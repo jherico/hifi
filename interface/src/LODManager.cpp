@@ -17,6 +17,8 @@
 #include "InterfaceLogging.h"
 
 #include "LODManager.h"
+#include <tbb/concurrent_unordered_map.h>
+
 
 Setting::Handle<float> desktopLODDecreaseFPS("desktopLODDecreaseFPS", DEFAULT_DESKTOP_LOD_DOWN_FPS);
 Setting::Handle<float> hmdLODDecreaseFPS("hmdLODDecreaseFPS", DEFAULT_HMD_LOD_DOWN_FPS);
@@ -218,6 +220,7 @@ QString LODManager::getLODFeedbackText() {
 }
 
 bool LODManager::shouldRender(const RenderArgs* args, const AABox& bounds) {
+    return true;
     const float maxScale = (float)TREE_SCALE;
     const float octreeToMeshRatio = 4.0f; // must be this many times closer to a mesh than a voxel to see it.
     float octreeSizeScale = args->_sizeScale;
@@ -227,7 +230,8 @@ bool LODManager::shouldRender(const RenderArgs* args, const AABox& bounds) {
     float largestDimension = bounds.getLargestDimension();
     
     static bool shouldRenderTableNeedsBuilding = true;
-    static QMap<float, float> shouldRenderTable;
+    using Map = tbb::concurrent_unordered_map<float, float>;
+    static Map shouldRenderTable;
     if (shouldRenderTableNeedsBuilding) {
         
         float SMALLEST_SCALE_IN_TABLE = 0.001f; // 1mm is plenty small
@@ -245,12 +249,19 @@ bool LODManager::shouldRender(const RenderArgs* args, const AABox& bounds) {
     
     float closestScale = maxScale;
     float visibleDistanceAtClosestScale = visibleDistanceAtMaxScale;
-    QMap<float, float>::const_iterator lowerBound = shouldRenderTable.lowerBound(largestDimension);
-    if (lowerBound != shouldRenderTable.constEnd()) {
-        closestScale = lowerBound.key();
-        visibleDistanceAtClosestScale = visibleDistanceAtMaxScale * lowerBound.value();
+    Map::key_type k = NAN; float r;
+    std::for_each(shouldRenderTable.begin(), shouldRenderTable.end(), [&](Map::const_reference item) {
+        if (isNaN(k) || (item.first >= largestDimension && item.first < k)) {
+            k = item.first;
+            r = item.second;
+        }
+    });
+
+    if (!isNaN(k)) {
+        closestScale = k;
+        visibleDistanceAtClosestScale = visibleDistanceAtMaxScale * r;
     }
-    
+
     if (closestScale < largestDimension) {
         visibleDistanceAtClosestScale *= 2.0f;
     }

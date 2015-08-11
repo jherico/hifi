@@ -19,6 +19,10 @@
 #include <ViewFrustum.h>
 #include <gpu/Context.h>
 
+#include <tbb/parallel_for.h>
+#include <tbb/parallel_for_each.h>
+#include <tbb/concurrent_vector.h>
+
 using namespace render;
 
 DrawSceneTask::DrawSceneTask() : Task() {
@@ -60,12 +64,14 @@ void render::cullItems(const SceneContextPointer& sceneContext, const RenderCont
     auto renderDetails = renderContext->args->_details._item;
 
     renderDetails->_considered += inItems.size();
-    
+    using ConcurrentItemIDsBounds = tbb::concurrent_vector< ItemIDAndBounds >;
+    ConcurrentItemIDsBounds results;
+    results.reserve(inItems.size() / 2);
     // Culling / LOD
-    for (auto item : inItems) {
+    tbb::parallel_for_each(inItems.begin(), inItems.end(), [&](const ItemIDAndBounds& item) {
         if (item.bounds.isNull()) {
-            outItems.emplace_back(item); // One more Item to render
-            continue;
+            results.emplace_back(item); // One more Item to render
+            return;
         }
 
         // TODO: some entity types (like lights) might want to be rendered even
@@ -82,14 +88,16 @@ void render::cullItems(const SceneContextPointer& sceneContext, const RenderCont
                 bigEnoughToRender = (args->_shouldRender) ? args->_shouldRender(args, item.bounds) : true;
             }
             if (bigEnoughToRender) {
-                outItems.emplace_back(item); // One more Item to render
+                results.emplace_back(item); // One more Item to render
             } else {
-                renderDetails->_tooSmall++;
+                ++(renderDetails->_tooSmall);
             }
         } else {
-            renderDetails->_outOfView++;
+            ++(renderDetails->_outOfView);
         }
-    }
+    });
+
+    outItems.assign(results.begin(), results.end());
     renderDetails->_rendered += outItems.size();
 }
 
@@ -98,13 +106,14 @@ void FetchItems::run(const SceneContextPointer& sceneContext, const RenderContex
     auto& scene = sceneContext->_scene;
     auto& items = scene->getMasterBucket().at(_filter);
 
-    outItems.clear();
-    outItems.reserve(items.size());
-    for (auto id : items) {
+    using ConcurrentItemIDsBounds = tbb::concurrent_vector< ItemIDAndBounds >;
+    ConcurrentItemIDsBounds results;
+    results.reserve(items.size());
+    tbb::parallel_for_each(items.begin(), items.end(), [&](const render::ItemID& id) {
         auto& item = scene->getItem(id);
-        outItems.emplace_back(ItemIDAndBounds(id, item.getBound()));
-    }
-
+        results.emplace_back(ItemIDAndBounds(id, item.getBound()));
+    });
+    outItems.assign(results.begin(), results.end());
     if (_probeNumItems) {
         _probeNumItems(renderContext, outItems.size());
     }

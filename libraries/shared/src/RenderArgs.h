@@ -14,6 +14,7 @@
 
 #include <functional>
 #include <memory>
+#include <atomic>
 #include "GLMHelpers.h"
 
 
@@ -35,10 +36,10 @@ public:
     };
     
     struct Item {
-        int _considered = 0;
-        int _rendered = 0;
-        int _outOfView = 0;
-        int _tooSmall = 0;
+        std::atomic<int> _considered{ 0 };
+        std::atomic<int> _rendered{ 0 };
+        std::atomic<int> _outOfView{ 0 };
+        std::atomic<int> _tooSmall{ 0 };
     };
     
     int _materialSwitches = 0;

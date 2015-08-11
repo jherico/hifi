@@ -339,14 +339,14 @@ void Stats::setRenderDetails(const RenderDetails& details) {
     STAT_UPDATE(quads, details._quadsRendered);
     STAT_UPDATE(materialSwitches, details._materialSwitches);
     if (_expanded) {
-        STAT_UPDATE(meshOpaque, details._opaque._rendered);
-        STAT_UPDATE(meshTranslucent, details._opaque._rendered);
-        STAT_UPDATE(opaqueConsidered, details._opaque._considered);
-        STAT_UPDATE(opaqueOutOfView, details._opaque._outOfView);
-        STAT_UPDATE(opaqueTooSmall, details._opaque._tooSmall);
-        STAT_UPDATE(translucentConsidered, details._translucent._considered);
-        STAT_UPDATE(translucentOutOfView, details._translucent._outOfView);
-        STAT_UPDATE(translucentTooSmall, details._translucent._tooSmall);
+        STAT_UPDATE(meshOpaque, details._opaque._rendered.load());
+        STAT_UPDATE(meshTranslucent, details._opaque._rendered.load());
+        STAT_UPDATE(opaqueConsidered, details._opaque._considered.load());
+        STAT_UPDATE(opaqueOutOfView, details._opaque._outOfView.load());
+        STAT_UPDATE(opaqueTooSmall, details._opaque._tooSmall.load());
+        STAT_UPDATE(translucentConsidered, details._translucent._considered.load());
+        STAT_UPDATE(translucentOutOfView, details._translucent._outOfView.load());
+        STAT_UPDATE(translucentTooSmall, details._translucent._tooSmall.load());
     }
 }
 
