@@ -12,16 +12,12 @@
 #ifndef hifi_ArrayBufferViewClass_h
 #define hifi_ArrayBufferViewClass_h
 
-#include <QScriptClass>
 #include <QtCore/QObject>
-#include <QtScript/QScriptClass>
-#include <QtScript/QScriptContext>
-#include <QtScript/QScriptEngine>
-#include <QtScript/QScriptString>
-#include <QtScript/QScriptValue>
+#include <QtQml/QJSEngine>
 
 #include "ScriptEngine.h"
 
+#if 0
 static const QString BUFFER_PROPERTY_NAME = "buffer";
 static const QString BYTE_OFFSET_PROPERTY_NAME = "byteOffset";
 static const QString BYTE_LENGTH_PROPERTY_NAME = "byteLength";
@@ -33,12 +29,12 @@ public:
     
     ScriptEngine* getScriptEngine() { return _scriptEngine; }
     
-    virtual QueryFlags queryProperty(const QScriptValue& object,
+    virtual QueryFlags queryProperty(const QJSValue& object,
                                      const QScriptString& name,
                                      QueryFlags flags, uint* id);
-    virtual QScriptValue property(const QScriptValue& object,
+    virtual QJSValue property(const QJSValue& object,
                                   const QScriptString& name, uint id);
-    virtual QScriptValue::PropertyFlags propertyFlags(const QScriptValue& object,
+    virtual QJSValue::PropertyFlags propertyFlags(const QJSValue& object,
                                                       const QScriptString& name, uint id);
 protected:
     // JS Object attributes
@@ -49,4 +45,5 @@ protected:
     ScriptEngine* _scriptEngine;
 };
 
+#endif
 #endif // hifi_ArrayBufferViewClass_h

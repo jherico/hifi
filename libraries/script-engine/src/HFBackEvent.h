@@ -13,7 +13,7 @@
 #define hifi_HFBackEvent_h
 
 #include <qevent.h>
-#include <qscriptengine.h>
+#include <QJSEngine.h>
 
 #include "HFMetaEvent.h"
 

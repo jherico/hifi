@@ -14,23 +14,25 @@
 
 #include "ArrayBufferViewClass.h"
 
+#if 0
+
 class DataViewClass : public ArrayBufferViewClass {
     Q_OBJECT
 public:
     DataViewClass(ScriptEngine* scriptEngine);
-    QScriptValue newInstance(QScriptValue buffer, quint32 byteOffset, quint32 byteLength);
+    QJSValue newInstance(QJSValue buffer, quint32 byteOffset, quint32 byteLength);
     
     QString name() const;
-    QScriptValue prototype() const;
+    QJSValue prototype() const;
     
 private:
-    static QScriptValue construct(QScriptContext* context, QScriptEngine* engine);
+    static QJSValue construct(QScriptContext* context, QJSEngine* engine);
     
-    QScriptValue _proto;
-    QScriptValue _ctor;
+    QJSValue _proto;
+    QJSValue _ctor;
     
     QScriptString _name;
 };
-
+#endif
 
 #endif // hifi_DataViewClass_h

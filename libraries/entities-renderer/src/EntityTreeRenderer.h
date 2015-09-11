@@ -19,7 +19,7 @@
 #include <EntityScriptingInterface.h> // for RayToEntityIntersectionResult
 #include <MouseEvent.h>
 #include <OctreeRenderer.h>
-#include <ScriptCache.h>
+#include <ScriptEngine.h>
 #include <AbstractAudioInterface.h>
 
 class AbstractScriptingServicesInterface;
@@ -31,7 +31,7 @@ class ZoneEntityItem;
 class EntityScriptDetails {
 public:
     QString scriptText;
-    QScriptValue scriptObject;
+    QJSValue scriptObject;
 };
 
 // Generic client side Octree renderer class.
@@ -147,7 +147,7 @@ private:
     EntityItemID _currentHoverOverEntityID;
     EntityItemID _currentClickingOnEntityID;
 
-    QScriptValueList createEntityArgs(const EntityItemID& entityID);
+    QJSValueList createEntityArgs(const EntityItemID& entityID);
     void checkEnterLeaveEntities();
     void leaveAllEntities();
     glm::vec3 _lastAvatarPosition;
@@ -157,12 +157,12 @@ private:
     ScriptEngine* _entitiesScriptEngine;
     ScriptEngine* _sandboxScriptEngine;
 
-    QScriptValue loadEntityScript(EntityItemPointer entity, bool isPreload = false, bool reload = false);
-    QScriptValue loadEntityScript(const EntityItemID& entityItemID, bool isPreload = false, bool reload = false);
-    QScriptValue getPreviouslyLoadedEntityScript(const EntityItemID& entityItemID);
+    QJSValue loadEntityScript(EntityItemPointer entity, bool isPreload = false, bool reload = false);
+    QJSValue loadEntityScript(const EntityItemID& entityItemID, bool isPreload = false, bool reload = false);
+    QJSValue getPreviouslyLoadedEntityScript(const EntityItemID& entityItemID);
     QString loadScriptContents(const QString& scriptMaybeURLorText, bool& isURL, bool& isPending, QUrl& url, bool& reload);
-    QScriptValueList createMouseEventArgs(const EntityItemID& entityID, QMouseEvent* event, unsigned int deviceID);
-    QScriptValueList createMouseEventArgs(const EntityItemID& entityID, const MouseEvent& mouseEvent);
+    QJSValueList createMouseEventArgs(const EntityItemID& entityID, QMouseEvent* event, unsigned int deviceID);
+    QJSValueList createMouseEventArgs(const EntityItemID& entityID, const MouseEvent& mouseEvent);
     
     QHash<EntityItemID, EntityScriptDetails> _entityScripts;
 

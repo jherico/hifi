@@ -9,10 +9,11 @@
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 //
 
-#include <QColor>
-#include <QUrl>
-#include <QUuid>
-#include <QRect>
+#include <QtCore/QUrl>
+#include <QtCore/QUuid>
+#include <QtCore/QRect>
+#include <QtGui/QColor>
+#include <QtQml/QJSEngine>
 
 #include <glm/gtc/quaternion.hpp>
 
@@ -28,26 +29,25 @@ static int pickRayMetaTypeId = qRegisterMetaType<PickRay>();
 static int collisionMetaTypeId = qRegisterMetaType<Collision>();
 static int qMapURLStringMetaTypeId = qRegisterMetaType<QMap<QUrl,QString>>();
 
-void registerMetaTypes(QScriptEngine* engine) {
-    qScriptRegisterMetaType(engine, vec4toScriptValue, vec4FromScriptValue);
-    qScriptRegisterMetaType(engine, vec3toScriptValue, vec3FromScriptValue);
-    qScriptRegisterMetaType(engine, qVectorVec3ToScriptValue, qVectorVec3FromScriptValue);
-    qScriptRegisterMetaType(engine, qVectorFloatToScriptValue, qVectorFloatFromScriptValue);
-    qScriptRegisterMetaType(engine, vec2toScriptValue, vec2FromScriptValue);
-    qScriptRegisterMetaType(engine, quatToScriptValue, quatFromScriptValue);
-    qScriptRegisterMetaType(engine, qRectToScriptValue, qRectFromScriptValue);
-    qScriptRegisterMetaType(engine, xColorToScriptValue, xColorFromScriptValue);
-    qScriptRegisterMetaType(engine, qColorToScriptValue, qColorFromScriptValue);
-    qScriptRegisterMetaType(engine, qURLToScriptValue, qURLFromScriptValue);
-    qScriptRegisterMetaType(engine, pickRayToScriptValue, pickRayFromScriptValue);
-    qScriptRegisterMetaType(engine, collisionToScriptValue, collisionFromScriptValue);
-    qScriptRegisterMetaType(engine, quuidToScriptValue, quuidFromScriptValue);
-    qScriptRegisterMetaType(engine, qSizeFToScriptValue, qSizeFFromScriptValue);
-
+void registerMetaTypes(QJSEngine* engine) {
+    //qScriptRegisterMetaType(engine, vec4toScriptValue, vec4FromScriptValue);
+    //qScriptRegisterMetaType(engine, vec3toScriptValue, vec3FromScriptValue);
+    //qScriptRegisterMetaType(engine, qVectorVec3ToScriptValue, qVectorVec3FromScriptValue);
+    //qScriptRegisterMetaType(engine, qVectorFloatToScriptValue, qVectorFloatFromScriptValue);
+    //qScriptRegisterMetaType(engine, vec2toScriptValue, vec2FromScriptValue);
+    //qScriptRegisterMetaType(engine, quatToScriptValue, quatFromScriptValue);
+    //qScriptRegisterMetaType(engine, qRectToScriptValue, qRectFromScriptValue);
+    //qScriptRegisterMetaType(engine, xColorToScriptValue, xColorFromScriptValue);
+    //qScriptRegisterMetaType(engine, qColorToScriptValue, qColorFromScriptValue);
+    //qScriptRegisterMetaType(engine, qURLToScriptValue, qURLFromScriptValue);
+    //qScriptRegisterMetaType(engine, pickRayToScriptValue, pickRayFromScriptValue);
+    //qScriptRegisterMetaType(engine, collisionToScriptValue, collisionFromScriptValue);
+    //qScriptRegisterMetaType(engine, quuidToScriptValue, quuidFromScriptValue);
+    //qScriptRegisterMetaType(engine, qSizeFToScriptValue, qSizeFFromScriptValue);
 }
 
-QScriptValue vec4toScriptValue(QScriptEngine* engine, const glm::vec4& vec4) {
-    QScriptValue obj = engine->newObject();
+QJSValue vec4toScriptValue(QJSEngine* engine, const glm::vec4& vec4) {
+    QJSValue obj = engine->newObject();
     obj.setProperty("x", vec4.x);
     obj.setProperty("y", vec4.y);
     obj.setProperty("z", vec4.z);
@@ -55,15 +55,15 @@ QScriptValue vec4toScriptValue(QScriptEngine* engine, const glm::vec4& vec4) {
     return obj;
 }
 
-void vec4FromScriptValue(const QScriptValue& object, glm::vec4& vec4) {
+void vec4FromScriptValue(const QJSValue& object, glm::vec4& vec4) {
     vec4.x = object.property("x").toVariant().toFloat();
     vec4.y = object.property("y").toVariant().toFloat();
     vec4.z = object.property("z").toVariant().toFloat();
     vec4.w = object.property("w").toVariant().toFloat();
 }
 
-QScriptValue vec3toScriptValue(QScriptEngine* engine, const glm::vec3 &vec3) {
-    QScriptValue obj = engine->newObject();
+QJSValue vec3toScriptValue(QJSEngine* engine, const glm::vec3 &vec3) {
+    QJSValue obj = engine->newObject();
     if (vec3.x != vec3.x || vec3.y != vec3.y || vec3.z != vec3.z) {
         // if vec3 contains a NaN don't try to convert it
         return obj;
@@ -74,26 +74,26 @@ QScriptValue vec3toScriptValue(QScriptEngine* engine, const glm::vec3 &vec3) {
     return obj;
 }
 
-void vec3FromScriptValue(const QScriptValue &object, glm::vec3 &vec3) {
+void vec3FromScriptValue(const QJSValue &object, glm::vec3 &vec3) {
     vec3.x = object.property("x").toVariant().toFloat();
     vec3.y = object.property("y").toVariant().toFloat();
     vec3.z = object.property("z").toVariant().toFloat();
 }
 
-QScriptValue qVectorVec3ToScriptValue(QScriptEngine* engine, const QVector<glm::vec3>& vector) {
-    QScriptValue array = engine->newArray();
+QJSValue qVectorVec3ToScriptValue(QJSEngine* engine, const QVector<glm::vec3>& vector) {
+    QJSValue array = engine->newArray();
     for (int i = 0; i < vector.size(); i++) {
         array.setProperty(i, vec3toScriptValue(engine, vector.at(i)));
     }
     return array;
 }
 
-QVector<float> qVectorFloatFromScriptValue(const QScriptValue& array) {
+QVector<float> qVectorFloatFromScriptValue(const QJSValue& array) {
     if(!array.isArray()) {
         return QVector<float>();
     }
     QVector<float> newVector;
-    int length = array.property("length").toInteger();
+    int length = array.property("length").toInt();
     newVector.reserve(length);
     for (int i = 0; i < length; i++) {
         if(array.property(i).isNumber()) {
@@ -104,26 +104,26 @@ QVector<float> qVectorFloatFromScriptValue(const QScriptValue& array) {
     return newVector;
 }
 
-QScriptValue qVectorFloatToScriptValue(QScriptEngine* engine, const QVector<float>& vector) {
-    QScriptValue array = engine->newArray();
+QJSValue qVectorFloatToScriptValue(QJSEngine* engine, const QVector<float>& vector) {
+    QJSValue array = engine->newArray();
     for (int i = 0; i < vector.size(); i++) {
         float num = vector.at(i);
-        array.setProperty(i, QScriptValue(num));
+        array.setProperty(i, QJSValue(num));
     }
     return array;
 }
 
-void qVectorFloatFromScriptValue(const QScriptValue& array, QVector<float>& vector) {
-    int length = array.property("length").toInteger();
+void qVectorFloatFromScriptValue(const QJSValue& array, QVector<float>& vector) {
+    int length = array.property("length").toInt();
     
     for (int i = 0; i < length; i++) {
         vector << array.property(i).toVariant().toFloat();
     }
 }
 //
-QVector<glm::vec3> qVectorVec3FromScriptValue(const QScriptValue& array){
+QVector<glm::vec3> qVectorVec3FromScriptValue(const QJSValue& array){
     QVector<glm::vec3> newVector;
-    int length = array.property("length").toInteger();
+    int length = array.property("length").toInt();
     
     for (int i = 0; i < length; i++) {
         glm::vec3 newVec3 = glm::vec3();
@@ -133,8 +133,8 @@ QVector<glm::vec3> qVectorVec3FromScriptValue(const QScriptValue& array){
     return newVector;
 }
 
-void qVectorVec3FromScriptValue(const QScriptValue& array, QVector<glm::vec3>& vector ) {
-    int length = array.property("length").toInteger();
+void qVectorVec3FromScriptValue(const QJSValue& array, QVector<glm::vec3>& vector ) {
+    int length = array.property("length").toInt();
     
     for (int i = 0; i < length; i++) {
         glm::vec3 newVec3 = glm::vec3();
@@ -143,20 +143,20 @@ void qVectorVec3FromScriptValue(const QScriptValue& array, QVector<glm::vec3>& v
     }
 }
 
-QScriptValue vec2toScriptValue(QScriptEngine* engine, const glm::vec2 &vec2) {
-    QScriptValue obj = engine->newObject();
+QJSValue vec2toScriptValue(QJSEngine* engine, const glm::vec2 &vec2) {
+    QJSValue obj = engine->newObject();
     obj.setProperty("x", vec2.x);
     obj.setProperty("y", vec2.y);
     return obj;
 }
 
-void vec2FromScriptValue(const QScriptValue &object, glm::vec2 &vec2) {
+void vec2FromScriptValue(const QJSValue &object, glm::vec2 &vec2) {
     vec2.x = object.property("x").toVariant().toFloat();
     vec2.y = object.property("y").toVariant().toFloat();
 }
 
-QScriptValue quatToScriptValue(QScriptEngine* engine, const glm::quat& quat) {
-    QScriptValue obj = engine->newObject();
+QJSValue quatToScriptValue(QJSEngine* engine, const glm::quat& quat) {
+    QJSValue obj = engine->newObject();
     obj.setProperty("x", quat.x);
     obj.setProperty("y", quat.y);
     obj.setProperty("z", quat.z);
@@ -164,15 +164,15 @@ QScriptValue quatToScriptValue(QScriptEngine* engine, const glm::quat& quat) {
     return obj;
 }
 
-void quatFromScriptValue(const QScriptValue &object, glm::quat& quat) {
+void quatFromScriptValue(const QJSValue &object, glm::quat& quat) {
     quat.x = object.property("x").toVariant().toFloat();
     quat.y = object.property("y").toVariant().toFloat();
     quat.z = object.property("z").toVariant().toFloat();
     quat.w = object.property("w").toVariant().toFloat();
 }
 
-QScriptValue qRectToScriptValue(QScriptEngine* engine, const QRect& rect) {
-    QScriptValue obj = engine->newObject();
+QJSValue qRectToScriptValue(QJSEngine* engine, const QRect& rect) {
+    QJSValue obj = engine->newObject();
     obj.setProperty("x", rect.x());
     obj.setProperty("y", rect.y());
     obj.setProperty("width", rect.width());
@@ -180,27 +180,27 @@ QScriptValue qRectToScriptValue(QScriptEngine* engine, const QRect& rect) {
     return obj;
 }
 
-void qRectFromScriptValue(const QScriptValue &object, QRect& rect) {
+void qRectFromScriptValue(const QJSValue &object, QRect& rect) {
     rect.setX(object.property("x").toVariant().toInt());
     rect.setY(object.property("y").toVariant().toInt());
     rect.setWidth(object.property("width").toVariant().toInt());
     rect.setHeight(object.property("height").toVariant().toInt());
 }
 
-QScriptValue xColorToScriptValue(QScriptEngine *engine, const xColor& color) {
-    QScriptValue obj = engine->newObject();
+QJSValue xColorToScriptValue(QJSEngine *engine, const xColor& color) {
+    QJSValue obj = engine->newObject();
     obj.setProperty("red", color.red);
     obj.setProperty("green", color.green);
     obj.setProperty("blue", color.blue);
     return obj;
 }
 
-void xColorFromScriptValue(const QScriptValue &object, xColor& color) {
-    if (!object.isValid()) {
+void xColorFromScriptValue(const QJSValue &object, xColor& color) {
+    if (object.isUndefined() || object.isNull()) {
         return;
     }
     if (object.isNumber()) {
-        color.red = color.green = color.blue = (uint8_t)object.toUInt32();
+        color.red = color.green = color.blue = (uint8_t)object.toInt();
     } else if (object.isString()) {
         QColor qcolor(object.toString());
         if (qcolor.isValid()) {
@@ -215,8 +215,8 @@ void xColorFromScriptValue(const QScriptValue &object, xColor& color) {
     }
 }
 
-QScriptValue qColorToScriptValue(QScriptEngine* engine, const QColor& color) {
-    QScriptValue object = engine->newObject();
+QJSValue qColorToScriptValue(QJSEngine* engine, const QColor& color) {
+    QJSValue object = engine->newObject();
     object.setProperty("red", color.red());
     object.setProperty("green", color.green());
     object.setProperty("blue", color.blue());
@@ -224,64 +224,64 @@ QScriptValue qColorToScriptValue(QScriptEngine* engine, const QColor& color) {
     return object;
 }
 
-void qColorFromScriptValue(const QScriptValue& object, QColor& color) {
+void qColorFromScriptValue(const QJSValue& object, QColor& color) {
     if (object.isNumber()) {
-        color.setRgb(object.toUInt32());
+        color.setRgb(object.toInt());
     
     } else if (object.isString()) {
         color.setNamedColor(object.toString());
             
     } else {
-        QScriptValue alphaValue = object.property("alpha");
-        color.setRgb(object.property("red").toInt32(), object.property("green").toInt32(), object.property("blue").toInt32(),
-            alphaValue.isNumber() ? alphaValue.toInt32() : 255);
+        QJSValue alphaValue = object.property("alpha");
+        color.setRgb(object.property("red").toInt(), object.property("green").toInt(), object.property("blue").toInt(),
+            alphaValue.isNumber() ? alphaValue.toInt() : 255);
     }
 }
 
-QScriptValue qURLToScriptValue(QScriptEngine* engine, const QUrl& url) {
+QJSValue qURLToScriptValue(QJSEngine* engine, const QUrl& url) {
     return url.toString();
 }
 
-void qURLFromScriptValue(const QScriptValue& object, QUrl& url) {
+void qURLFromScriptValue(const QJSValue& object, QUrl& url) {
     url = object.toString();
 }
 
-QScriptValue pickRayToScriptValue(QScriptEngine* engine, const PickRay& pickRay) {
-    QScriptValue obj = engine->newObject();
-    QScriptValue origin = vec3toScriptValue(engine, pickRay.origin);
+QJSValue pickRayToScriptValue(QJSEngine* engine, const PickRay& pickRay) {
+    QJSValue obj = engine->newObject();
+    QJSValue origin = vec3toScriptValue(engine, pickRay.origin);
     obj.setProperty("origin", origin);
-    QScriptValue direction = vec3toScriptValue(engine, pickRay.direction);
+    QJSValue direction = vec3toScriptValue(engine, pickRay.direction);
     obj.setProperty("direction", direction);
     return obj;
 }
 
-void pickRayFromScriptValue(const QScriptValue& object, PickRay& pickRay) {
-    QScriptValue originValue = object.property("origin");
-    if (originValue.isValid()) {
+void pickRayFromScriptValue(const QJSValue& object, PickRay& pickRay) {
+    QJSValue originValue = object.property("origin");
+    if (originValue.isObject()) {
         auto x = originValue.property("x");
         auto y = originValue.property("y");
         auto z = originValue.property("z");
-        if (x.isValid() && y.isValid() && z.isValid()) {
-            pickRay.origin.x = x.toVariant().toFloat();
-            pickRay.origin.y = y.toVariant().toFloat();
-            pickRay.origin.z = z.toVariant().toFloat();
+        if (x.isNumber() && y.isNumber() && z.isNumber()) {
+            pickRay.origin.x = x.toNumber();
+            pickRay.origin.y = y.toNumber();
+            pickRay.origin.z = z.toNumber();
         }
     }
-    QScriptValue directionValue = object.property("direction");
-    if (directionValue.isValid()) {
+    QJSValue directionValue = object.property("direction");
+    if (directionValue.isObject()) {
         auto x = directionValue.property("x");
         auto y = directionValue.property("y");
         auto z = directionValue.property("z");
-        if (x.isValid() && y.isValid() && z.isValid()) {
-            pickRay.direction.x = x.toVariant().toFloat();
-            pickRay.direction.y = y.toVariant().toFloat();
-            pickRay.direction.z = z.toVariant().toFloat();
+        if (x.isNumber() && y.isNumber() && z.isNumber()) {
+            pickRay.direction.x = x.toNumber();
+            pickRay.direction.y = y.toNumber();
+            pickRay.direction.z = z.toNumber();
         }
     }
 }
 
-QScriptValue collisionToScriptValue(QScriptEngine* engine, const Collision& collision) {
-    QScriptValue obj = engine->newObject();
+QJSValue collisionToScriptValue(QJSEngine* engine, const Collision& collision) {
+    QJSValue obj = engine->newObject();
     obj.setProperty("type", collision.type);
     obj.setProperty("idA", quuidToScriptValue(engine, collision.idA));
     obj.setProperty("idB", quuidToScriptValue(engine, collision.idB));
@@ -291,19 +291,19 @@ QScriptValue collisionToScriptValue(QScriptEngine* engine, const Collision& coll
     return obj;
 }
 
-void collisionFromScriptValue(const QScriptValue &object, Collision& collision) {
+void collisionFromScriptValue(const QJSValue &object, Collision& collision) {
     // TODO: implement this when we know what it means to accept collision events from JS
 }
 
-QScriptValue quuidToScriptValue(QScriptEngine* engine, const QUuid& uuid) {
+QJSValue quuidToScriptValue(QJSEngine* engine, const QUuid& uuid) {
     if (uuid.isNull()) {
-        return QScriptValue::NullValue;
+        return QJSValue::NullValue;
     }
-    QScriptValue obj(uuid.toString());
+    QJSValue obj(uuid.toString());
     return obj;
 }
 
-void quuidFromScriptValue(const QScriptValue& object, QUuid& uuid) {
+void quuidFromScriptValue(const QJSValue& object, QUuid& uuid) {
     if (object.isNull()) {
         uuid = QUuid();
         return;
@@ -313,14 +313,14 @@ void quuidFromScriptValue(const QScriptValue& object, QUuid& uuid) {
     uuid = fromString;
 }
 
-QScriptValue qSizeFToScriptValue(QScriptEngine* engine, const QSizeF& qSizeF) {
-    QScriptValue obj = engine->newObject();
+QJSValue qSizeFToScriptValue(QJSEngine* engine, const QSizeF& qSizeF) {
+    QJSValue obj = engine->newObject();
     obj.setProperty("width", qSizeF.width());
     obj.setProperty("height", qSizeF.height());
     return obj;
 }
 
-void qSizeFFromScriptValue(const QScriptValue& object, QSizeF& qSizeF) {
+void qSizeFFromScriptValue(const QJSValue& object, QSizeF& qSizeF) {
     qSizeF.setWidth(object.property("width").toVariant().toFloat());
     qSizeF.setHeight(object.property("height").toVariant().toFloat());
 }

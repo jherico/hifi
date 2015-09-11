@@ -36,17 +36,17 @@ static int inputChannelMetaTypeId = qRegisterMetaType<UserInputMapper::InputChan
 static int inputMetaTypeId = qRegisterMetaType<UserInputMapper::Input>();
 static int inputPairMetaTypeId = qRegisterMetaType<UserInputMapper::InputPair>();
 
-QScriptValue inputToScriptValue(QScriptEngine* engine, const UserInputMapper::Input& input);
-void inputFromScriptValue(const QScriptValue& object, UserInputMapper::Input& input);
-QScriptValue inputChannelToScriptValue(QScriptEngine* engine, const UserInputMapper::InputChannel& inputChannel);
-void inputChannelFromScriptValue(const QScriptValue& object, UserInputMapper::InputChannel& inputChannel);
-QScriptValue actionToScriptValue(QScriptEngine* engine, const UserInputMapper::Action& action);
-void actionFromScriptValue(const QScriptValue& object, UserInputMapper::Action& action);
-QScriptValue inputPairToScriptValue(QScriptEngine* engine, const UserInputMapper::InputPair& inputPair);
-void inputPairFromScriptValue(const QScriptValue& object, UserInputMapper::InputPair& inputPair);
+QJSValue inputToScriptValue(QJSEngine* engine, const UserInputMapper::Input& input);
+void inputFromScriptValue(const QJSValue& object, UserInputMapper::Input& input);
+QJSValue inputChannelToScriptValue(QJSEngine* engine, const UserInputMapper::InputChannel& inputChannel);
+void inputChannelFromScriptValue(const QJSValue& object, UserInputMapper::InputChannel& inputChannel);
+QJSValue actionToScriptValue(QJSEngine* engine, const UserInputMapper::Action& action);
+void actionFromScriptValue(const QJSValue& object, UserInputMapper::Action& action);
+QJSValue inputPairToScriptValue(QJSEngine* engine, const UserInputMapper::InputPair& inputPair);
+void inputPairFromScriptValue(const QJSValue& object, UserInputMapper::InputPair& inputPair);
 
-QScriptValue inputToScriptValue(QScriptEngine* engine, const UserInputMapper::Input& input) {
-    QScriptValue obj = engine->newObject();
+QJSValue inputToScriptValue(QJSEngine* engine, const UserInputMapper::Input& input) {
+    QJSValue obj = engine->newObject();
     obj.setProperty("device", input.getDevice());
     obj.setProperty("channel", input.getChannel());
     obj.setProperty("type", (unsigned short) input.getType());
@@ -54,15 +54,15 @@ QScriptValue inputToScriptValue(QScriptEngine* engine, const UserInputMapper::In
     return obj;
 }
 
-void inputFromScriptValue(const QScriptValue& object, UserInputMapper::Input& input) {
-    input.setDevice(object.property("device").toUInt16());
-    input.setChannel(object.property("channel").toUInt16());
-    input.setType(object.property("type").toUInt16());
-    input.setID(object.property("id").toInt32());
+void inputFromScriptValue(const QJSValue& object, UserInputMapper::Input& input) {
+    input.setDevice(object.property("device").toInt());
+    input.setChannel(object.property("channel").toInt());
+    input.setType(object.property("type").toInt());
+    input.setID(object.property("id").toInt());
 }
 
-QScriptValue inputChannelToScriptValue(QScriptEngine* engine, const UserInputMapper::InputChannel& inputChannel) {
-    QScriptValue obj = engine->newObject();
+QJSValue inputChannelToScriptValue(QJSEngine* engine, const UserInputMapper::InputChannel& inputChannel) {
+    QJSValue obj = engine->newObject();
     obj.setProperty("input", inputToScriptValue(engine, inputChannel.getInput()));
     obj.setProperty("modifier", inputToScriptValue(engine, inputChannel.getModifier()));
     obj.setProperty("action", inputChannel.getAction());
@@ -70,7 +70,7 @@ QScriptValue inputChannelToScriptValue(QScriptEngine* engine, const UserInputMap
     return obj;
 }
 
-void inputChannelFromScriptValue(const QScriptValue& object, UserInputMapper::InputChannel& inputChannel) {
+void inputChannelFromScriptValue(const QJSValue& object, UserInputMapper::InputChannel& inputChannel) {
     UserInputMapper::Input input;
     UserInputMapper::Input modifier;
     inputFromScriptValue(object.property("input"), input);
@@ -81,11 +81,11 @@ void inputChannelFromScriptValue(const QScriptValue& object, UserInputMapper::In
     inputChannel.setScale(object.property("scale").toVariant().toFloat());
 }
 
-QScriptValue actionToScriptValue(QScriptEngine* engine, const UserInputMapper::Action& action) {
-    QScriptValue obj = engine->newObject();
+QJSValue actionToScriptValue(QJSEngine* engine, const UserInputMapper::Action& action) {
+    QJSValue obj = engine->newObject();
     auto userInputMapper = DependencyManager::get<UserInputMapper>();
     QVector<UserInputMapper::InputChannel> inputChannels = userInputMapper->getInputChannelsForAction(action);
-    QScriptValue _inputChannels = engine->newArray(inputChannels.size());
+    QJSValue _inputChannels = engine->newArray(inputChannels.size());
     for (int i = 0; i < inputChannels.size(); i++) {
         _inputChannels.setProperty(i, inputChannelToScriptValue(engine, inputChannels[i]));
     }
@@ -95,23 +95,25 @@ QScriptValue actionToScriptValue(QScriptEngine* engine, const UserInputMapper::A
     return obj;
 }
 
-void actionFromScriptValue(const QScriptValue& object, UserInputMapper::Action& action) {
+void actionFromScriptValue(const QJSValue& object, UserInputMapper::Action& action) {
     action = UserInputMapper::Action(object.property("action").toVariant().toInt());
 }
 
-QScriptValue inputPairToScriptValue(QScriptEngine* engine, const UserInputMapper::InputPair& inputPair) {
-    QScriptValue obj = engine->newObject();
+QJSValue inputPairToScriptValue(QJSEngine* engine, const UserInputMapper::InputPair& inputPair) {
+    QJSValue obj = engine->newObject();
     obj.setProperty("input", inputToScriptValue(engine, inputPair.first));
     obj.setProperty("inputName", inputPair.second);
     return obj;
 }
 
-void inputPairFromScriptValue(const QScriptValue& object, UserInputMapper::InputPair& inputPair) {
+void inputPairFromScriptValue(const QJSValue& object, UserInputMapper::InputPair& inputPair) {
     inputFromScriptValue(object.property("input"), inputPair.first);
     inputPair.second = QString(object.property("inputName").toVariant().toString());
 }
 
-void ControllerScriptingInterface::registerControllerTypes(QScriptEngine* engine) {
+void ControllerScriptingInterface::registerControllerTypes(QJSEngine* engine) {
+    // FIXME JSENGINE
+#if 0
     qScriptRegisterSequenceMetaType<QVector<UserInputMapper::Action> >(engine);
     qScriptRegisterSequenceMetaType<QVector<UserInputMapper::InputChannel> >(engine);
     qScriptRegisterSequenceMetaType<QVector<UserInputMapper::InputPair> >(engine);
@@ -119,6 +121,7 @@ void ControllerScriptingInterface::registerControllerTypes(QScriptEngine* engine
     qScriptRegisterMetaType(engine, inputChannelToScriptValue, inputChannelFromScriptValue);
     qScriptRegisterMetaType(engine, inputToScriptValue, inputFromScriptValue);
     qScriptRegisterMetaType(engine, inputPairToScriptValue, inputPairFromScriptValue);
+#endif
 }
 
 void ControllerScriptingInterface::handleMetaEvent(HFMetaEvent* event) {

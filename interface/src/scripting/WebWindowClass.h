@@ -12,8 +12,7 @@
 #ifndef hifi_WebWindowClass_h
 #define hifi_WebWindowClass_h
 
-#include <QScriptContext>
-#include <QScriptEngine>
+#include <QtQml/QJSEngine>
 #include <QWebView>
 
 class ScriptEventBridge : public QObject {
@@ -42,7 +41,10 @@ public:
     WebWindowClass(const QString& title, const QString& url, int width, int height, bool isToolWindow = false);
     ~WebWindowClass();
 
-    static QScriptValue constructor(QScriptContext* context, QScriptEngine* engine);
+    // FIXME JSENGINE
+#if 0
+    static QJSValue constructor(QScriptContext* context, QJSEngine* engine);
+#endif
 
 public slots:
     void setVisible(bool visible);

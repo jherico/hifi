@@ -32,19 +32,19 @@
 
 static int soundMetaTypeId = qRegisterMetaType<Sound*>();
 
-QScriptValue soundSharedPointerToScriptValue(QScriptEngine* engine, SharedSoundPointer const& in) {
+QJSValue soundSharedPointerToScriptValue(QJSEngine* engine, SharedSoundPointer const& in) {
     return engine->newQObject(in.data());
 }
 
-void soundSharedPointerFromScriptValue(const QScriptValue& object, SharedSoundPointer &out) {
+void soundSharedPointerFromScriptValue(const QJSValue& object, SharedSoundPointer &out) {
     out = SharedSoundPointer(qobject_cast<Sound*>(object.toQObject()));
 }
 
-QScriptValue soundPointerToScriptValue(QScriptEngine* engine, Sound* const& in) {
+QJSValue soundPointerToScriptValue(QJSEngine* engine, Sound* const& in) {
     return engine->newQObject(in);
 }
 
-void soundPointerFromScriptValue(const QScriptValue &object, Sound* &out) {
+void soundPointerFromScriptValue(const QJSValue &object, Sound* &out) {
     out = qobject_cast<Sound*>(object.toQObject());
 }
 

@@ -26,42 +26,42 @@ AABox Volume3DOverlay::getBounds() const {
     return AABox(extents);
 }
 
-void Volume3DOverlay::setProperties(const QScriptValue& properties) {
+void Volume3DOverlay::setProperties(const QJSValue& properties) {
     Base3DOverlay::setProperties(properties);
 
-    QScriptValue dimensions = properties.property("dimensions");
+    QJSValue dimensions = properties.property("dimensions");
 
     // if "dimensions" property was not there, check to see if they included aliases: scale
-    if (!dimensions.isValid()) {
+    if (dimensions.isUndefined()) {
         dimensions = properties.property("scale");
-        if (!dimensions.isValid()) {
+        if (dimensions.isUndefined()) {
             dimensions = properties.property("size");
         }
     }
 
-    if (dimensions.isValid()) {
+    if (!dimensions.isUndefined()) {
         bool validDimensions = false;
         glm::vec3 newDimensions;
 
-        QScriptValue x = dimensions.property("x");
-        QScriptValue y = dimensions.property("y");
-        QScriptValue z = dimensions.property("z");
+        QJSValue x = dimensions.property("x");
+        QJSValue y = dimensions.property("y");
+        QJSValue z = dimensions.property("z");
 
 
-        if (x.isValid() && x.isNumber() &&
-            y.isValid() && y.isNumber() &&
-            z.isValid() && z.isNumber()) {
+        if (x.isNumber() &&
+            y.isNumber() &&
+            z.isNumber()) {
             newDimensions.x = x.toNumber();
             newDimensions.y = y.toNumber();
             newDimensions.z = z.toNumber();
             validDimensions = true;
         } else {
-            QScriptValue width = dimensions.property("width");
-            QScriptValue height = dimensions.property("height");
-            QScriptValue depth = dimensions.property("depth");
-            if (width.isValid() && width.isNumber() &&
-                height.isValid() && height.isNumber() &&
-                depth.isValid() && depth.isNumber()) {
+            QJSValue width = dimensions.property("width");
+            QJSValue height = dimensions.property("height");
+            QJSValue depth = dimensions.property("depth");
+            if (width.isNumber() &&
+                height.isNumber() &&
+                depth.isNumber()) {
                 newDimensions.x = width.toNumber();
                 newDimensions.y = height.toNumber();
                 newDimensions.z = depth.toNumber();
@@ -84,7 +84,7 @@ void Volume3DOverlay::setProperties(const QScriptValue& properties) {
     }
 }
 
-QScriptValue Volume3DOverlay::getProperty(const QString& property) {
+QJSValue Volume3DOverlay::getProperty(const QString& property) {
     if (property == "dimensions" || property == "scale" || property == "size") {
         return vec3toScriptValue(_scriptEngine, getDimensions());
     }

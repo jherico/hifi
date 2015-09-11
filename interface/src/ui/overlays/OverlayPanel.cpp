@@ -27,25 +27,25 @@ PropertyBinding::PropertyBinding(QString avatar, QUuid entity) :
 {
 }
 
-QScriptValue propertyBindingToScriptValue(QScriptEngine* engine, const PropertyBinding& value) {
-    QScriptValue obj = engine->newObject();
+QJSValue propertyBindingToScriptValue(QJSEngine* engine, const PropertyBinding& value) {
+    QJSValue obj = engine->newObject();
 
     if (value.avatar == "MyAvatar") {
         obj.setProperty("avatar", "MyAvatar");
     } else if (!value.entity.isNull()) {
-        obj.setProperty("entity", engine->newVariant(value.entity));
+        obj.setProperty("entity", value.entity.toString());
     }
 
     return obj;
 }
 
-void propertyBindingFromScriptValue(const QScriptValue& object, PropertyBinding& value) {
-    QScriptValue avatar = object.property("avatar");
-    QScriptValue entity = object.property("entity");
+void propertyBindingFromScriptValue(const QJSValue& object, PropertyBinding& value) {
+    QJSValue avatar = object.property("avatar");
+    QJSValue entity = object.property("entity");
 
-    if (avatar.isValid() && !avatar.isNull()) {
+    if (!avatar.isUndefined() && !avatar.isNull()) {
         value.avatar = avatar.toVariant().toString();
-    } else if (entity.isValid() && !entity.isNull()) {
+    } else if (!entity.isUndefined() && !entity.isNull()) {
         value.entity = entity.toVariant().toUuid();
     }
 }
@@ -63,7 +63,7 @@ void OverlayPanel::removeChild(unsigned int childId) {
     }
 }
 
-QScriptValue OverlayPanel::getProperty(const QString &property) {
+QJSValue OverlayPanel::getProperty(const QString &property) {
     if (property == "anchorPosition") {
         return vec3toScriptValue(_scriptEngine, getAnchorPosition());
     }
@@ -89,66 +89,66 @@ QScriptValue OverlayPanel::getProperty(const QString &property) {
         return getVisible();
     }
     if (property == "children") {
-        QScriptValue array = _scriptEngine->newArray(_children.length());
+        QJSValue array = _scriptEngine->newArray(_children.length());
         for (int i = 0; i < _children.length(); i++) {
             array.setProperty(i, _children[i]);
         }
         return array;
     }
 
-    QScriptValue value = Billboardable::getProperty(_scriptEngine, property);
-    if (value.isValid()) {
+    QJSValue value = Billboardable::getProperty(_scriptEngine, property);
+    if (!value.isUndefined()) {
         return value;
     }
     return PanelAttachable::getProperty(_scriptEngine, property);
 }
 
-void OverlayPanel::setProperties(const QScriptValue &properties) {
+void OverlayPanel::setProperties(const QJSValue &properties) {
     PanelAttachable::setProperties(properties);
     Billboardable::setProperties(properties);
 
-    QScriptValue anchorPosition = properties.property("anchorPosition");
-    if (anchorPosition.isValid() &&
-        anchorPosition.property("x").isValid() &&
-        anchorPosition.property("y").isValid() &&
-        anchorPosition.property("z").isValid()) {
+    QJSValue anchorPosition = properties.property("anchorPosition");
+    if (!anchorPosition.isUndefined() &&
+        !anchorPosition.property("x").isUndefined() &&
+        !anchorPosition.property("y").isUndefined() &&
+        !anchorPosition.property("z").isUndefined()) {
         glm::vec3 newPosition;
         vec3FromScriptValue(anchorPosition, newPosition);
         setAnchorPosition(newPosition);
     }
 
-    QScriptValue anchorPositionBinding = properties.property("anchorPositionBinding");
-    if (anchorPositionBinding.isValid()) {
+    QJSValue anchorPositionBinding = properties.property("anchorPositionBinding");
+    if (!anchorPositionBinding.isUndefined()) {
         PropertyBinding binding = {};
         propertyBindingFromScriptValue(anchorPositionBinding, binding);
         _anchorPositionBindMyAvatar = binding.avatar == "MyAvatar";
         _anchorPositionBindEntity = binding.entity;
     }
 
-    QScriptValue anchorRotation = properties.property("anchorRotation");
-    if (anchorRotation.isValid() &&
-        anchorRotation.property("x").isValid() &&
-        anchorRotation.property("y").isValid() &&
-        anchorRotation.property("z").isValid() &&
-        anchorRotation.property("w").isValid()) {
+    QJSValue anchorRotation = properties.property("anchorRotation");
+    if (!anchorRotation.isUndefined() &&
+        !anchorRotation.property("x").isUndefined() &&
+        !anchorRotation.property("y").isUndefined() &&
+        !anchorRotation.property("z").isUndefined() &&
+        !anchorRotation.property("w").isUndefined()) {
         glm::quat newRotation;
         quatFromScriptValue(anchorRotation, newRotation);
         setAnchorRotation(newRotation);
     }
 
-    QScriptValue anchorRotationBinding = properties.property("anchorRotationBinding");
-    if (anchorRotationBinding.isValid()) {
+    QJSValue anchorRotationBinding = properties.property("anchorRotationBinding");
+    if (!anchorRotationBinding.isUndefined()) {
         PropertyBinding binding = {};
         propertyBindingFromScriptValue(anchorPositionBinding, binding);
         _anchorRotationBindMyAvatar = binding.avatar == "MyAvatar";
         _anchorRotationBindEntity = binding.entity;
     }
 
-    QScriptValue anchorScale = properties.property("anchorScale");
-    if (anchorScale.isValid()) {
-        if (anchorScale.property("x").isValid() &&
-            anchorScale.property("y").isValid() &&
-            anchorScale.property("z").isValid()) {
+    QJSValue anchorScale = properties.property("anchorScale");
+    if (!anchorScale.isUndefined()) {
+        if (!anchorScale.property("x").isUndefined() &&
+            !anchorScale.property("y").isUndefined() &&
+            !anchorScale.property("z").isUndefined()) {
             glm::vec3 newScale;
             vec3FromScriptValue(anchorScale, newScale);
             setAnchorScale(newScale);
@@ -157,9 +157,9 @@ void OverlayPanel::setProperties(const QScriptValue &properties) {
         }
     }
 
-    QScriptValue visible = properties.property("visible");
-    if (visible.isValid()) {
-        setVisible(visible.toVariant().toBool());
+    QJSValue visible = properties.property("visible");
+    if (!visible.isUndefined()) {
+        setVisible(visible.toBool());
     }
 }
 

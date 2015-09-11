@@ -39,8 +39,8 @@ public:
     // setters
     void setClipFromSource(const QRect& bounds) { _fromImage = bounds; _wantClipFromImage = true; }
     void setImageURL(const QUrl& url);
-    virtual void setProperties(const QScriptValue& properties);
-    virtual QScriptValue getProperty(const QString& property);
+    virtual void setProperties(const QJSValue& properties);
+    virtual QJSValue getProperty(const QString& property);
 
     virtual ImageOverlay* createClone() const;
 

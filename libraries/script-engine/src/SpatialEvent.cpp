@@ -30,8 +30,8 @@ SpatialEvent::SpatialEvent(const SpatialEvent& event) {
 }
 
 
-QScriptValue SpatialEvent::toScriptValue(QScriptEngine* engine, const SpatialEvent& event) {
-    QScriptValue obj = engine->newObject();
+QJSValue SpatialEvent::toScriptValue(QJSEngine* engine, const SpatialEvent& event) {
+    QJSValue obj = engine->newObject();
     
     obj.setProperty("locTranslation", vec3toScriptValue(engine, event.locTranslation) );
     obj.setProperty("locRotation", quatToScriptValue(engine, event.locRotation) );
@@ -41,6 +41,6 @@ QScriptValue SpatialEvent::toScriptValue(QScriptEngine* engine, const SpatialEve
     return obj;
 }
 
-void SpatialEvent::fromScriptValue(const QScriptValue& object,SpatialEvent& event) {
+void SpatialEvent::fromScriptValue(const QJSValue& object,SpatialEvent& event) {
     // nothing for now...
 }

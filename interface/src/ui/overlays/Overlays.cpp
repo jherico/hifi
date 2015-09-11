@@ -10,10 +10,9 @@
 
 #include "Overlays.h"
 
-#include <QScriptValueIterator>
-
 #include <limits>
 
+#include <QtQml/QJSValueIterator>
 #include <render/Scene.h>
 #include <RegisteredMetaTypes.h>
 
@@ -55,7 +54,7 @@ Overlays::~Overlays() {
 }
 
 void Overlays::init() {
-    _scriptEngine = new QScriptEngine();
+    _scriptEngine = new QJSEngine();
 }
 
 void Overlays::update(float deltatime) {
@@ -144,7 +143,7 @@ Overlay::Pointer Overlays::getOverlay(unsigned int id) const {
     return nullptr;
 }
 
-unsigned int Overlays::addOverlay(const QString& type, const QScriptValue& properties) {
+unsigned int Overlays::addOverlay(const QString& type, const QJSValue& properties) {
     Overlay::Pointer thisOverlay = nullptr;
 
     if (type == ImageOverlay::TYPE) {
@@ -224,7 +223,7 @@ unsigned int Overlays::cloneOverlay(unsigned int id) {
     return 0;  // Not found
 }
 
-bool Overlays::editOverlay(unsigned int id, const QScriptValue& properties) {
+bool Overlays::editOverlay(unsigned int id, const QJSValue& properties) {
     QWriteLocker lock(&_lock);
 
     Overlay::Pointer thisOverlay = getOverlay(id);
@@ -381,22 +380,22 @@ OverlayPropertyResult Overlays::getProperty(unsigned int id, const QString& prop
 }
 
 OverlayPropertyResult::OverlayPropertyResult() :
-    value(QScriptValue())
+    value(QJSValue())
 {
 }
 
-QScriptValue OverlayPropertyResultToScriptValue(QScriptEngine* engine, const OverlayPropertyResult& result)
+QJSValue OverlayPropertyResultToScriptValue(QJSEngine* engine, const OverlayPropertyResult& result)
 {
-    if (!result.value.isValid()) {
-        return QScriptValue::UndefinedValue;
+    if (!result.value.isUndefined()) {
+        return QJSValue();
     }
 
-    QScriptValue object = engine->newObject();
+    QJSValue object = engine->newObject();
     if (result.value.isObject()) {
-        QScriptValueIterator it(result.value);
+        QJSValueIterator it(result.value);
         while (it.hasNext()) {
             it.next();
-            object.setProperty(it.name(), QScriptValue(it.value().toString()));
+            object.setProperty(it.name(), QJSValue(it.value().toString()));
         }
 
     } else {
@@ -405,7 +404,7 @@ QScriptValue OverlayPropertyResultToScriptValue(QScriptEngine* engine, const Ove
     return object;
 }
 
-void OverlayPropertyResultFromScriptValue(const QScriptValue& value, OverlayPropertyResult& result)
+void OverlayPropertyResultFromScriptValue(const QJSValue& value, OverlayPropertyResult& result)
 {
     result.value = value;
 }
@@ -452,8 +451,8 @@ RayToOverlayIntersectionResult::RayToOverlayIntersectionResult() :
 { 
 }
 
-QScriptValue RayToOverlayIntersectionResultToScriptValue(QScriptEngine* engine, const RayToOverlayIntersectionResult& value) {
-    QScriptValue obj = engine->newObject();
+QJSValue RayToOverlayIntersectionResultToScriptValue(QJSEngine* engine, const RayToOverlayIntersectionResult& value) {
+    QJSValue obj = engine->newObject();
     obj.setProperty("intersects", value.intersects);
     obj.setProperty("overlayID", value.overlayID);
     obj.setProperty("distance", value.distance);
@@ -485,13 +484,13 @@ QScriptValue RayToOverlayIntersectionResultToScriptValue(QScriptEngine* engine, 
             break;
     }
     obj.setProperty("face", faceName);
-    QScriptValue intersection = vec3toScriptValue(engine, value.intersection);
+    QJSValue intersection = vec3toScriptValue(engine, value.intersection);
     obj.setProperty("intersection", intersection);
     obj.setProperty("extraInfo", value.extraInfo);
     return obj;
 }
 
-void RayToOverlayIntersectionResultFromScriptValue(const QScriptValue& object, RayToOverlayIntersectionResult& value) {
+void RayToOverlayIntersectionResultFromScriptValue(const QJSValue& object, RayToOverlayIntersectionResult& value) {
     value.intersects = object.property("intersects").toVariant().toBool();
     value.overlayID = object.property("overlayID").toVariant().toInt();
     value.distance = object.property("distance").toVariant().toFloat();
@@ -512,8 +511,8 @@ void RayToOverlayIntersectionResultFromScriptValue(const QScriptValue& object, R
     } else {
         value.face = UNKNOWN_FACE;
     };
-    QScriptValue intersection = object.property("intersection");
-    if (intersection.isValid()) {
+    QJSValue intersection = object.property("intersection");
+    if (!intersection.isUndefined()) {
         vec3FromScriptValue(intersection, value.intersection);
     }
     value.extraInfo = object.property("extraInfo").toVariant().toString();
@@ -555,14 +554,14 @@ unsigned int Overlays::addPanel(OverlayPanel::Pointer panel) {
     return thisID;
 }
 
-unsigned int Overlays::addPanel(const QScriptValue& properties) {
+unsigned int Overlays::addPanel(const QJSValue& properties) {
     OverlayPanel::Pointer panel = std::make_shared<OverlayPanel>();
     panel->init(_scriptEngine);
     panel->setProperties(properties);
     return addPanel(panel);
 }
 
-void Overlays::editPanel(unsigned int panelId, const QScriptValue& properties) {
+void Overlays::editPanel(unsigned int panelId, const QJSValue& properties) {
     if (_panels.contains(panelId)) {
         _panels[panelId]->setProperties(properties);
     }

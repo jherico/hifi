@@ -12,7 +12,7 @@
 #ifndef hifi_MenuItemProperties_h
 #define hifi_MenuItemProperties_h
 
-#include <QtScript/QScriptEngine>
+#include <QtQml/QJsEngine>
 
 #include "KeyEvent.h"
 
@@ -45,9 +45,9 @@ public:
     bool isSeparator;
 };
 Q_DECLARE_METATYPE(MenuItemProperties)
-QScriptValue menuItemPropertiesToScriptValue(QScriptEngine* engine, const MenuItemProperties& props);
-void menuItemPropertiesFromScriptValue(const QScriptValue& object, MenuItemProperties& props);
-void registerMenuItemProperties(QScriptEngine* engine);
+QJSValue menuItemPropertiesToScriptValue(QJSEngine* engine, const MenuItemProperties& props);
+void menuItemPropertiesFromScriptValue(const QJSValue& object, MenuItemProperties& props);
+void registerMenuItemProperties(QJSEngine* engine);
 
 
 

@@ -13,9 +13,8 @@
 #define hifi_GlobalServicesScriptingInterface_h
 
 #include <QObject>
-#include <QScriptContext>
-#include <QScriptEngine>
-#include <QScriptValue>
+#include <QtQml/QJSEngine>
+
 #include <QString>
 #include <QStringList>
 
@@ -28,8 +27,8 @@ public:
 
 Q_DECLARE_METATYPE(DownloadInfoResult)
 
-QScriptValue DownloadInfoResultToScriptValue(QScriptEngine* engine, const DownloadInfoResult& result);
-void DownloadInfoResultFromScriptValue(const QScriptValue& object, DownloadInfoResult& result);
+QJSValue DownloadInfoResultToScriptValue(QJSEngine* engine, const DownloadInfoResult& result);
+void DownloadInfoResultFromScriptValue(const QJSValue& object, DownloadInfoResult& result);
 
 class GlobalServicesScriptingInterface : public QObject {
     Q_OBJECT

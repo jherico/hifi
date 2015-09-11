@@ -11,7 +11,7 @@
 
 #include <PerfStat.h>
 #include <QDateTime>
-#include <QtScript/QScriptEngine>
+#include <QtQml/QJSEngine>
 
 #include "EntityTree.h"
 #include "EntitySimulation.h"
@@ -1045,7 +1045,7 @@ bool EntityTree::writeToMap(QVariantMap& entityDescription, OctreeElementPointer
     if (! entityDescription.contains("Entities")) {
         entityDescription["Entities"] = QVariantList();
     }
-    QScriptEngine scriptEngine;
+    QJSEngine scriptEngine;
     RecurseOctreeToMapOperator theOperator(entityDescription, element, &scriptEngine, skipDefaultValues);
     recurseTreeWithOperator(&theOperator);
     return true;
@@ -1054,15 +1054,15 @@ bool EntityTree::writeToMap(QVariantMap& entityDescription, OctreeElementPointer
 bool EntityTree::readFromMap(QVariantMap& map) {
     // map will have a top-level list keyed as "Entities".  This will be extracted
     // and iterated over.  Each member of this list is converted to a QVariantMap, then
-    // to a QScriptValue, and then to EntityItemProperties.  These properties are used
+    // to a QJSValue, and then to EntityItemProperties.  These properties are used
     // to add the new entity to the EnitytTree.
     QVariantList entitiesQList = map["Entities"].toList();
-    QScriptEngine scriptEngine;
+    QJSEngine scriptEngine;
 
     foreach (QVariant entityVariant, entitiesQList) {
-        // QVariantMap --> QScriptValue --> EntityItemProperties --> Entity
+        // QVariantMap --> QJSValue --> EntityItemProperties --> Entity
         QVariantMap entityMap = entityVariant.toMap();
-        QScriptValue entityScriptValue = variantMapToScriptValue(entityMap, scriptEngine);
+        QJSValue entityScriptValue = variantMapToScriptValue(entityMap, scriptEngine);
         EntityItemProperties properties;
         EntityItemPropertiesFromScriptValueIgnoreReadOnly(entityScriptValue, properties);
 

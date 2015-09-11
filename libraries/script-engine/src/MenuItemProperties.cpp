@@ -60,41 +60,44 @@ MenuItemProperties::MenuItemProperties(const QString& menuName, const QString& m
 {
 }
 
-void registerMenuItemProperties(QScriptEngine* engine) {
+void registerMenuItemProperties(QJSEngine* engine) {
+    // FIXME JSENGINE
+#if 0
     qScriptRegisterMetaType(engine, menuItemPropertiesToScriptValue, menuItemPropertiesFromScriptValue);
+#endif
 }
 
-QScriptValue menuItemPropertiesToScriptValue(QScriptEngine* engine, const MenuItemProperties& properties) {
-    QScriptValue obj = engine->newObject();
+QJSValue menuItemPropertiesToScriptValue(QJSEngine* engine, const MenuItemProperties& properties) {
+    QJSValue obj = engine->newObject();
     // not supported
     return obj;
 }
 
-void menuItemPropertiesFromScriptValue(const QScriptValue& object, MenuItemProperties& properties) {
-    properties.menuName = object.property("menuName").toVariant().toString();
-    properties.menuItemName = object.property("menuItemName").toVariant().toString();
-    properties.isCheckable = object.property("isCheckable").toVariant().toBool();
-    properties.isChecked = object.property("isChecked").toVariant().toBool();
-    properties.isSeparator = object.property("isSeparator").toVariant().toBool();
+void menuItemPropertiesFromScriptValue(const QJSValue& object, MenuItemProperties& properties) {
+    properties.menuName = object.property("menuName").toString();
+    properties.menuItemName = object.property("menuItemName").toString();
+    properties.isCheckable = object.property("isCheckable").toBool();
+    properties.isChecked = object.property("isChecked").toBool();
+    properties.isSeparator = object.property("isSeparator").toBool();
     
     // handle the shortcut key options in order...
-    QScriptValue shortcutKeyValue = object.property("shortcutKey");
-    if (shortcutKeyValue.isValid()) {
-        properties.shortcutKey = shortcutKeyValue.toVariant().toString();
+    QJSValue shortcutKeyValue = object.property("shortcutKey");
+    if (shortcutKeyValue.isString()) {
+        properties.shortcutKey = shortcutKeyValue.toString();
         properties.shortcutKeySequence = properties.shortcutKey;
     } else {
-        QScriptValue shortcutKeyEventValue = object.property("shortcutKeyEvent");
-        if (shortcutKeyEventValue.isValid()) {
+        QJSValue shortcutKeyEventValue = object.property("shortcutKeyEvent");
+        if (!shortcutKeyEventValue.isUndefined()) {
             KeyEvent::fromScriptValue(shortcutKeyEventValue, properties.shortcutKeyEvent);
             properties.shortcutKeySequence = properties.shortcutKeyEvent;
         }
     }
 
-    if (object.property("position").isValid()) {
-        properties.position = object.property("position").toVariant().toInt();
+    if (!object.property("position").isUndefined()) {
+        properties.position = object.property("position").toInt();
     }
-    properties.beforeItem = object.property("beforeItem").toVariant().toString();
-    properties.afterItem = object.property("afterItem").toVariant().toString();
+    properties.beforeItem = object.property("beforeItem").toString();
+    properties.afterItem = object.property("afterItem").toString();
 }
 
 

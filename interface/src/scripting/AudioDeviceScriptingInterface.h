@@ -39,6 +39,7 @@ public slots:
     float getInputVolume();
     void setInputVolume(float volume);
     void setReverb(bool reverb);
+    Q_INVOKABLE QJSValue newAudioEffectOptions();
     void setReverbOptions(const AudioEffectOptions* options);
 
     bool getMuted();

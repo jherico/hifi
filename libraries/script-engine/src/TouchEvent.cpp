@@ -9,8 +9,8 @@
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 //
 
-#include <qscriptengine.h>
-#include <qscriptvalue.h>
+#include <QJSEngine.h>
+#include <QJSValue.h>
 #include <QTouchEvent>
 
 #include <RegisteredMetaTypes.h>
@@ -165,8 +165,8 @@ void TouchEvent::calculateMetaAttributes(const TouchEvent& other) {
     }
 }
 
-QScriptValue TouchEvent::toScriptValue(QScriptEngine* engine, const TouchEvent& event) {
-    QScriptValue obj = engine->newObject();
+QJSValue TouchEvent::toScriptValue(QJSEngine* engine, const TouchEvent& event) {
+    QJSValue obj = engine->newObject();
     obj.setProperty("x", event.x);
     obj.setProperty("y", event.y);
     obj.setProperty("isPressed", event.isPressed);
@@ -179,10 +179,10 @@ QScriptValue TouchEvent::toScriptValue(QScriptEngine* engine, const TouchEvent& 
     obj.setProperty("isAlt", event.isAlt);
     obj.setProperty("touchPoints", event.touchPoints);
 
-    QScriptValue pointsObj = engine->newArray();
+    QJSValue pointsObj = engine->newArray();
     int index = 0;
     foreach (glm::vec2 point, event.points) {
-        QScriptValue thisPoint = vec2toScriptValue(engine, point);
+        QJSValue thisPoint = vec2toScriptValue(engine, point);
         pointsObj.setProperty(index, thisPoint);
         index++;
     }
@@ -193,7 +193,7 @@ QScriptValue TouchEvent::toScriptValue(QScriptEngine* engine, const TouchEvent& 
 
     obj.setProperty("angle", event.angle);
     obj.setProperty("deltaAngle", event.deltaAngle);
-    QScriptValue anglesObj = engine->newArray();
+    QJSValue anglesObj = engine->newArray();
     index = 0;
     foreach (float angle, event.angles) {
         anglesObj.setProperty(index, angle);
@@ -206,6 +206,6 @@ QScriptValue TouchEvent::toScriptValue(QScriptEngine* engine, const TouchEvent& 
     return obj;
 }
 
-void TouchEvent::fromScriptValue(const QScriptValue& object, TouchEvent& event) {
+void TouchEvent::fromScriptValue(const QJSValue& object, TouchEvent& event) {
     // nothing for now...
 }

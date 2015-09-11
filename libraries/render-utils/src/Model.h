@@ -36,7 +36,7 @@
 #include "TextureCache.h"
 
 class AbstractViewStateInterface;
-class QScriptEngine;
+class QJSEngine;
 
 #include "RenderArgs.h"
 class ViewFrustum;

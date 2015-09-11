@@ -32,7 +32,7 @@ AtmospherePropertyGroup::AtmospherePropertyGroup() {
     _hasStars = true;
 }
 
-void AtmospherePropertyGroup::copyToScriptValue(QScriptValue& properties, QScriptEngine* engine, bool skipDefaults, EntityItemProperties& defaultEntityProperties) const {
+void AtmospherePropertyGroup::copyToScriptValue(QJSValue& properties, QJSEngine* engine, bool skipDefaults, EntityItemProperties& defaultEntityProperties) const {
     COPY_GROUP_PROPERTY_TO_QSCRIPTVALUE(Atmosphere, atmosphere, Center, center);
     COPY_GROUP_PROPERTY_TO_QSCRIPTVALUE(Atmosphere, atmosphere, InnerRadius, innerRadius);
     COPY_GROUP_PROPERTY_TO_QSCRIPTVALUE(Atmosphere, atmosphere, OuterRadius, outerRadius);
@@ -42,7 +42,7 @@ void AtmospherePropertyGroup::copyToScriptValue(QScriptValue& properties, QScrip
     COPY_GROUP_PROPERTY_TO_QSCRIPTVALUE(Atmosphere, atmosphere, HasStars, hasStars);
 }
 
-void AtmospherePropertyGroup::copyFromScriptValue(const QScriptValue& object, bool& _defaultSettings) {
+void AtmospherePropertyGroup::copyFromScriptValue(const QJSValue& object, bool& _defaultSettings) {
     COPY_GROUP_PROPERTY_FROM_QSCRIPTVALUE(atmosphere, center, glmVec3, setCenter);
     COPY_GROUP_PROPERTY_FROM_QSCRIPTVALUE(atmosphere, innerRadius, float, setInnerRadius);
     COPY_GROUP_PROPERTY_FROM_QSCRIPTVALUE(atmosphere, outerRadius, float, setOuterRadius);

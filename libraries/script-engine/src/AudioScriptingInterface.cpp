@@ -14,10 +14,13 @@
 #include "ScriptAudioInjector.h"
 #include "ScriptEngineLogging.h"
 
-void registerAudioMetaTypes(QScriptEngine* engine) {
+void registerAudioMetaTypes(QJSEngine* engine) {
+    // FIXME JSENGINE
+#if 0
     qScriptRegisterMetaType(engine, injectorOptionsToScriptValue, injectorOptionsFromScriptValue);
     qScriptRegisterMetaType(engine, soundSharedPointerToScriptValue, soundSharedPointerFromScriptValue);
     qScriptRegisterMetaType(engine, soundPointerToScriptValue, soundPointerFromScriptValue);
+#endif
 }
 
 AudioScriptingInterface& AudioScriptingInterface::getInstance() {

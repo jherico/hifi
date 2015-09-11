@@ -15,7 +15,7 @@
 #include "ScriptEngine.h"
 #include "WebSocketClass.h"
 
-WebSocketClass::WebSocketClass(QScriptEngine* engine, QString url) :
+WebSocketClass::WebSocketClass(QJSEngine* engine, QString url) :
     _webSocket(new QWebSocket()),
     _engine(engine)
 {
@@ -23,7 +23,7 @@ WebSocketClass::WebSocketClass(QScriptEngine* engine, QString url) :
     _webSocket->open(url);
 }
 
-WebSocketClass::WebSocketClass(QScriptEngine* engine, QWebSocket* qWebSocket) :
+WebSocketClass::WebSocketClass(QJSEngine* engine, QWebSocket* qWebSocket) :
     _webSocket(qWebSocket),
 	_engine(engine)
 {
@@ -39,19 +39,24 @@ void WebSocketClass::initialize() {
     _binaryType = QStringLiteral("blob");
 }
 
-QScriptValue WebSocketClass::constructor(QScriptContext* context, QScriptEngine* engine) {
+// FIXME JSENGINE
+#if 0
+
+QJSValue WebSocketClass::constructor(QScriptContext* context, QJSEngine* engine) {
     QString url;
     if (context->argumentCount() > 0) {
         url = context->argument(0).toString();
     }
-    return engine->newQObject(new WebSocketClass(engine, url), QScriptEngine::ScriptOwnership);
+    return engine->newQObject(new WebSocketClass(engine, url), QJSEngine::ScriptOwnership);
 }
+
+#endif
 
 WebSocketClass::~WebSocketClass() {
     _webSocket->deleteLater();
 }
 
-void WebSocketClass::send(QScriptValue message) {
+void WebSocketClass::send(QJSValue message) {
     _webSocket->sendTextMessage(message.toString());
 }
 
@@ -69,59 +74,59 @@ void WebSocketClass::close(QWebSocketProtocol::CloseCode closeCode, QString reas
 
 void WebSocketClass::handleOnClose() {
     bool hasError = (_webSocket->error() != QAbstractSocket::UnknownSocketError);
-    if (_onCloseEvent.isFunction()) {
-        QScriptValueList args;
-        QScriptValue arg = _engine->newObject();
+    if (_onCloseEvent.isCallable()) {
+        QJSValueList args;
+        QJSValue arg = _engine->newObject();
         arg.setProperty("code", hasError ? QWebSocketProtocol::CloseCodeAbnormalDisconnection : _webSocket->closeCode());
         arg.setProperty("reason", _webSocket->closeReason());
         arg.setProperty("wasClean", !hasError);
         args << arg;
-        _onCloseEvent.call(QScriptValue(), args);
+        _onCloseEvent.call(args);
     }
 }
 
 void WebSocketClass::handleOnError(QAbstractSocket::SocketError error) {
-    if (_onErrorEvent.isFunction()) {
+    if (_onErrorEvent.isCallable()) {
         _onErrorEvent.call();
     }
 }
 
 void WebSocketClass::handleOnMessage(const QString& message) {
-    if (_onMessageEvent.isFunction()) {
-        QScriptValueList args;
-        QScriptValue arg = _engine->newObject();
+    if (_onMessageEvent.isCallable()) {
+        QJSValueList args;
+        QJSValue arg = _engine->newObject();
         arg.setProperty("data", message);
         args << arg;
-        _onMessageEvent.call(QScriptValue(), args);
+        _onMessageEvent.call(args);
     }
 }
 
 void WebSocketClass::handleOnOpen() {
-    if (_onOpenEvent.isFunction()) {
+    if (_onOpenEvent.isCallable()) {
         _onOpenEvent.call();
     }
 }
 
-QScriptValue qWSCloseCodeToScriptValue(QScriptEngine* engine, const QWebSocketProtocol::CloseCode &closeCode) {
+QJSValue qWSCloseCodeToScriptValue(QJSEngine* engine, const QWebSocketProtocol::CloseCode &closeCode) {
     return closeCode;
 }
 
-void qWSCloseCodeFromScriptValue(const QScriptValue &object, QWebSocketProtocol::CloseCode &closeCode) {
-    closeCode = (QWebSocketProtocol::CloseCode)object.toUInt16();
+void qWSCloseCodeFromScriptValue(const QJSValue &object, QWebSocketProtocol::CloseCode &closeCode) {
+    closeCode = (QWebSocketProtocol::CloseCode)object.toInt();
 }
 
-QScriptValue webSocketToScriptValue(QScriptEngine* engine, WebSocketClass* const &in) {
-    return engine->newQObject(in, QScriptEngine::ScriptOwnership);
+QJSValue webSocketToScriptValue(QJSEngine* engine, WebSocketClass* const &in) {
+    return engine->newQObject(in);
 }
 
-void webSocketFromScriptValue(const QScriptValue &object, WebSocketClass* &out) {
+void webSocketFromScriptValue(const QJSValue &object, WebSocketClass* &out) {
     out = qobject_cast<WebSocketClass*>(object.toQObject());
 }
 
-QScriptValue wscReadyStateToScriptValue(QScriptEngine* engine, const WebSocketClass::ReadyState& readyState) {
+QJSValue wscReadyStateToScriptValue(QJSEngine* engine, const WebSocketClass::ReadyState& readyState) {
     return readyState;
 }
 
-void wscReadyStateFromScriptValue(const QScriptValue& object, WebSocketClass::ReadyState& readyState) {
-    readyState = (WebSocketClass::ReadyState)object.toUInt16();
+void wscReadyStateFromScriptValue(const QJSValue& object, WebSocketClass::ReadyState& readyState) {
+    readyState = (WebSocketClass::ReadyState)object.toInt();
 }

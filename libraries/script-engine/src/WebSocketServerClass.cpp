@@ -14,7 +14,7 @@
 #include "ScriptEngine.h"
 #include "WebSocketServerClass.h"
 
-WebSocketServerClass::WebSocketServerClass(QScriptEngine* engine, const QString& serverName, const quint16 port) :
+WebSocketServerClass::WebSocketServerClass(QJSEngine* engine, const QString& serverName, const quint16 port) :
     _webSocketServer(serverName, QWebSocketServer::SslMode::NonSecureMode),
     _engine(engine)
 {
@@ -22,26 +22,29 @@ WebSocketServerClass::WebSocketServerClass(QScriptEngine* engine, const QString&
         connect(&_webSocketServer, &QWebSocketServer::newConnection, this, &WebSocketServerClass::onNewConnection);
     }
 }
+// FIXME JSENGINE
+#if 0
 
-QScriptValue WebSocketServerClass::constructor(QScriptContext* context, QScriptEngine* engine) {
+QJSValue WebSocketServerClass::constructor(QScriptContext* context, QJSEngine* engine) {
     // the serverName is used in handshakes
     QString serverName = QStringLiteral("HighFidelity - Scripted WebSocket Listener");
     // port 0 will auto-assign a free port
     quint16 port = 0;
-    QScriptValue callee = context->callee();
+    QJSValue callee = context->callee();
     if (context->argumentCount() > 0) {
-        QScriptValue options = context->argument(0);
-        QScriptValue portOption = options.property(QStringLiteral("port"));
+        QJSValue options = context->argument(0);
+        QJSValue portOption = options.property(QStringLiteral("port"));
         if (portOption.isValid() && portOption.isNumber()) {
             port = portOption.toNumber();
         }
-        QScriptValue serverNameOption = options.property(QStringLiteral("serverName"));
+        QJSValue serverNameOption = options.property(QStringLiteral("serverName"));
         if (serverNameOption.isValid() && serverNameOption.isString()) {
             serverName = serverNameOption.toString();
         }
     }
-    return engine->newQObject(new WebSocketServerClass(engine, serverName, port), QScriptEngine::ScriptOwnership);
+    return engine->newQObject(new WebSocketServerClass(engine, serverName, port), QJSEngine::ScriptOwnership);
 }
+#endif
 
 WebSocketServerClass::~WebSocketServerClass() {
     if (_webSocketServer.isListening()) {

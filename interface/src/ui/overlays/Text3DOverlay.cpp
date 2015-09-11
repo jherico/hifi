@@ -124,52 +124,52 @@ void Text3DOverlay::render(RenderArgs* args) {
     _textRenderer->draw(batch, 0, 0, _text, textColor);
 }
 
-void Text3DOverlay::setProperties(const QScriptValue& properties) {
+void Text3DOverlay::setProperties(const QJSValue& properties) {
     Billboard3DOverlay::setProperties(properties);
 
-    QScriptValue text = properties.property("text");
-    if (text.isValid()) {
+    QJSValue text = properties.property("text");
+    if (!text.isUndefined()) {
         setText(text.toVariant().toString());
     }
 
-    QScriptValue backgroundColor = properties.property("backgroundColor");
-    if (backgroundColor.isValid()) {
-        QScriptValue red = backgroundColor.property("red");
-        QScriptValue green = backgroundColor.property("green");
-        QScriptValue blue = backgroundColor.property("blue");
-        if (red.isValid() && green.isValid() && blue.isValid()) {
+    QJSValue backgroundColor = properties.property("backgroundColor");
+    if (!backgroundColor.isUndefined()) {
+        QJSValue red = backgroundColor.property("red");
+        QJSValue green = backgroundColor.property("green");
+        QJSValue blue = backgroundColor.property("blue");
+        if (!red.isUndefined() && !green.isUndefined() && !blue.isUndefined()) {
             _backgroundColor.red = red.toVariant().toInt();
             _backgroundColor.green = green.toVariant().toInt();
             _backgroundColor.blue = blue.toVariant().toInt();
         }
     }
 
-    if (properties.property("backgroundAlpha").isValid()) {
+    if (!properties.property("backgroundAlpha").isUndefined()) {
         _backgroundAlpha = properties.property("backgroundAlpha").toVariant().toFloat();
     }
 
-    if (properties.property("lineHeight").isValid()) {
+    if (!properties.property("lineHeight").isUndefined()) {
         setLineHeight(properties.property("lineHeight").toVariant().toFloat());
     }
 
-    if (properties.property("leftMargin").isValid()) {
+    if (!properties.property("leftMargin").isUndefined()) {
         setLeftMargin(properties.property("leftMargin").toVariant().toFloat());
     }
 
-    if (properties.property("topMargin").isValid()) {
+    if (!properties.property("topMargin").isUndefined()) {
         setTopMargin(properties.property("topMargin").toVariant().toFloat());
     }
 
-    if (properties.property("rightMargin").isValid()) {
+    if (!properties.property("rightMargin").isUndefined()) {
         setRightMargin(properties.property("rightMargin").toVariant().toFloat());
     }
 
-    if (properties.property("bottomMargin").isValid()) {
+    if (!properties.property("bottomMargin").isUndefined()) {
         setBottomMargin(properties.property("bottomMargin").toVariant().toFloat());
     }
 }
 
-QScriptValue Text3DOverlay::getProperty(const QString& property) {
+QJSValue Text3DOverlay::getProperty(const QString& property) {
     if (property == "text") {
         return _text;
     }

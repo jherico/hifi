@@ -43,12 +43,12 @@ protected slots:
 private:
     QPointer<AudioInjector> _injector;
     
-    friend QScriptValue injectorToScriptValue(QScriptEngine* engine, ScriptAudioInjector* const& in);
+    friend QJSValue injectorToScriptValue(QJSEngine* engine, ScriptAudioInjector* const& in);
 };
 
 Q_DECLARE_METATYPE(ScriptAudioInjector*)
 
-QScriptValue injectorToScriptValue(QScriptEngine* engine, ScriptAudioInjector* const& in);
-void injectorFromScriptValue(const QScriptValue& object, ScriptAudioInjector*& out);
+QJSValue injectorToScriptValue(QJSEngine* engine, ScriptAudioInjector* const& in);
+void injectorFromScriptValue(const QJSValue& object, ScriptAudioInjector*& out);
 
 #endif // hifi_ScriptAudioInjector_h

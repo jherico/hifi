@@ -23,8 +23,11 @@ class HMDScriptingInterface : public QObject {
 public:
     static HMDScriptingInterface& getInstance();
 
-    static QScriptValue getHUDLookAtPosition2D(QScriptContext* context, QScriptEngine* engine);
-    static QScriptValue getHUDLookAtPosition3D(QScriptContext* context, QScriptEngine* engine);
+    // FIXME JSENGINE
+#if 0
+    static QJSValue getHUDLookAtPosition2D(QScriptContext* context, QJSEngine* engine);
+    static QJSValue getHUDLookAtPosition3D(QScriptContext* context, QJSEngine* engine);
+#endif
 
 public slots:
     void toggleMagnifier() { Application::getInstance()->getApplicationCompositor().toggleMagnifier(); };

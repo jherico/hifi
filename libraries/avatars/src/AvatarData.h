@@ -43,7 +43,6 @@ typedef unsigned long long quint64;
 #include <QUuid>
 #include <QVariantMap>
 #include <QVector>
-#include <QtScript/QScriptable>
 #include <QReadWriteLock>
 
 #include <NLPacket.h>
@@ -458,33 +457,36 @@ QDataStream& operator>>(QDataStream& in, AttachmentData& attachment);
 Q_DECLARE_METATYPE(AttachmentData)
 Q_DECLARE_METATYPE(QVector<AttachmentData>)
 
+// FIXME JSENGINE
+#if 0
 /// Scriptable wrapper for attachments.
-class AttachmentDataObject : public QObject, protected QScriptable {
+class AttachmentDataObject : public QObject {
     Q_OBJECT
-    Q_PROPERTY(QString modelURL READ getModelURL WRITE setModelURL)
-    Q_PROPERTY(QString jointName READ getJointName WRITE setJointName)
-    Q_PROPERTY(glm::vec3 translation READ getTranslation WRITE setTranslation)
-    Q_PROPERTY(glm::quat rotation READ getRotation WRITE setRotation)
-    Q_PROPERTY(float scale READ getScale WRITE setScale)
+        Q_PROPERTY(QString modelURL READ getModelURL WRITE setModelURL)
+        Q_PROPERTY(QString jointName READ getJointName WRITE setJointName)
+        Q_PROPERTY(glm::vec3 translation READ getTranslation WRITE setTranslation)
+        Q_PROPERTY(glm::quat rotation READ getRotation WRITE setRotation)
+        Q_PROPERTY(float scale READ getScale WRITE setScale)
 
 public:
-    
+
     Q_INVOKABLE void setModelURL(const QString& modelURL) const;
     Q_INVOKABLE QString getModelURL() const;
-    
+
     Q_INVOKABLE void setJointName(const QString& jointName) const;
     Q_INVOKABLE QString getJointName() const;
-    
+
     Q_INVOKABLE void setTranslation(const glm::vec3& translation) const;
     Q_INVOKABLE glm::vec3 getTranslation() const;
-    
+
     Q_INVOKABLE void setRotation(const glm::quat& rotation) const;
     Q_INVOKABLE glm::quat getRotation() const;
-    
+
     Q_INVOKABLE void setScale(float scale) const;
     Q_INVOKABLE float getScale() const;
 };
+#endif
 
-void registerAvatarTypes(QScriptEngine* engine);
+void registerAvatarTypes(QJSEngine* engine);
 
 #endif // hifi_AvatarData_h

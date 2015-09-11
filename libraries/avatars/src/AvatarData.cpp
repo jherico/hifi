@@ -1212,6 +1212,8 @@ QDataStream& operator>>(QDataStream& in, AttachmentData& attachment) {
         attachment.translation >> attachment.rotation >> attachment.scale;
 }
 
+// FIXME JSENGINE
+#if 0
 void AttachmentDataObject::setModelURL(const QString& modelURL) const {
     AttachmentData data = qscriptvalue_cast<AttachmentData>(thisObject());
     data.modelURL = modelURL;
@@ -1262,9 +1264,14 @@ float AttachmentDataObject::getScale() const {
     return qscriptvalue_cast<AttachmentData>(thisObject()).scale;
 }
 
-void registerAvatarTypes(QScriptEngine* engine) {
+
+#endif
+
+void registerAvatarTypes(QJSEngine* engine) {
+    // FIXME JSENGINE
+#if 0
     qScriptRegisterSequenceMetaType<QVector<AttachmentData> >(engine);
     engine->setDefaultPrototype(qMetaTypeId<AttachmentData>(), engine->newQObject(
-        new AttachmentDataObject(), QScriptEngine::ScriptOwnership));
+        new AttachmentDataObject(), QJSEngine::ScriptOwnership));
+#endif
 }
-

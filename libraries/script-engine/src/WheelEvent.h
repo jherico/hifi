@@ -19,8 +19,8 @@ public:
     WheelEvent();
     WheelEvent(const QWheelEvent& event);
     
-    static QScriptValue toScriptValue(QScriptEngine* engine, const WheelEvent& event);
-    static void fromScriptValue(const QScriptValue& object, WheelEvent& event);
+    static QJSValue toScriptValue(QJSEngine* engine, const WheelEvent& event);
+    static void fromScriptValue(const QJSValue& object, WheelEvent& event);
     
     int x;
     int y;

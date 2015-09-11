@@ -12,50 +12,48 @@
 #ifndef hifi_ArrayBufferClass_h
 #define hifi_ArrayBufferClass_h
 
-#include <QScriptClass>
 #include <QtCore/QObject>
-#include <QtScript/QScriptClass>
-#include <QtScript/QScriptContext>
-#include <QtScript/QScriptEngine>
-#include <QtScript/QScriptString>
-#include <QtScript/QScriptValue>
+#include <QtQml/QJSEngine>
 
-class ScriptEngine;
+// FIXME JSENGINE
+#if 0
 
-class ArrayBufferClass : public QObject, public QScriptClass {
+class ArrayBufferClass : public QObject {
     Q_OBJECT
 public:
     ArrayBufferClass(ScriptEngine* scriptEngine);
-    QScriptValue newInstance(qint32 size);
-    QScriptValue newInstance(const QByteArray& ba);
+    QJSValue newInstance(qint32 size);
+    QJSValue newInstance(const QByteArray& ba);
     
-    QueryFlags queryProperty(const QScriptValue& object,
-                             const QScriptString& name,
-                             QueryFlags flags, uint* id);
-    QScriptValue property(const QScriptValue& object,
-                          const QScriptString& name, uint id);
-    QScriptValue::PropertyFlags propertyFlags(const QScriptValue& object,
-                                              const QScriptString& name, uint id);
+    //QueryFlags queryProperty(const QJSValue& object,
+    //                         const QScriptString& name,
+    //                         QueryFlags flags, uint* id);
+    //QJSValue property(const QJSValue& object,
+    //                      const QScriptString& name, uint id);
+    //QJSValue::PropertyFlags propertyFlags(const QJSValue& object,
+    //                                          const QScriptString& name, uint id);
     
     QString name() const;
-    QScriptValue prototype() const;
+    QJSValue prototype() const;
     
     ScriptEngine* getEngine() { return _scriptEngine; }
     
 private:
-    static QScriptValue construct(QScriptContext* context, QScriptEngine* engine);
+    static QJSValue construct(QScriptContext* context, QJSEngine* engine);
     
-    static QScriptValue toScriptValue(QScriptEngine* eng, const QByteArray& ba);
-    static void fromScriptValue(const QScriptValue& obj, QByteArray& ba);
+    static QJSValue toScriptValue(QJSEngine* eng, const QByteArray& ba);
+    static void fromScriptValue(const QJSValue& obj, QByteArray& ba);
     
-    QScriptValue _proto;
-    QScriptValue _ctor;
+    QJSValue _proto;
+    QJSValue _ctor;
     
     // JS Object attributes
-    QScriptString _name;
-    QScriptString _byteLength;
+    QString _name;
+    int _byteLength;
     
     ScriptEngine* _scriptEngine;
 };
+
+#endif
 
 #endif // hifi_ArrayBufferClass_h

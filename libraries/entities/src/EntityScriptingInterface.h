@@ -47,8 +47,8 @@ public:
 
 Q_DECLARE_METATYPE(RayToEntityIntersectionResult)
 
-QScriptValue RayToEntityIntersectionResultToScriptValue(QScriptEngine* engine, const RayToEntityIntersectionResult& results);
-void RayToEntityIntersectionResultFromScriptValue(const QScriptValue& object, RayToEntityIntersectionResult& results);
+QJSValue RayToEntityIntersectionResultToScriptValue(QJSEngine* engine, const RayToEntityIntersectionResult& results);
+void RayToEntityIntersectionResultFromScriptValue(const QJSValue& object, RayToEntityIntersectionResult& results);
 
 
 /// handles scripting of Entity commands from JS passed to assigned clients

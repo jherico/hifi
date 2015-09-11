@@ -9,15 +9,15 @@
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 //
 
+#include "EntityItemID.h"
+
 #include <QtCore/QObject>
 #include <QDebug>
-
 #include <BufferParser.h>
 #include <udt/PacketHeaders.h>
 #include <UUID.h>
 
-#include "RegisteredMetaTypes.h"
-#include "EntityItemID.h"
+#include <RegisteredMetaTypes.h>
 
 
 EntityItemID::EntityItemID() : QUuid()
@@ -41,14 +41,14 @@ EntityItemID EntityItemID::readEntityItemIDFromBuffer(const unsigned char* data,
     return result;
 }
 
-QScriptValue EntityItemID::toScriptValue(QScriptEngine* engine) const { 
+QJSValue EntityItemID::toScriptValue(QJSEngine* engine) const { 
     return EntityItemIDtoScriptValue(engine, *this); 
 }
 
-QScriptValue EntityItemIDtoScriptValue(QScriptEngine* engine, const EntityItemID& id) {
+QJSValue EntityItemIDtoScriptValue(QJSEngine* engine, const EntityItemID& id) {
     return quuidToScriptValue(engine, id);
 }
 
-void EntityItemIDfromScriptValue(const QScriptValue &object, EntityItemID& id) {
+void EntityItemIDfromScriptValue(const QJSValue &object, EntityItemID& id) {
     quuidFromScriptValue(object, id);
 }

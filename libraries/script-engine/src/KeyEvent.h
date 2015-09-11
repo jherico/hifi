@@ -13,7 +13,7 @@
 #define hifi_KeyEvent_h
 
 #include <QKeyEvent>
-#include <QScriptValue>
+#include <QtQml/QJSEngine>
 
 class KeyEvent {
 public:
@@ -22,8 +22,8 @@ public:
     bool operator==(const KeyEvent& other) const;
     operator QKeySequence() const;
     
-    static QScriptValue toScriptValue(QScriptEngine* engine, const KeyEvent& event);
-    static void fromScriptValue(const QScriptValue& object, KeyEvent& event);
+    static QJSValue toScriptValue(QJSEngine* engine, const KeyEvent& event);
+    static void fromScriptValue(const QJSValue& object, KeyEvent& event);
     
     int key;
     QString text;

@@ -15,7 +15,7 @@
 #include <QtCore/QThread>
 #include <QtNetwork/QNetworkRequest>
 #include <QtNetwork/QNetworkReply>
-#include <QScriptEngine>
+#include <QtQML/QJSEngine>
 
 #include <AudioConstants.h>
 #include <AudioEffectOptions.h>
@@ -44,8 +44,14 @@
 
 #include "MIDIEvent.h"
 
+void clearExceptions() {
 
-static QScriptValue debugPrint(QScriptContext* context, QScriptEngine* engine){
+}
+
+// FIXME JSENGINE
+#if 0
+
+static QJSValue debugPrint(QScriptContext* context, QJSEngine* engine){
     QString message = "";
     for (int i = 0; i < context->argumentCount(); i++) {
         if (i > 0) {
@@ -61,22 +67,24 @@ static QScriptValue debugPrint(QScriptContext* context, QScriptEngine* engine){
                      .replace("'", "\\'");
     engine->evaluate("Script.print('" + message + "')");
 
-    return QScriptValue();
+    return QJSValue();
 }
 
-QScriptValue avatarDataToScriptValue(QScriptEngine* engine, AvatarData* const &in) {
+#endif
+
+QJSValue avatarDataToScriptValue(QJSEngine* engine, AvatarData* const &in) {
     return engine->newQObject(in);
 }
 
-void avatarDataFromScriptValue(const QScriptValue &object, AvatarData* &out) {
+void avatarDataFromScriptValue(const QJSValue &object, AvatarData* &out) {
     out = qobject_cast<AvatarData*>(object.toQObject());
 }
 
-QScriptValue inputControllerToScriptValue(QScriptEngine *engine, AbstractInputController* const &in) {
+QJSValue inputControllerToScriptValue(QJSEngine *engine, AbstractInputController* const &in) {
     return engine->newQObject(in);
 }
 
-void inputControllerFromScriptValue(const QScriptValue &object, AbstractInputController* &out) {
+void inputControllerFromScriptValue(const QJSValue &object, AbstractInputController* &out) {
     out = qobject_cast<AbstractInputController*>(object.toQObject());
 }
 
@@ -103,8 +111,11 @@ ScriptEngine::ScriptEngine(const QString& scriptContents, const QString& fileNam
     _vec3Library(),
     _uuidLibrary(),
     _isUserLoaded(false),
-    _isReloading(false),
-    _arrayBufferClass(new ArrayBufferClass(this))
+    _isReloading(false)
+    // FIXME JSENGINE
+#if 0
+    , _arrayBufferClass(new ArrayBufferClass(this))
+#endif
 {
     _allScriptsMutex.lock();
     _allKnownScriptEngines.insert(this);
@@ -238,7 +249,7 @@ void ScriptEngine::setAvatarData(AvatarData* avatarData, const QString& objectNa
     _avatarData = avatarData;
 
     // remove the old Avatar property, if it exists
-    globalObject().setProperty(objectName, QScriptValue());
+    globalObject().setProperty(objectName, QJSValue());
 
     // give the script engine the new Avatar script property
     registerGlobalObject(objectName, _avatarData);
@@ -246,7 +257,7 @@ void ScriptEngine::setAvatarData(AvatarData* avatarData, const QString& objectNa
 
 void ScriptEngine::setAvatarHashMap(AvatarHashMap* avatarHashMap, const QString& objectName) {
     // remove the old Avatar property, if it exists
-    globalObject().setProperty(objectName, QScriptValue());
+    globalObject().setProperty(objectName, QJSValue());
 
     // give the script engine the new avatar hash map
     registerGlobalObject(objectName, avatarHashMap);
@@ -298,7 +309,12 @@ void ScriptEngine::loadURL(const QUrl& scriptURL, bool reload) {
         } else {
             bool isPending;
             auto scriptCache = DependencyManager::get<ScriptCache>();
-            scriptCache->getScript(url, this, isPending, reload);
+            if (qApp->thread() == QThread::currentThread()) {
+                scriptCache->getScript(url, this, isPending, reload);
+            } else {
+                QString script = scriptCache->getScriptSynchronously(url, reload);
+                scriptContentsAvailable(url, script);
+            }
         }
     }
 }
@@ -340,35 +356,35 @@ void ScriptEngine::init() {
         _controllerScriptingInterface->registerControllerTypes(this);
     }
 
-    qScriptRegisterMetaType(this, EntityItemPropertiesToScriptValue, EntityItemPropertiesFromScriptValueHonorReadOnly);
-    qScriptRegisterMetaType(this, EntityItemIDtoScriptValue, EntityItemIDfromScriptValue);
-    qScriptRegisterMetaType(this, RayToEntityIntersectionResultToScriptValue, RayToEntityIntersectionResultFromScriptValue);
-    qScriptRegisterSequenceMetaType<QVector<QUuid>>(this);
-    qScriptRegisterSequenceMetaType<QVector<EntityItemID>>(this);
+    //qScriptRegisterMetaType(this, EntityItemPropertiesToScriptValue, EntityItemPropertiesFromScriptValueHonorReadOnly);
+    //qScriptRegisterMetaType(this, EntityItemIDtoScriptValue, EntityItemIDfromScriptValue);
+    //qScriptRegisterMetaType(this, RayToEntityIntersectionResultToScriptValue, RayToEntityIntersectionResultFromScriptValue);
+    //qScriptRegisterSequenceMetaType<QVector<QUuid>>(this);
+    //qScriptRegisterSequenceMetaType<QVector<EntityItemID>>(this);
 
-    qScriptRegisterSequenceMetaType<QVector<glm::vec2> >(this);
-    qScriptRegisterSequenceMetaType<QVector<glm::quat> >(this);
-    qScriptRegisterSequenceMetaType<QVector<QString> >(this);
+    //qScriptRegisterSequenceMetaType<QVector<glm::vec2> >(this);
+    //qScriptRegisterSequenceMetaType<QVector<glm::quat> >(this);
+    //qScriptRegisterSequenceMetaType<QVector<QString> >(this);
 
-    QScriptValue xmlHttpRequestConstructorValue = newFunction(XMLHttpRequestClass::constructor);
-    globalObject().setProperty("XMLHttpRequest", xmlHttpRequestConstructorValue);
+    //QJSValue xmlHttpRequestConstructorValue = newFunction(XMLHttpRequestClass::constructor);
+    //globalObject().setProperty("XMLHttpRequest", xmlHttpRequestConstructorValue);
 
-    QScriptValue webSocketConstructorValue = newFunction(WebSocketClass::constructor);
-    globalObject().setProperty("WebSocket", webSocketConstructorValue);
+    //QJSValue webSocketConstructorValue = newFunction(WebSocketClass::constructor);
+    //globalObject().setProperty("WebSocket", webSocketConstructorValue);
 
-    QScriptValue printConstructorValue = newFunction(debugPrint);
-    globalObject().setProperty("print", printConstructorValue);
+    //QJSValue printConstructorValue = newFunction(debugPrint);
+    //globalObject().setProperty("print", printConstructorValue);
 
-    QScriptValue audioEffectOptionsConstructorValue = newFunction(AudioEffectOptions::constructor);
-    globalObject().setProperty("AudioEffectOptions", audioEffectOptionsConstructorValue);
+    //QJSValue audioEffectOptionsConstructorValue = newFunction(AudioEffectOptions::constructor);
+    //globalObject().setProperty("AudioEffectOptions", audioEffectOptionsConstructorValue);
 
-    qScriptRegisterMetaType(this, injectorToScriptValue, injectorFromScriptValue);
-    qScriptRegisterMetaType(this, inputControllerToScriptValue, inputControllerFromScriptValue);
-    qScriptRegisterMetaType(this, avatarDataToScriptValue, avatarDataFromScriptValue);
-    qScriptRegisterMetaType(this, animationDetailsToScriptValue, animationDetailsFromScriptValue);
-    qScriptRegisterMetaType(this, webSocketToScriptValue, webSocketFromScriptValue);
-    qScriptRegisterMetaType(this, qWSCloseCodeToScriptValue, qWSCloseCodeFromScriptValue);
-    qScriptRegisterMetaType(this, wscReadyStateToScriptValue, wscReadyStateFromScriptValue);
+    //qScriptRegisterMetaType(this, injectorToScriptValue, injectorFromScriptValue);
+    //qScriptRegisterMetaType(this, inputControllerToScriptValue, inputControllerFromScriptValue);
+    //qScriptRegisterMetaType(this, avatarDataToScriptValue, avatarDataFromScriptValue);
+    //qScriptRegisterMetaType(this, animationDetailsToScriptValue, animationDetailsFromScriptValue);
+    //qScriptRegisterMetaType(this, webSocketToScriptValue, webSocketFromScriptValue);
+    //qScriptRegisterMetaType(this, qWSCloseCodeToScriptValue, qWSCloseCodeFromScriptValue);
+    //qScriptRegisterMetaType(this, wscReadyStateToScriptValue, wscReadyStateFromScriptValue);
 
     registerGlobalObject("Script", this);
     registerGlobalObject("Audio", &AudioScriptingInterface::getInstance());
@@ -380,43 +396,43 @@ void ScriptEngine::init() {
     registerGlobalObject("AnimationCache", DependencyManager::get<AnimationCache>().data());
 
     // constants
-    globalObject().setProperty("TREE_SCALE", newVariant(QVariant(TREE_SCALE)));
+    globalObject().setProperty("TREE_SCALE", QJSValue(TREE_SCALE));
 }
 
-QScriptValue ScriptEngine::registerGlobalObject(const QString& name, QObject* object) {
+QJSValue ScriptEngine::registerGlobalObject(const QString& name, QObject* object) {
     if (object) {
-        QScriptValue value = newQObject(object);
+        QJSValue value = newQObject(object);
         globalObject().setProperty(name, value);
         return value;
     }
-    return QScriptValue::NullValue;
+    return QJSValue::NullValue;
 }
 
-void ScriptEngine::registerFunction(const QString& name, QScriptEngine::FunctionSignature fun, int numArguments) {
-    registerFunction(globalObject(), name, fun, numArguments);
-}
-
-void ScriptEngine::registerFunction(QScriptValue parent, const QString& name, QScriptEngine::FunctionSignature fun, int numArguments) {
-    QScriptValue scriptFun = newFunction(fun, numArguments);
-    parent.setProperty(name, scriptFun);
-}
-
-void ScriptEngine::registerGetterSetter(const QString& name, QScriptEngine::FunctionSignature getter,
-                                        QScriptEngine::FunctionSignature setter, QScriptValue object) {
-    QScriptValue setterFunction = newFunction(setter, 1);
-    QScriptValue getterFunction = newFunction(getter);
-
-    if (!object.isNull()) {
-        object.setProperty(name, setterFunction, QScriptValue::PropertySetter);
-        object.setProperty(name, getterFunction, QScriptValue::PropertyGetter);
-    } else {
-        globalObject().setProperty(name, setterFunction, QScriptValue::PropertySetter);
-        globalObject().setProperty(name, getterFunction, QScriptValue::PropertyGetter);
-    }
-}
+//void ScriptEngine::registerFunction(const QString& name, QJSEngine::FunctionSignature fun, int numArguments) {
+//    registerFunction(globalObject(), name, fun, numArguments);
+//}
+//
+//void ScriptEngine::registerFunction(QJSValue parent, const QString& name, QJSEngine::FunctionSignature fun, int numArguments) {
+//    QJSValue scriptFun = newFunction(fun, numArguments);
+//    parent.setProperty(name, scriptFun);
+//}
+//
+//void ScriptEngine::registerGetterSetter(const QString& name, QJSEngine::FunctionSignature getter,
+//                                        QJSEngine::FunctionSignature setter, QJSValue object) {
+//    QJSValue setterFunction = newFunction(setter, 1);
+//    QJSValue getterFunction = newFunction(getter);
+//
+//    if (!object.isNull()) {
+//        object.setProperty(name, setterFunction, QJSValue::PropertySetter);
+//        object.setProperty(name, getterFunction, QJSValue::PropertyGetter);
+//    } else {
+//        globalObject().setProperty(name, setterFunction, QJSValue::PropertySetter);
+//        globalObject().setProperty(name, getterFunction, QJSValue::PropertyGetter);
+//    }
+//}
 
 // Look up the handler associated with eventName and entityID. If found, evalute the argGenerator thunk and call the handler with those args
-void ScriptEngine::generalHandler(const EntityItemID& entityID, const QString& eventName, std::function<QScriptValueList()> argGenerator) {
+void ScriptEngine::generalHandler(const EntityItemID& entityID, const QString& eventName, std::function<QJSValueList()> argGenerator) {
     if (!_registeredHandlers.contains(entityID)) {
         return;
     }
@@ -424,22 +440,22 @@ void ScriptEngine::generalHandler(const EntityItemID& entityID, const QString& e
     if (!handlersOnEntity.contains(eventName)) {
         return;
     }
-    QScriptValueList handlersForEvent = handlersOnEntity[eventName];
+    QJSValueList handlersForEvent = handlersOnEntity[eventName];
     if (!handlersForEvent.isEmpty()) {
-        QScriptValueList args = argGenerator();
+        QJSValueList args = argGenerator();
         for (int i = 0; i < handlersForEvent.count(); ++i) {
-            handlersForEvent[i].call(QScriptValue(), args);
+            handlersForEvent[i].call(args);
         }
     }
 }
 // Unregister the handlers for this eventName and entityID.
-void ScriptEngine::removeEventHandler(const EntityItemID& entityID, const QString& eventName, QScriptValue handler) {
+void ScriptEngine::removeEventHandler(const EntityItemID& entityID, const QString& eventName, QJSValue handler) {
     if (!_registeredHandlers.contains(entityID)) {
         return;
     }
     RegisteredEventHandlers& handlersOnEntity = _registeredHandlers[entityID];
-    QScriptValueList& handlersForEvent = handlersOnEntity[eventName];
-    // QScriptValue does not have operator==(), so we can't use QList::removeOne and friends. So iterate.
+    QJSValueList& handlersForEvent = handlersOnEntity[eventName];
+    // QJSValue does not have operator==(), so we can't use QList::removeOne and friends. So iterate.
     for (int i = 0; i < handlersForEvent.count(); ++i) {
         if (handlersForEvent[i].equals(handler)) {
             handlersForEvent.removeAt(i);
@@ -448,7 +464,7 @@ void ScriptEngine::removeEventHandler(const EntityItemID& entityID, const QStrin
     }
 }
 // Register the handler.
-void ScriptEngine::addEventHandler(const EntityItemID& entityID, const QString& eventName, QScriptValue handler) {
+void ScriptEngine::addEventHandler(const EntityItemID& entityID, const QString& eventName, QJSValue handler) {
     if (_registeredHandlers.count() == 0) { // First time any per-entity handler has been added in this script...
         // Connect up ALL the handlers to the global entities object's signals.
         // (We could go signal by signal, or even handler by handler, but I don't think the efficiency is worth the complexity.)
@@ -461,15 +477,15 @@ void ScriptEngine::addEventHandler(const EntityItemID& entityID, const QString& 
         // Two common cases of event handler, differing only in argument signature.
         auto makeSingleEntityHandler = [=](const QString& eventName) -> std::function<void(const EntityItemID&)> {
             return [=](const EntityItemID& entityItemID) -> void {
-                generalHandler(entityItemID, eventName, [=]() -> QScriptValueList {
-                    return QScriptValueList() << entityItemID.toScriptValue(this);
+                generalHandler(entityItemID, eventName, [=]() -> QJSValueList {
+                    return QJSValueList() << entityItemID.toScriptValue(this);
                 });
             };
         };
         auto makeMouseHandler = [=](const QString& eventName) -> std::function<void(const EntityItemID&, const MouseEvent&)>  {
             return [=](const EntityItemID& entityItemID, const MouseEvent& event) -> void {
-                generalHandler(entityItemID, eventName, [=]() -> QScriptValueList {
-                    return QScriptValueList() << entityItemID.toScriptValue(this) << event.toScriptValue(this);
+                generalHandler(entityItemID, eventName, [=]() -> QJSValueList {
+                    return QJSValueList() << entityItemID.toScriptValue(this) << event.toScriptValue(this);
                 });
             };
         };
@@ -491,14 +507,14 @@ void ScriptEngine::addEventHandler(const EntityItemID& entityID, const QString& 
         connect(entities.data(), &EntityScriptingInterface::collisionWithEntity, this,
                 [=](const EntityItemID& idA, const EntityItemID& idB, const Collision& collision) {
                     generalHandler(idA, "collisionWithEntity", [=]() {
-                        return QScriptValueList () << idA.toScriptValue(this) << idB.toScriptValue(this) << collisionToScriptValue(this, collision);
+                        return QJSValueList () << idA.toScriptValue(this) << idB.toScriptValue(this) << collisionToScriptValue(this, collision);
                     });
                 });
     }
     if (!_registeredHandlers.contains(entityID)) {
         _registeredHandlers[entityID] = RegisteredEventHandlers();
     }
-    QScriptValueList& handlersForEvent = _registeredHandlers[entityID][eventName];
+    QJSValueList& handlersForEvent = _registeredHandlers[entityID][eventName];
     handlersForEvent << handler; // Note that the same handler can be added many times. See removeEntityEventHandler().
 }
 
@@ -512,34 +528,36 @@ void ScriptEngine::evaluate() {
         init();
     }
 
-    QScriptValue result = evaluate(_scriptContents);
+    QJSValue result = evaluate(_scriptContents);
 
     // TODO: why do we check this twice? It seems like the call to clearExceptions() in the lower level evaluate call
     // will cause this code to never actually run...
-    if (hasUncaughtException()) {
-        int line = uncaughtExceptionLineNumber();
+    if (result.isError()) {
+        // FIXME
+        int line = 0; // result.property("lineNumber").toInt();
         qCDebug(scriptengine) << "Uncaught exception at (" << _fileNameString << ") line" << line << ":" << result.toString();
         if (_wantSignals) {
             emit errorMessage("Uncaught exception at (" + _fileNameString + ") line" + QString::number(line) + ":" + result.toString());
         }
-        clearExceptions();
+        // FIXME
+        //clearExceptions();
     }
 }
 
-QScriptValue ScriptEngine::evaluate(const QString& program, const QString& fileName, int lineNumber) {
+QJSValue ScriptEngine::evaluate(const QString& program, const QString& fileName, int lineNumber) {
     if (_stoppingAllScripts) {
-        return QScriptValue(); // bail early
+        return QJSValue(); // bail early
     }
 
     _evaluatesPending++;
-    QScriptValue result = QScriptEngine::evaluate(program, fileName, lineNumber);
-    if (hasUncaughtException()) {
-        int line = uncaughtExceptionLineNumber();
+    QJSValue result = QJSEngine::evaluate(program, fileName, lineNumber);
+    if (result.isError()) {
+        int line = result.property("lineNumber").toInt();
         qCDebug(scriptengine) << "Uncaught exception at (" << _fileNameString << " : " << fileName << ") line" << line << ": " << result.toString();
     }
     _evaluatesPending--;
     if (_wantSignals) {
-        emit evaluationFinished(result, hasUncaughtException());
+        emit evaluationFinished(result, result.isError());
     }
     clearExceptions();
     return result;
@@ -565,12 +583,23 @@ void ScriptEngine::run() {
         init();
     }
     _isRunning = true;
+    {
+        QJSValue result = evaluate(_scriptContents);
+        if (result.isError()) {
+            int line = result.property("lineNumber").toInt();
+            qCDebug(scriptengine) << "Uncaught exception at (" << _fileNameString << ") line" << line << ":" << result.toString();
+            if (_wantSignals) {
+                emit errorMessage("Uncaught exception at (" + _fileNameString + ") line" + QString::number(line) + ":" + result.toString());
+            }
+            clearExceptions();
+        }
+    }
+
     _isFinished = false;
     if (_wantSignals) {
         emit runningStateChanged();
     }
 
-    QScriptValue result = evaluate(_scriptContents);
 
     QElapsedTimer startTime;
     startTime.start();
@@ -578,7 +607,7 @@ void ScriptEngine::run() {
     int thisFrame = 0;
 
     auto nodeList = DependencyManager::get<NodeList>();
-    auto entityScriptingInterface = DependencyManager::get<EntityScriptingInterface>();
+//    auto entityScriptingInterface = DependencyManager::get<EntityScriptingInterface>();
 
     qint64 lastUpdate = usecTimestampNow();
 
@@ -598,15 +627,15 @@ void ScriptEngine::run() {
             break;
         }
 
-        if (!_isFinished && entityScriptingInterface->getEntityPacketSender()->serversExist()) {
-            // release the queue of edit entity messages.
-            entityScriptingInterface->getEntityPacketSender()->releaseQueuedMessages();
+        //if (!_isFinished && entityScriptingInterface->getEntityPacketSender()->serversExist()) {
+        //    // release the queue of edit entity messages.
+        //    entityScriptingInterface->getEntityPacketSender()->releaseQueuedMessages();
 
-            // since we're in non-threaded mode, call process so that the packets are sent
-            if (!entityScriptingInterface->getEntityPacketSender()->isThreaded()) {
-                entityScriptingInterface->getEntityPacketSender()->process();
-            }
-        }
+        //    // since we're in non-threaded mode, call process so that the packets are sent
+        //    if (!entityScriptingInterface->getEntityPacketSender()->isThreaded()) {
+        //        entityScriptingInterface->getEntityPacketSender()->process();
+        //    }
+        //}
 
         if (!_isFinished && _isAvatar && _avatarData) {
 
@@ -712,15 +741,6 @@ void ScriptEngine::run() {
         qint64 now = usecTimestampNow();
         float deltaTime = (float) (now - lastUpdate) / (float) USECS_PER_SECOND;
 
-        if (hasUncaughtException()) {
-            int line = uncaughtExceptionLineNumber();
-            qCDebug(scriptengine) << "Uncaught exception at (" << _fileNameString << ") line" << line << ":" << uncaughtException().toString();
-            if (_wantSignals) {
-                emit errorMessage("Uncaught exception at (" + _fileNameString + ") line" + QString::number(line) + ":" + uncaughtException().toString());
-            }
-            clearExceptions();
-        }
-
         if (!_isFinished) {
             if (_wantSignals) {
                 emit update(deltaTime);
@@ -738,21 +758,21 @@ void ScriptEngine::run() {
     // kill the avatar identity timer
     delete _avatarIdentityTimer;
 
-    if (entityScriptingInterface->getEntityPacketSender()->serversExist()) {
-        // release the queue of edit entity messages.
-        entityScriptingInterface->getEntityPacketSender()->releaseQueuedMessages();
+    //if (entityScriptingInterface->getEntityPacketSender()->serversExist()) {
+    //    // release the queue of edit entity messages.
+    //    entityScriptingInterface->getEntityPacketSender()->releaseQueuedMessages();
 
-        // since we're in non-threaded mode, call process so that the packets are sent
-        if (!entityScriptingInterface->getEntityPacketSender()->isThreaded()) {
-            // wait here till the edit packet sender is completely done sending
-            while (entityScriptingInterface->getEntityPacketSender()->hasPacketsToSend()) {
-                entityScriptingInterface->getEntityPacketSender()->process();
-                QCoreApplication::processEvents();
-            }
-        } else {
-            // FIXME - do we need to have a similar "wait here" loop for non-threaded packet senders?
-        }
-    }
+    //    // since we're in non-threaded mode, call process so that the packets are sent
+    //    if (!entityScriptingInterface->getEntityPacketSender()->isThreaded()) {
+    //        // wait here till the edit packet sender is completely done sending
+    //        while (entityScriptingInterface->getEntityPacketSender()->hasPacketsToSend()) {
+    //            entityScriptingInterface->getEntityPacketSender()->process();
+    //            QCoreApplication::processEvents();
+    //        }
+    //    } else {
+    //        // FIXME - do we need to have a similar "wait here" loop for non-threaded packet senders?
+    //    }
+    //}
 
     if (_wantSignals) {
         emit finished(_fileNameString);
@@ -770,7 +790,7 @@ void ScriptEngine::run() {
 // NOTE: This is private because it must be called on the same thread that created the timers, which is why
 // we want to only call it in our own run "shutdown" processing.
 void ScriptEngine::stopAllTimers() {
-    QMutableHashIterator<QTimer*, QScriptValue> i(_timerFunctionMap);
+    QMutableHashIterator<QTimer*, QJSValue> i(_timerFunctionMap);
     while (i.hasNext()) {
         i.next();
         QTimer* timer = i.key();
@@ -789,7 +809,7 @@ void ScriptEngine::stop() {
 
 void ScriptEngine::timerFired() {
     QTimer* callingTimer = reinterpret_cast<QTimer*>(sender());
-    QScriptValue timerFunction = _timerFunctionMap.value(callingTimer);
+    QJSValue timerFunction = _timerFunctionMap.value(callingTimer);
 
     if (!callingTimer->isActive()) {
         // this timer is done, we can kill it
@@ -798,12 +818,12 @@ void ScriptEngine::timerFired() {
     }
 
     // call the associated JS function, if it exists
-    if (timerFunction.isValid()) {
+    if (timerFunction.isCallable()) {
         timerFunction.call();
     }
 }
 
-QObject* ScriptEngine::setupTimerWithInterval(const QScriptValue& function, int intervalMS, bool isSingleShot) {
+QObject* ScriptEngine::setupTimerWithInterval(const QJSValue& function, int intervalMS, bool isSingleShot) {
     // create the timer, add it to the map, and start it
     QTimer* newTimer = new QTimer(this);
     newTimer->setSingleShot(isSingleShot);
@@ -819,7 +839,7 @@ QObject* ScriptEngine::setupTimerWithInterval(const QScriptValue& function, int 
     return newTimer;
 }
 
-QObject* ScriptEngine::setInterval(const QScriptValue& function, int intervalMS) {
+QObject* ScriptEngine::setInterval(const QJSValue& function, int intervalMS) {
     if (_stoppingAllScripts) {
         qCDebug(scriptengine) << "Script.setInterval() while shutting down is ignored... parent script:" << getFilename();
         return NULL; // bail early
@@ -828,7 +848,7 @@ QObject* ScriptEngine::setInterval(const QScriptValue& function, int intervalMS)
     return setupTimerWithInterval(function, intervalMS, false);
 }
 
-QObject* ScriptEngine::setTimeout(const QScriptValue& function, int timeoutMS) {
+QObject* ScriptEngine::setTimeout(const QJSValue& function, int timeoutMS) {
     if (_stoppingAllScripts) {
         qCDebug(scriptengine) << "Script.setTimeout() while shutting down is ignored... parent script:" << getFilename();
         return NULL; // bail early
@@ -880,7 +900,7 @@ void ScriptEngine::print(const QString& message) {
 // when all of the files have finished loading.
 // If no callback is specified, the included files will be loaded synchronously and will block execution until
 // all of the files have finished loading.
-void ScriptEngine::include(const QStringList& includeFiles, QScriptValue callback) {
+void ScriptEngine::include(const QStringList& includeFiles, QJSValue callback) {
     if (_stoppingAllScripts) {
         qCDebug(scriptengine) << "Script.include() while shutting down is ignored..."
                  << "includeFiles:" << includeFiles << "parent script:" << getFilename();
@@ -906,12 +926,12 @@ void ScriptEngine::include(const QStringList& includeFiles, QScriptValue callbac
             if (contents.isNull()) {
                 qCDebug(scriptengine) << "Error loading file: " << url << "line:" << __LINE__;
             } else {
-                QScriptValue result = evaluate(contents, url.toString());
+                QJSValue result = evaluate(contents, url.toString());
             }
         }
 
-        if (callback.isFunction()) {
-            QScriptValue(callback).call();
+        if (callback.isCallable()) {
+            QJSValue(callback).call();
         }
 
         loader->deleteLater();
@@ -924,14 +944,14 @@ void ScriptEngine::include(const QStringList& includeFiles, QScriptValue callbac
 
     loader->start();
 
-    if (!callback.isFunction() && !loader->isFinished()) {
+    if (!callback.isCallable() && !loader->isFinished()) {
         QEventLoop loop;
         QObject::connect(loader, &BatchLoader::finished, &loop, &QEventLoop::quit);
         loop.exec();
     }
 }
 
-void ScriptEngine::include(const QString& includeFile, QScriptValue callback) {
+void ScriptEngine::include(const QString& includeFile, QJSValue callback) {
     if (_stoppingAllScripts) {
         qCDebug(scriptengine) << "Script.include() while shutting down is ignored... "
                  << "includeFile:" << includeFile << "parent script:" << getFilename();

@@ -100,7 +100,7 @@ void ModelOverlay::render(RenderArgs* args) {
     */
 }
 
-void ModelOverlay::setProperties(const QScriptValue &properties) {
+void ModelOverlay::setProperties(const QJSValue &properties) {
     auto position = getPosition();
     auto rotation = getRotation();
     auto scale = getDimensions();
@@ -112,15 +112,15 @@ void ModelOverlay::setProperties(const QScriptValue &properties) {
         _updateModel = true;
     }
     
-    QScriptValue urlValue = properties.property("url");
-    if (urlValue.isValid() && urlValue.isString()) {
+    QJSValue urlValue = properties.property("url");
+    if (urlValue.isString()) {
         _url = urlValue.toString();
         _updateModel = true;
         _isLoaded = false;
     }
     
-    QScriptValue texturesValue = properties.property("textures");
-    if (texturesValue.isValid() && texturesValue.toVariant().canConvert(QVariant::Map)) {
+    QJSValue texturesValue = properties.property("textures");
+    if (!texturesValue.isUndefined() && texturesValue.toVariant().canConvert(QVariant::Map)) {
         QVariantMap textureMap = texturesValue.toVariant().toMap();
         foreach(const QString& key, textureMap.keys()) {
             
@@ -136,7 +136,7 @@ void ModelOverlay::setProperties(const QScriptValue &properties) {
     }
 }
 
-QScriptValue ModelOverlay::getProperty(const QString& property) {
+QJSValue ModelOverlay::getProperty(const QString& property) {
     if (property == "url") {
         return _url.toString();
     }
@@ -145,13 +145,13 @@ QScriptValue ModelOverlay::getProperty(const QString& property) {
     }
     if (property == "textures") {
         if (_modelTextures.size() > 0) {
-            QScriptValue textures = _scriptEngine->newObject();
+            QJSValue textures = _scriptEngine->newObject();
             foreach(const QString& key, _modelTextures.keys()) {
                 textures.setProperty(key, _modelTextures[key].toString());
             }
             return textures;
         } else {
-            return QScriptValue();
+            return QJSValue();
         }
     }
 

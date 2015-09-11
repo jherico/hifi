@@ -17,8 +17,11 @@
 #include <QtCore/QObject>
 #include <QtCore/QUrl>
 #include <QtCore/QSet>
+#include <QtCore/QFuture>
+#include <QtCore/QFutureWatcher>
 #include <QtCore/QWaitCondition>
-#include <QtScript/QScriptEngine>
+#include <QtCore/QString>
+#include <QtQml/QJsEngine>
 
 #include <AnimationCache.h>
 #include <AvatarData.h>
@@ -30,7 +33,6 @@
 #include "ArrayBufferClass.h"
 #include "AudioScriptingInterface.h"
 #include "Quat.h"
-#include "ScriptCache.h"
 #include "ScriptUUID.h"
 #include "Vec3.h"
 
@@ -38,9 +40,16 @@ const QString NO_SCRIPT("");
 
 const unsigned int SCRIPT_DATA_CALLBACK_USECS = floor(((1.0f / 60.0f) * 1000 * 1000) + 0.5f);
 
-typedef QHash<QString, QScriptValueList> RegisteredEventHandlers;
+typedef QHash<QString, QJSValueList> RegisteredEventHandlers;
 
-class ScriptEngine : public QScriptEngine, public ScriptUser {
+class ScriptUser {
+public:
+    virtual void scriptContentsAvailable(const QUrl& url, const QString& scriptContents) = 0;
+    virtual void errorInLoadingScript(const QUrl& url) = 0;
+};
+
+
+class ScriptEngine : public QJSEngine, public ScriptUser {
     Q_OBJECT
 public:
     ScriptEngine(const QString& scriptContents = NO_SCRIPT,
@@ -50,19 +59,22 @@ public:
 
     ~ScriptEngine();
 
+    // FIXME JSENGINE
+#if 0
     ArrayBufferClass* getArrayBufferClass() { return _arrayBufferClass; }
+#endif
     
     /// sets the script contents, will return false if failed, will fail if script is already running
     bool setScriptContents(const QString& scriptContents, const QString& fileNameString = QString(""));
 
     const QString& getScriptName() const { return _scriptName; }
 
-    QScriptValue registerGlobalObject(const QString& name, QObject* object); /// registers a global object by name
-    void registerGetterSetter(const QString& name, QScriptEngine::FunctionSignature getter,
-                              QScriptEngine::FunctionSignature setter, QScriptValue object = QScriptValue::NullValue);
-    void registerFunction(const QString& name, QScriptEngine::FunctionSignature fun, int numArguments = -1);
-    void registerFunction(QScriptValue parent, const QString& name, QScriptEngine::FunctionSignature fun,
-                          int numArguments = -1);
+    QJSValue registerGlobalObject(const QString& name, QObject* object); /// registers a global object by name
+//    void registerGetterSetter(const QString& name, QJSEngine::FunctionSignature getter,
+//        QJSEngine::FunctionSignature setter, QJSValue object = QJSValue::NullValue);
+    //void registerFunction(const QString& name, QJSEngine::FunctionSignature fun, int numArguments = -1);
+    //void registerFunction(QJSValue parent, const QString& name, QJSEngine::FunctionSignature fun,
+    //                      int numArguments = -1);
 
     Q_INVOKABLE void setIsAvatar(bool isAvatar);
     bool isAvatar() const { return _isAvatar; }
@@ -104,20 +116,20 @@ public:
     virtual void scriptContentsAvailable(const QUrl& url, const QString& scriptContents);
     virtual void errorInLoadingScript(const QUrl& url);
 
-    Q_INVOKABLE void addEventHandler(const EntityItemID& entityID, const QString& eventName, QScriptValue handler);
-    Q_INVOKABLE void removeEventHandler(const EntityItemID& entityID, const QString& eventName, QScriptValue handler);
+    Q_INVOKABLE void addEventHandler(const EntityItemID& entityID, const QString& eventName, QJSValue handler);
+    Q_INVOKABLE void removeEventHandler(const EntityItemID& entityID, const QString& eventName, QJSValue handler);
 
 public slots:
     void loadURL(const QUrl& scriptURL, bool reload);
     void stop();
 
-    QScriptValue evaluate(const QString& program, const QString& fileName = QString(), int lineNumber = 1);
-    QObject* setInterval(const QScriptValue& function, int intervalMS);
-    QObject* setTimeout(const QScriptValue& function, int timeoutMS);
+    QJSValue evaluate(const QString& program, const QString& fileName = QString(), int lineNumber = 1);
+    QObject* setInterval(const QJSValue& function, int intervalMS);
+    QObject* setTimeout(const QJSValue& function, int timeoutMS);
     void clearInterval(QObject* timer) { stopTimer(reinterpret_cast<QTimer*>(timer)); }
     void clearTimeout(QObject* timer) { stopTimer(reinterpret_cast<QTimer*>(timer)); }
-    void include(const QStringList& includeFiles, QScriptValue callback = QScriptValue());
-    void include(const QString& includeFile, QScriptValue callback = QScriptValue());
+    void include(const QStringList& includeFiles, QJSValue callback = QJSValue());
+    void include(const QString& includeFile, QJSValue callback = QJSValue());
     void load(const QString& loadfile);
     void print(const QString& message);
     QUrl resolvePath(const QString& path) const;
@@ -134,12 +146,13 @@ signals:
     void printedMessage(const QString& message);
     void errorMessage(const QString& message);
     void runningStateChanged();
-    void evaluationFinished(QScriptValue result, bool isException);
+    void evaluationFinished(QJSValue result, bool isException);
     void loadScript(const QString& scriptName, bool isUserLoaded);
     void reloadScript(const QString& scriptName, bool isUserLoaded);
     void doneRunning();
 
 protected:
+    QFuture<QString> _scriptFuture;
     QString _scriptContents;
     QString _parentURL;
     bool _isFinished;
@@ -149,7 +162,7 @@ protected:
     bool _isAvatar;
     QTimer* _avatarIdentityTimer;
     QTimer* _avatarBillboardTimer;
-    QHash<QTimer*, QScriptValue> _timerFunctionMap;
+    QHash<QTimer*, QJSValue> _timerFunctionMap;
     bool _isListeningToAudioStream;
     Sound* _avatarSound;
     int _numAvatarSoundSentBytes;
@@ -162,7 +175,7 @@ private:
     void sendAvatarIdentityPacket();
     void sendAvatarBillboardPacket();
 
-    QObject* setupTimerWithInterval(const QScriptValue& function, int intervalMS, bool isSingleShot);
+    QObject* setupTimerWithInterval(const QJSValue& function, int intervalMS, bool isSingleShot);
     void stopTimer(QTimer* timer);
 
     AbstractControllerScriptingInterface* _controllerScriptingInterface;
@@ -175,11 +188,14 @@ private:
     bool _isUserLoaded;
     bool _isReloading;
 
+    // FIXME JSENGINE
+#if 0
     ArrayBufferClass* _arrayBufferClass;
+#endif
 
     QHash<QUuid, quint16> _outgoingScriptAudioSequenceNumbers;
     QHash<EntityItemID, RegisteredEventHandlers> _registeredHandlers;
-    void generalHandler(const EntityItemID& entityID, const QString& eventName, std::function<QScriptValueList()> argGenerator);
+    void generalHandler(const EntityItemID& entityID, const QString& eventName, std::function<QJSValueList()> argGenerator);
 
 private:
     static QSet<ScriptEngine*> _allKnownScriptEngines;

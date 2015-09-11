@@ -11,7 +11,7 @@
 
 #include "Base3DOverlay.h"
 
-#include <QScriptValue>
+
 
 #include <RegisteredMetaTypes.h>
 #include <SharedUtil.h>
@@ -43,38 +43,38 @@ Base3DOverlay::Base3DOverlay(const Base3DOverlay* base3DOverlay) :
 {
 }
 
-void Base3DOverlay::setProperties(const QScriptValue& properties) {
+void Base3DOverlay::setProperties(const QJSValue& properties) {
     Overlay::setProperties(properties);
 
-    QScriptValue drawInFront = properties.property("drawInFront");
+    QJSValue drawInFront = properties.property("drawInFront");
 
-    if (drawInFront.isValid()) {
+    if (!drawInFront.isUndefined()) {
         bool value = drawInFront.toVariant().toBool();
         setDrawInFront(value);
     }
 
-    QScriptValue drawOnHUD = properties.property("drawOnHUD");
+    QJSValue drawOnHUD = properties.property("drawOnHUD");
 
-    if (drawOnHUD.isValid()) {
+    if (!drawOnHUD.isUndefined()) {
         bool value = drawOnHUD.toVariant().toBool();
         setDrawOnHUD(value);
     }
 
-    QScriptValue position = properties.property("position");
+    QJSValue position = properties.property("position");
 
     // if "position" property was not there, check to see if they included aliases: point, p1
-    if (!position.isValid()) {
+    if (position.isUndefined()) {
         position = properties.property("p1");
-        if (!position.isValid()) {
+        if (position.isUndefined()) {
             position = properties.property("point");
         }
     }
 
-    if (position.isValid()) {
-        QScriptValue x = position.property("x");
-        QScriptValue y = position.property("y");
-        QScriptValue z = position.property("z");
-        if (x.isValid() && y.isValid() && z.isValid()) {
+    if (!position.isUndefined()) {
+        QJSValue x = position.property("x");
+        QJSValue y = position.property("y");
+        QJSValue z = position.property("z");
+        if (!x.isUndefined() && !y.isUndefined() && !z.isUndefined()) {
             glm::vec3 newPosition;
             newPosition.x = x.toVariant().toFloat();
             newPosition.y = y.toVariant().toFloat();
@@ -83,23 +83,23 @@ void Base3DOverlay::setProperties(const QScriptValue& properties) {
         }
     }
 
-    if (properties.property("lineWidth").isValid()) {
+    if (!properties.property("lineWidth").isUndefined()) {
         setLineWidth(properties.property("lineWidth").toVariant().toFloat());
     }
 
-    QScriptValue rotation = properties.property("rotation");
+    QJSValue rotation = properties.property("rotation");
 
-    if (rotation.isValid()) {
+    if (!rotation.isUndefined()) {
         glm::quat newRotation;
 
         // size, scale, dimensions is special, it might just be a single scalar, or it might be a vector, check that here
-        QScriptValue x = rotation.property("x");
-        QScriptValue y = rotation.property("y");
-        QScriptValue z = rotation.property("z");
-        QScriptValue w = rotation.property("w");
+        QJSValue x = rotation.property("x");
+        QJSValue y = rotation.property("y");
+        QJSValue z = rotation.property("z");
+        QJSValue w = rotation.property("w");
 
 
-        if (x.isValid() && y.isValid() && z.isValid() && w.isValid()) {
+        if (!x.isUndefined() && !y.isUndefined() && !z.isUndefined() && !w.isUndefined()) {
             newRotation.x = x.toVariant().toFloat();
             newRotation.y = y.toVariant().toFloat();
             newRotation.z = z.toVariant().toFloat();
@@ -108,37 +108,37 @@ void Base3DOverlay::setProperties(const QScriptValue& properties) {
         }
     }
 
-    if (properties.property("isSolid").isValid()) {
+    if (!properties.property("isSolid").isUndefined()) {
         setIsSolid(properties.property("isSolid").toVariant().toBool());
     }
-    if (properties.property("isFilled").isValid()) {
+    if (!properties.property("isFilled").isUndefined()) {
         setIsSolid(properties.property("isSolid").toVariant().toBool());
     }
-    if (properties.property("isWire").isValid()) {
+    if (!properties.property("isWire").isUndefined()) {
         setIsSolid(!properties.property("isWire").toVariant().toBool());
     }
-    if (properties.property("solid").isValid()) {
+    if (!properties.property("solid").isUndefined()) {
         setIsSolid(properties.property("solid").toVariant().toBool());
     }
-    if (properties.property("filled").isValid()) {
+    if (!properties.property("filled").isUndefined()) {
         setIsSolid(properties.property("filled").toVariant().toBool());
     }
-    if (properties.property("wire").isValid()) {
+    if (!properties.property("wire").isUndefined()) {
         setIsSolid(!properties.property("wire").toVariant().toBool());
     }
 
-    if (properties.property("isDashedLine").isValid()) {
+    if (!properties.property("isDashedLine").isUndefined()) {
         setIsDashedLine(properties.property("isDashedLine").toVariant().toBool());
     }
-    if (properties.property("dashed").isValid()) {
+    if (!properties.property("dashed").isUndefined()) {
         setIsDashedLine(properties.property("dashed").toVariant().toBool());
     }
-    if (properties.property("ignoreRayIntersection").isValid()) {
+    if (!properties.property("ignoreRayIntersection").isUndefined()) {
         setIgnoreRayIntersection(properties.property("ignoreRayIntersection").toVariant().toBool());
     }
 }
 
-QScriptValue Base3DOverlay::getProperty(const QString& property) {
+QJSValue Base3DOverlay::getProperty(const QString& property) {
     if (property == "position" || property == "start" || property == "p1" || property == "point") {
         return vec3toScriptValue(_scriptEngine, getPosition());
     }

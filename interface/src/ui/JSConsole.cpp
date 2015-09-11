@@ -56,8 +56,8 @@ JSConsole::JSConsole(QWidget* parent, ScriptEngine* scriptEngine) :
         _scriptEngine = Application::getInstance()->loadScript(QString(), false);
     }
 
-    connect(_scriptEngine, SIGNAL(evaluationFinished(QScriptValue, bool)),
-            this, SLOT(handleEvalutationFinished(QScriptValue, bool)));
+    connect(_scriptEngine, SIGNAL(evaluationFinished(QJSValue, bool)),
+            this, SLOT(handleEvalutationFinished(QJSValue, bool)));
     connect(_scriptEngine, SIGNAL(printedMessage(const QString&)), this, SLOT(handlePrint(const QString&)));
     connect(_scriptEngine, SIGNAL(errorMessage(const QString&)), this, SLOT(handleError(const QString&)));
 
@@ -83,7 +83,7 @@ void JSConsole::executeCommand(const QString& command) {
     resetCurrentCommandHistory();
 }
 
-void JSConsole::handleEvalutationFinished(QScriptValue result, bool isException) {
+void JSConsole::handleEvalutationFinished(QJSValue result, bool isException) {
     _ui->promptTextEdit->setDisabled(false);
 
     // Make sure focus is still on this window - some commands are blocking and can take awhile to execute.

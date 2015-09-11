@@ -7,4 +7,4 @@ macro (setup_testcase_dependencies)
   copy_dlls_beside_windows_executable()
 endmacro ()
 
-setup_hifi_testcase(Script Network)
+setup_hifi_testcase(Qml Network)

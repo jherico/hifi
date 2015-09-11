@@ -13,20 +13,18 @@
 #define hifi_ScriptCache_h
 
 #include <ResourceCache.h>
-
-class ScriptUser {
-public:
-    virtual void scriptContentsAvailable(const QUrl& url, const QString& scriptContents) = 0;
-    virtual void errorInLoadingScript(const QUrl& url) = 0;
-};
+#include <shared/ReadWriteLockable.h>
+class ScriptUser;
+class Condition;
 
 /// Interface for loading scripts
-class ScriptCache : public QObject, public Dependency {
+class ScriptCache : public QObject, public Dependency, public ReadWriteLockable {
     Q_OBJECT
     SINGLETON_DEPENDENCY
 
 public:
     QString getScript(const QUrl& url, ScriptUser* scriptUser, bool& isPending, bool redownload = false);
+    QString getScriptSynchronously(const QUrl& url, bool redownload = false);
     void deleteScript(const QUrl& url);
     void addScriptToBadScriptList(const QUrl& url) { _badScripts.insert(url); }
     bool isInBadScriptList(const QUrl& url) { return _badScripts.contains(url); }
@@ -35,6 +33,9 @@ private slots:
     void scriptDownloaded();
     
 private:
+    bool fetchCachedScript(const QUrl& url, QString& result);
+    void fetchScript(const QUrl& url, bool reload, bool synchronous);
+        
     ScriptCache(QObject* parent = NULL);
     
     QHash<QUrl, QString> _scriptCache;

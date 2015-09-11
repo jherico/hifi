@@ -49,8 +49,8 @@ public:
     void setRightMargin(float margin) { _rightMargin = margin; }
     void setBottomMargin(float margin) { _bottomMargin = margin; }
 
-    virtual void setProperties(const QScriptValue& properties);
-    virtual QScriptValue getProperty(const QString& property);
+    virtual void setProperties(const QJSValue& properties);
+    virtual QJSValue getProperty(const QString& property);
 
     QSizeF textSize(const QString& test) const;  // Meters
 

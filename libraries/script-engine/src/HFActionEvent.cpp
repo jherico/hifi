@@ -28,13 +28,13 @@ QEvent::Type HFActionEvent::endType() {
     return endType;
 }
 
-QScriptValue HFActionEvent::toScriptValue(QScriptEngine* engine, const HFActionEvent& event) {
-    QScriptValue obj = engine->newObject();
+QJSValue HFActionEvent::toScriptValue(QJSEngine* engine, const HFActionEvent& event) {
+    QJSValue obj = engine->newObject();
     obj.setProperty("actionRay", pickRayToScriptValue(engine, event.actionRay));
     return obj;
 }
 
-void HFActionEvent::fromScriptValue(const QScriptValue& object, HFActionEvent& event) {
+void HFActionEvent::fromScriptValue(const QJSValue& object, HFActionEvent& event) {
     // not yet implemented
 }
 

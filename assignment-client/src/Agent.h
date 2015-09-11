@@ -14,7 +14,7 @@
 
 #include <vector>
 
-#include <QtScript/QScriptEngine>
+#include <QtQml/QJSEngine>
 #include <QtCore/QObject>
 #include <QtCore/QUrl>
 

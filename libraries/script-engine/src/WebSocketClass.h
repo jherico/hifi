@@ -13,7 +13,7 @@
 #define hifi_WebSocketClass_h
 
 #include <QObject>
-#include <QScriptEngine>
+#include <QtQml/QJSEngine>
 #include <QWebSocket>
 
 class WebSocketClass : public QObject {
@@ -22,10 +22,10 @@ class WebSocketClass : public QObject {
         Q_PROPERTY(ulong bufferedAmount READ getBufferedAmount)
         Q_PROPERTY(QString extensions READ getExtensions)
 
-        Q_PROPERTY(QScriptValue onclose READ getOnClose WRITE setOnClose)
-        Q_PROPERTY(QScriptValue onerror READ getOnError WRITE setOnError)
-        Q_PROPERTY(QScriptValue onmessage READ getOnMessage WRITE setOnMessage)
-        Q_PROPERTY(QScriptValue onopen READ getOnOpen WRITE setOnOpen)
+        Q_PROPERTY(QJSValue onclose READ getOnClose WRITE setOnClose)
+        Q_PROPERTY(QJSValue onerror READ getOnError WRITE setOnError)
+        Q_PROPERTY(QJSValue onmessage READ getOnMessage WRITE setOnMessage)
+        Q_PROPERTY(QJSValue onopen READ getOnOpen WRITE setOnOpen)
 
         Q_PROPERTY(QString protocol READ getProtocol)
         Q_PROPERTY(WebSocketClass::ReadyState readyState READ getReadyState)
@@ -37,11 +37,14 @@ class WebSocketClass : public QObject {
         Q_PROPERTY(WebSocketClass::ReadyState CLOSED READ getClosed CONSTANT)
 
 public:
-    WebSocketClass(QScriptEngine* engine, QString url);
-    WebSocketClass(QScriptEngine* engine, QWebSocket* qWebSocket);
+    WebSocketClass(QJSEngine* engine, QString url);
+    WebSocketClass(QJSEngine* engine, QWebSocket* qWebSocket);
     ~WebSocketClass();
 
-    static QScriptValue constructor(QScriptContext* context, QScriptEngine* engine);
+    // FIXME JSENGINE
+#if 0
+    static QJSValue constructor(QJSEngine* engine);
+#endif
 
     enum ReadyState {
         CONNECTING = 0,
@@ -87,20 +90,20 @@ public:
         }
     }
 
-    void setOnClose(QScriptValue eventFunction) { _onCloseEvent = eventFunction; }
-    QScriptValue getOnClose() { return _onCloseEvent; }
+    void setOnClose(QJSValue eventFunction) { _onCloseEvent = eventFunction; }
+    QJSValue getOnClose() { return _onCloseEvent; }
 
-    void setOnError(QScriptValue eventFunction) { _onErrorEvent = eventFunction; }
-    QScriptValue getOnError() { return _onErrorEvent; }
+    void setOnError(QJSValue eventFunction) { _onErrorEvent = eventFunction; }
+    QJSValue getOnError() { return _onErrorEvent; }
 
-    void setOnMessage(QScriptValue eventFunction) { _onMessageEvent = eventFunction; }
-    QScriptValue getOnMessage() { return _onMessageEvent; }
+    void setOnMessage(QJSValue eventFunction) { _onMessageEvent = eventFunction; }
+    QJSValue getOnMessage() { return _onMessageEvent; }
 
-    void setOnOpen(QScriptValue eventFunction) { _onOpenEvent = eventFunction; }
-    QScriptValue getOnOpen() { return _onOpenEvent; }
+    void setOnOpen(QJSValue eventFunction) { _onOpenEvent = eventFunction; }
+    QJSValue getOnOpen() { return _onOpenEvent; }
 
 public slots:
-    void send(QScriptValue message);
+    void send(QJSValue message);
 
     void close();
     void close(QWebSocketProtocol::CloseCode closeCode);
@@ -108,12 +111,12 @@ public slots:
 
 private:
     QWebSocket* _webSocket;
-    QScriptEngine* _engine;
+    QJSEngine* _engine;
 
-    QScriptValue _onCloseEvent;
-    QScriptValue _onErrorEvent;
-    QScriptValue _onMessageEvent;
-    QScriptValue _onOpenEvent;
+    QJSValue _onCloseEvent;
+    QJSValue _onErrorEvent;
+    QJSValue _onMessageEvent;
+    QJSValue _onOpenEvent;
 
     QString _binaryType;
 
@@ -130,13 +133,13 @@ private slots:
 Q_DECLARE_METATYPE(QWebSocketProtocol::CloseCode);
 Q_DECLARE_METATYPE(WebSocketClass::ReadyState);
 
-QScriptValue qWSCloseCodeToScriptValue(QScriptEngine* engine, const QWebSocketProtocol::CloseCode& closeCode);
-void qWSCloseCodeFromScriptValue(const QScriptValue& object, QWebSocketProtocol::CloseCode& closeCode);
+QJSValue qWSCloseCodeToScriptValue(QJSEngine* engine, const QWebSocketProtocol::CloseCode& closeCode);
+void qWSCloseCodeFromScriptValue(const QJSValue& object, QWebSocketProtocol::CloseCode& closeCode);
 
-QScriptValue webSocketToScriptValue(QScriptEngine* engine, WebSocketClass* const &in);
-void webSocketFromScriptValue(const QScriptValue &object, WebSocketClass* &out);
+QJSValue webSocketToScriptValue(QJSEngine* engine, WebSocketClass* const &in);
+void webSocketFromScriptValue(const QJSValue &object, WebSocketClass* &out);
 
-QScriptValue wscReadyStateToScriptValue(QScriptEngine* engine, const WebSocketClass::ReadyState& readyState);
-void wscReadyStateFromScriptValue(const QScriptValue& object, WebSocketClass::ReadyState& readyState);
+QJSValue wscReadyStateToScriptValue(QJSEngine* engine, const WebSocketClass::ReadyState& readyState);
+void wscReadyStateFromScriptValue(const QJSValue& object, WebSocketClass::ReadyState& readyState);
 
 #endif // hifi_WebSocketClass_h

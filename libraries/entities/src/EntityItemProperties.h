@@ -17,7 +17,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/extented_min_max.hpp>
 
-#include <QtScript/QScriptEngine>
+#include <QtQml/QJSEngine>
 #include <QtCore/QObject>
 #include <QVector>
 #include <QString>
@@ -41,7 +41,7 @@
 const quint64 UNKNOWN_CREATED_TIME = 0;
 
 /// A collection of properties of an entity item used in the scripting API. Translates between the actual properties of an
-/// entity and a JavaScript style hash/QScriptValue storing a set of properties. Used in scripting to set/get the complete
+/// entity and a JavaScript style hash/QJSValue storing a set of properties. Used in scripting to set/get the complete
 /// set of entity item properties via JavaScript hashes/QScriptValues
 /// all units for position, dimensions, etc are in meter units
 class EntityItemProperties {
@@ -64,8 +64,8 @@ public:
     EntityTypes::EntityType getType() const { return _type; }
     void setType(EntityTypes::EntityType type) { _type = type; }
 
-    virtual QScriptValue copyToScriptValue(QScriptEngine* engine, bool skipDefaults) const;
-    virtual void copyFromScriptValue(const QScriptValue& object, bool honorReadOnly);
+    virtual QJSValue copyToScriptValue(QJSEngine* engine, bool skipDefaults) const;
+    virtual void copyFromScriptValue(const QJSValue& object, bool honorReadOnly);
 
     // editing related features supported by all entities
     quint64 getLastEdited() const { return _lastEdited; }
@@ -262,10 +262,10 @@ private:
 };
 
 Q_DECLARE_METATYPE(EntityItemProperties);
-QScriptValue EntityItemPropertiesToScriptValue(QScriptEngine* engine, const EntityItemProperties& properties);
-QScriptValue EntityItemNonDefaultPropertiesToScriptValue(QScriptEngine* engine, const EntityItemProperties& properties);
-void EntityItemPropertiesFromScriptValueIgnoreReadOnly(const QScriptValue &object, EntityItemProperties& properties);
-void EntityItemPropertiesFromScriptValueHonorReadOnly(const QScriptValue &object, EntityItemProperties& properties);
+QJSValue EntityItemPropertiesToScriptValue(QJSEngine* engine, const EntityItemProperties& properties);
+QJSValue EntityItemNonDefaultPropertiesToScriptValue(QJSEngine* engine, const EntityItemProperties& properties);
+void EntityItemPropertiesFromScriptValueIgnoreReadOnly(const QJSValue &object, EntityItemProperties& properties);
+void EntityItemPropertiesFromScriptValueHonorReadOnly(const QJSValue &object, EntityItemProperties& properties);
 
 
 // define these inline here so the macros work

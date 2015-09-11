@@ -14,7 +14,7 @@
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QMessageBox>
-#include <QScriptValue>
+
 #include <QScrollArea>
 
 #include "Application.h"
@@ -40,7 +40,7 @@ WebWindowClass* WindowScriptingInterface::doCreateWebWindow(const QString& title
     return new WebWindowClass(title, url, width, height, isToolWindow);
 }
 
-QScriptValue WindowScriptingInterface::hasFocus() {
+QJSValue WindowScriptingInterface::hasFocus() {
     return Application::getInstance()->hasFocus();
 }
 
@@ -73,110 +73,110 @@ void WindowScriptingInterface::setCursorPosition(int x, int y) {
     QCursor::setPos(x, y);
 }
 
-QScriptValue WindowScriptingInterface::getCursorPositionX() {
+QJSValue WindowScriptingInterface::getCursorPositionX() {
     return QCursor::pos().x();
 }
 
-QScriptValue WindowScriptingInterface::getCursorPositionY() {
+QJSValue WindowScriptingInterface::getCursorPositionY() {
     return QCursor::pos().y();
 }
 
-QScriptValue WindowScriptingInterface::alert(const QString& message) {
-    QScriptValue retVal;
-    QMetaObject::invokeMethod(this, "showAlert", Qt::BlockingQueuedConnection, Q_RETURN_ARG(QScriptValue, retVal), Q_ARG(const QString&, message));
+QJSValue WindowScriptingInterface::alert(const QString& message) {
+    QJSValue retVal;
+    QMetaObject::invokeMethod(this, "showAlert", Qt::BlockingQueuedConnection, Q_RETURN_ARG(QJSValue, retVal), Q_ARG(const QString&, message));
     return retVal;
 }
 
-QScriptValue WindowScriptingInterface::confirm(const QString& message) {
-    QScriptValue retVal;
+QJSValue WindowScriptingInterface::confirm(const QString& message) {
+    QJSValue retVal;
     QMetaObject::invokeMethod(this, "showConfirm", Qt::BlockingQueuedConnection,
-                              Q_RETURN_ARG(QScriptValue, retVal), Q_ARG(const QString&, message));
+                              Q_RETURN_ARG(QJSValue, retVal), Q_ARG(const QString&, message));
     return retVal;
 }
 
-QScriptValue WindowScriptingInterface::form(const QString& title, QScriptValue form) {
-    QScriptValue retVal;
+QJSValue WindowScriptingInterface::form(const QString& title, QJSValue form) {
+    QJSValue retVal;
     QMetaObject::invokeMethod(this, "showForm", Qt::BlockingQueuedConnection,
-                              Q_RETURN_ARG(QScriptValue, retVal),
-                              Q_ARG(const QString&, title), Q_ARG(QScriptValue, form));
+                              Q_RETURN_ARG(QJSValue, retVal),
+                              Q_ARG(const QString&, title), Q_ARG(QJSValue, form));
     return retVal;
 }
 
-QScriptValue WindowScriptingInterface::prompt(const QString& message, const QString& defaultText) {
-    QScriptValue retVal;
+QJSValue WindowScriptingInterface::prompt(const QString& message, const QString& defaultText) {
+    QJSValue retVal;
     QMetaObject::invokeMethod(this, "showPrompt", Qt::BlockingQueuedConnection,
-                              Q_RETURN_ARG(QScriptValue, retVal),
+                              Q_RETURN_ARG(QJSValue, retVal),
                               Q_ARG(const QString&, message), Q_ARG(const QString&, defaultText));
     return retVal;
 }
 
-QScriptValue WindowScriptingInterface::browse(const QString& title, const QString& directory,  const QString& nameFilter) {
-    QScriptValue retVal;
+QJSValue WindowScriptingInterface::browse(const QString& title, const QString& directory,  const QString& nameFilter) {
+    QJSValue retVal;
     QMetaObject::invokeMethod(this, "showBrowse", Qt::BlockingQueuedConnection,
-                              Q_RETURN_ARG(QScriptValue, retVal),
+                              Q_RETURN_ARG(QJSValue, retVal),
                               Q_ARG(const QString&, title), Q_ARG(const QString&, directory), Q_ARG(const QString&, nameFilter));
     return retVal;
 }
 
-QScriptValue WindowScriptingInterface::save(const QString& title, const QString& directory,  const QString& nameFilter) {
-    QScriptValue retVal;
+QJSValue WindowScriptingInterface::save(const QString& title, const QString& directory,  const QString& nameFilter) {
+    QJSValue retVal;
     QMetaObject::invokeMethod(this, "showBrowse", Qt::BlockingQueuedConnection,
-                              Q_RETURN_ARG(QScriptValue, retVal),
+                              Q_RETURN_ARG(QJSValue, retVal),
                               Q_ARG(const QString&, title), Q_ARG(const QString&, directory), Q_ARG(const QString&, nameFilter),
                               Q_ARG(QFileDialog::AcceptMode, QFileDialog::AcceptSave));
     return retVal;
 }
 
-QScriptValue WindowScriptingInterface::s3Browse(const QString& nameFilter) {
-    QScriptValue retVal;
+QJSValue WindowScriptingInterface::s3Browse(const QString& nameFilter) {
+    QJSValue retVal;
     QMetaObject::invokeMethod(this, "showS3Browse", Qt::BlockingQueuedConnection,
-                              Q_RETURN_ARG(QScriptValue, retVal),
+                              Q_RETURN_ARG(QJSValue, retVal),
                               Q_ARG(const QString&, nameFilter));
     return retVal;
 }
 
-void WindowScriptingInterface::nonBlockingForm(const QString& title, QScriptValue form) {
+void WindowScriptingInterface::nonBlockingForm(const QString& title, QJSValue form) {
     QMetaObject::invokeMethod(this, "showNonBlockingForm", Qt::BlockingQueuedConnection,
-                              Q_ARG(const QString&, title), Q_ARG(QScriptValue, form));
+                              Q_ARG(const QString&, title), Q_ARG(QJSValue, form));
 }
 
-void WindowScriptingInterface::reloadNonBlockingForm(QScriptValue newValues) {
+void WindowScriptingInterface::reloadNonBlockingForm(QJSValue newValues) {
     QMetaObject::invokeMethod(this, "doReloadNonBlockingForm", Qt::BlockingQueuedConnection,
-                              Q_ARG(QScriptValue, newValues));
+                              Q_ARG(QJSValue, newValues));
 }
 
 
-QScriptValue WindowScriptingInterface::getNonBlockingFormResult(QScriptValue form) {
-    QScriptValue retVal;
+QJSValue WindowScriptingInterface::getNonBlockingFormResult(QJSValue form) {
+    QJSValue retVal;
     QMetaObject::invokeMethod(this, "doGetNonBlockingFormResult", Qt::BlockingQueuedConnection,
-                              Q_RETURN_ARG(QScriptValue, retVal),
-                              Q_ARG(QScriptValue, form));
+                              Q_RETURN_ARG(QJSValue, retVal),
+                              Q_ARG(QJSValue, form));
     return retVal;
 }
 
-QScriptValue WindowScriptingInterface::peekNonBlockingFormResult(QScriptValue form) {
-    QScriptValue retVal;
+QJSValue WindowScriptingInterface::peekNonBlockingFormResult(QJSValue form) {
+    QJSValue retVal;
     QMetaObject::invokeMethod(this, "doPeekNonBlockingFormResult", Qt::BlockingQueuedConnection,
-                              Q_RETURN_ARG(QScriptValue, retVal),
-                              Q_ARG(QScriptValue, form));
+                              Q_RETURN_ARG(QJSValue, retVal),
+                              Q_ARG(QJSValue, form));
     return retVal;
 }
 
 
 /// Display an alert box
 /// \param const QString& message message to display
-/// \return QScriptValue::UndefinedValue
-QScriptValue WindowScriptingInterface::showAlert(const QString& message) {
+/// \return QJSValue::UndefinedValue
+QJSValue WindowScriptingInterface::showAlert(const QString& message) {
     QMessageBox::warning(Application::getInstance()->getWindow(), "", message);
-    return QScriptValue::UndefinedValue;
+    return QJSValue();
 }
 
 /// Display a confirmation box with the options 'Yes' and 'No'
 /// \param const QString& message message to display
-/// \return QScriptValue `true` if 'Yes' was clicked, `false` otherwise
-QScriptValue WindowScriptingInterface::showConfirm(const QString& message) {
+/// \return QJSValue `true` if 'Yes' was clicked, `false` otherwise
+QJSValue WindowScriptingInterface::showConfirm(const QString& message) {
     QMessageBox::StandardButton response = QMessageBox::question(Application::getInstance()->getWindow(), "", message);
-    return QScriptValue(response == QMessageBox::Yes);
+    return QJSValue(response == QMessageBox::Yes);
 }
 
 void WindowScriptingInterface::chooseDirectory() {
@@ -217,8 +217,8 @@ QString WindowScriptingInterface::jsRegExp2QtRegExp(QString string) {
         .replace("\\/", "/");                  // No escaping of forward slash.
 }
 
-void WindowScriptingInterface::showNonBlockingForm(const QString& title, QScriptValue form) {
-    if (!form.isArray() || (form.isArray() && form.property("length").toInt32() <= 0)) {
+void WindowScriptingInterface::showNonBlockingForm(const QString& title, QJSValue form) {
+    if (!form.isArray() || (form.isArray() && form.property("length").toInt() <= 0)) {
         return;
     }
     
@@ -239,8 +239,8 @@ void WindowScriptingInterface::showNonBlockingForm(const QString& title, QScript
     _editDialog->show();
 }
 
-void WindowScriptingInterface::doReloadNonBlockingForm(QScriptValue newValues) {
-    if (!newValues.isArray() || (newValues.isArray() && newValues.property("length").toInt32() <= 0)) {
+void WindowScriptingInterface::doReloadNonBlockingForm(QJSValue newValues) {
+    if (!newValues.isArray() || (newValues.isArray() && newValues.property("length").toInt() <= 0)) {
         return;
     }
     
@@ -250,14 +250,14 @@ void WindowScriptingInterface::doReloadNonBlockingForm(QScriptValue newValues) {
         return;
     }
 
-    for (int i = 0; i < newValues.property("length").toInt32(); ++i) {
-        QScriptValue item = newValues.property(i);
+    for (int i = 0; i < newValues.property("length").toInt(); ++i) {
+        QJSValue item = newValues.property(i);
         
-        if (item.property("oldIndex").isValid()) {
-            int oldIndex = item.property("oldIndex").toInt32();
-            QScriptValue oldItem = _form.property(oldIndex);
-            if (oldItem.isValid()) {
-                QLineEdit* originalEdit = _edits[oldItem.property("editIndex").toInt32()];
+        if (!item.property("oldIndex").isUndefined()) {
+            int oldIndex = item.property("oldIndex").toInt();
+            QJSValue oldItem = _form.property(oldIndex);
+            if (!oldItem.isUndefined()) {
+                QLineEdit* originalEdit = _edits[oldItem.property("editIndex").toInt()];
                 originalEdit->setText(item.property("value").toString());
             }
         }
@@ -269,16 +269,16 @@ bool WindowScriptingInterface::nonBlockingFormActive() {
     return _nonBlockingFormActive;
 }
 
-QScriptValue WindowScriptingInterface::doPeekNonBlockingFormResult(QScriptValue array) {
-    QScriptValue retVal;
+QJSValue WindowScriptingInterface::doPeekNonBlockingFormResult(QJSValue array) {
+    QJSValue retVal;
     
     int e = -1;
     int d = -1;
     int c = -1;
     int h = -1;
-    for (int i = 0; i < _form.property("length").toInt32(); ++i) {
-        QScriptValue item = _form.property(i);
-        QScriptValue value = item.property("value");
+    for (int i = 0; i < _form.property("length").toInt(); ++i) {
+        QJSValue item = _form.property(i);
+        QJSValue value = item.property("value");
 
         if (item.property("button").toString() != "") {
             // Nothing to do
@@ -294,9 +294,9 @@ QScriptValue WindowScriptingInterface::doPeekNonBlockingFormResult(QScriptValue 
         } else if (item.property("options").isArray()) {
             c += 1;
             item.setProperty("value",
-                _combos.at(c)->currentIndex() < item.property("options").property("length").toInt32() ?
+                _combos.at(c)->currentIndex() < item.property("options").property("length").toInt() ?
                 item.property("options").property(_combos.at(c)->currentIndex()) :
-                array.engine()->undefinedValue()
+                QJSValue()
             );
             _form.setProperty(i, item);
         } else if (item.property("type").toString() == "checkbox") {
@@ -331,17 +331,17 @@ QScriptValue WindowScriptingInterface::doPeekNonBlockingFormResult(QScriptValue 
     return (_formResult == QDialog::Accepted);    
 }
 
-QScriptValue WindowScriptingInterface::doGetNonBlockingFormResult(QScriptValue array) {
-    QScriptValue retVal;
+QJSValue WindowScriptingInterface::doGetNonBlockingFormResult(QJSValue array) {
+    QJSValue retVal;
     
     if (_formResult == QDialog::Accepted) {
         int e = -1;
         int d = -1;
         int c = -1;
         int h = -1;
-        for (int i = 0; i < _form.property("length").toInt32(); ++i) {
-            QScriptValue item = _form.property(i);
-            QScriptValue value = item.property("value");
+        for (int i = 0; i < _form.property("length").toInt(); ++i) {
+            QJSValue item = _form.property(i);
+            QJSValue value = item.property("value");
 
             if (item.property("button").toString() != "") {
                 // Nothing to do
@@ -357,9 +357,9 @@ QScriptValue WindowScriptingInterface::doGetNonBlockingFormResult(QScriptValue a
             } else if (item.property("options").isArray()) {
                 c += 1;
                 item.setProperty("value",
-                    _combos.at(c)->currentIndex() < item.property("options").property("length").toInt32() ?
+                    _combos.at(c)->currentIndex() < item.property("options").property("length").toInt() ?
                     item.property("options").property(_combos.at(c)->currentIndex()) :
-                    array.engine()->undefinedValue()
+                    QJSValue()
                 );
                 _form.setProperty(i, item);
             } else if (item.property("type").toString() == "checkbox") {
@@ -393,7 +393,7 @@ QScriptValue WindowScriptingInterface::doGetNonBlockingFormResult(QScriptValue a
     
     delete _editDialog;
     _editDialog = NULL;
-    _form = QScriptValue();
+    _form = QJSValue();
     _edits.clear();
     _directories.clear();
     _combos.clear();
@@ -406,13 +406,13 @@ QScriptValue WindowScriptingInterface::doGetNonBlockingFormResult(QScriptValue a
 
 /// Display a form layout with an edit box
 /// \param const QString& title title to display
-/// \param const QScriptValue form to display as an array of objects:
+/// \param const QJSValue form to display as an array of objects:
 /// - label, value
 /// - label, directory, title, display regexp, validate regexp, error message
 /// - button ("Cancel")
-/// \return QScriptValue `true` if 'OK' was clicked, `false` otherwise
-QScriptValue WindowScriptingInterface::showForm(const QString& title, QScriptValue form) {
-    if (form.isArray() && form.property("length").toInt32() <= 0) {
+/// \return QJSValue `true` if 'OK' was clicked, `false` otherwise
+QJSValue WindowScriptingInterface::showForm(const QString& title, QJSValue form) {
+    if (form.isArray() && form.property("length").toInt() <= 0) {
         return false;
     }
     QDialog* editDialog = createForm(title, form);
@@ -424,9 +424,9 @@ QScriptValue WindowScriptingInterface::showForm(const QString& title, QScriptVal
         int d = -1;
         int c = -1;
         int h = -1;
-        for (int i = 0; i < form.property("length").toInt32(); ++i) {
-            QScriptValue item = form.property(i);
-            QScriptValue value = item.property("value");
+        for (int i = 0; i < form.property("length").toInt(); ++i) {
+            QJSValue item = form.property(i);
+            QJSValue value = item.property("value");
 
             if (item.property("button").toString() != "") {
                 // Nothing to do
@@ -442,9 +442,9 @@ QScriptValue WindowScriptingInterface::showForm(const QString& title, QScriptVal
             } else if (item.property("options").isArray()) {
                 c += 1;
                 item.setProperty("value", 
-                    _combos.at(c)->currentIndex() < item.property("options").property("length").toInt32() ?
+                    _combos.at(c)->currentIndex() < item.property("options").property("length").toInt() ?
                     item.property("options").property(_combos.at(c)->currentIndex()) :
-                    form.engine()->undefinedValue()
+                    QJSValue()
                 );
                 form.setProperty(i, item);
             } else if (item.property("type").toString() == "checkbox") {
@@ -486,7 +486,7 @@ QScriptValue WindowScriptingInterface::showForm(const QString& title, QScriptVal
 
 
 
-QDialog* WindowScriptingInterface::createForm(const QString& title, QScriptValue form) {
+QDialog* WindowScriptingInterface::createForm(const QString& title, QJSValue form) {
     QDialog* editDialog = new QDialog(Application::getInstance()->getWindow());
     editDialog->setWindowTitle(title);
 
@@ -509,8 +509,8 @@ QDialog* WindowScriptingInterface::createForm(const QString& title, QScriptValue
     
     area->setWidget(container);
     
-    for (int i = 0; i < form.property("length").toInt32(); ++i) {
-        QScriptValue item = form.property(i);
+    for (int i = 0; i < form.property("length").toInt(); ++i) {
+        QJSValue item = form.property(i);
 
         if (item.property("button").toString() != "") {
             cancelButton = cancelButton || item.property("button").toString().toLower() == "cancel";
@@ -559,7 +559,7 @@ QDialog* WindowScriptingInterface::createForm(const QString& title, QScriptValue
         } else if (item.property("options").isArray()) {
             QComboBox* combo = new QComboBox();
             combo->setMinimumWidth(200);
-            qint32 options_count = item.property("options").property("length").toInt32();
+            qint32 options_count = item.property("options").property("length").toInt();
             for (qint32 i = 0; i < options_count; i++) {
                 combo->addItem(item.property("options").property(i).toString());
             }
@@ -595,8 +595,8 @@ QDialog* WindowScriptingInterface::createForm(const QString& title, QScriptValue
 /// Display a prompt with a text box
 /// \param const QString& message message to display
 /// \param const QString& defaultText default text in the text box
-/// \return QScriptValue string text value in text box if the dialog was accepted, `null` otherwise.
-QScriptValue WindowScriptingInterface::showPrompt(const QString& message, const QString& defaultText) {
+/// \return QJSValue string text value in text box if the dialog was accepted, `null` otherwise.
+QJSValue WindowScriptingInterface::showPrompt(const QString& message, const QString& defaultText) {
     QInputDialog promptDialog(Application::getInstance()->getWindow());
     promptDialog.setWindowTitle("");
     promptDialog.setLabelText(message);
@@ -604,10 +604,10 @@ QScriptValue WindowScriptingInterface::showPrompt(const QString& message, const 
     promptDialog.setFixedSize(600, 200);
     
     if (promptDialog.exec() == QDialog::Accepted) {
-        return QScriptValue(promptDialog.textValue());
+        return QJSValue(promptDialog.textValue());
     }
     
-    return QScriptValue::NullValue;
+    return QJSValue::NullValue;
 }
 
 /// Display a file dialog.  If `directory` is an invalid file or directory the browser will start at the current
@@ -615,8 +615,8 @@ QScriptValue WindowScriptingInterface::showPrompt(const QString& message, const 
 /// \param const QString& title title of the window
 /// \param const QString& directory directory to start the file browser at
 /// \param const QString& nameFilter filter to filter filenames by - see `QFileDialog`
-/// \return QScriptValue file path as a string if one was selected, otherwise `QScriptValue::NullValue`
-QScriptValue WindowScriptingInterface::showBrowse(const QString& title, const QString& directory, const QString& nameFilter,
+/// \return QJSValue file path as a string if one was selected, otherwise `QJSValue::NullValue`
+QJSValue WindowScriptingInterface::showBrowse(const QString& title, const QString& directory, const QString& nameFilter,
                                                   QFileDialog::AcceptMode acceptMode) {
     // On OS X `directory` does not work as expected unless a file is included in the path, so we append a bogus
     // filename if the directory is valid.
@@ -635,15 +635,15 @@ QScriptValue WindowScriptingInterface::showBrowse(const QString& title, const QS
         fileDialog.selectFile(fileUrl.fileName());
     }
     if (fileDialog.exec()) {
-        return QScriptValue(fileDialog.selectedFiles().first());
+        return QJSValue(fileDialog.selectedFiles().first());
     }
-    return QScriptValue::NullValue;
+    return QJSValue::NullValue;
 }
 
 /// Display a browse window for S3 models
 /// \param const QString& nameFilter filter to filter filenames
-/// \return QScriptValue file path as a string if one was selected, otherwise `QScriptValue::NullValue`
-QScriptValue WindowScriptingInterface::showS3Browse(const QString& nameFilter) {
+/// \return QJSValue file path as a string if one was selected, otherwise `QJSValue::NullValue`
+QJSValue WindowScriptingInterface::showS3Browse(const QString& nameFilter) {
     ModelsBrowser browser(FSTReader::ENTITY_MODEL);
     if (nameFilter != "") {
         browser.setNameFilter(nameFilter);

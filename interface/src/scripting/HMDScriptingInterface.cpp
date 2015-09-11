@@ -30,7 +30,9 @@ bool HMDScriptingInterface::getHUDLookAtPosition3D(glm::vec3& result) const {
     return compositor.calculateRayUICollisionPoint(position, direction, result);
 }
 
-QScriptValue HMDScriptingInterface::getHUDLookAtPosition2D(QScriptContext* context, QScriptEngine* engine) {
+// FIXME JSENGINE
+#if 0
+QJSValue HMDScriptingInterface::getHUDLookAtPosition2D(QScriptContext* context, QJSEngine* engine) {
 
     glm::vec3 hudIntersection;
 
@@ -43,13 +45,14 @@ QScriptValue HMDScriptingInterface::getHUDLookAtPosition2D(QScriptContext* conte
         return qScriptValueFromValue<glm::vec2>(engine, Application::getInstance()->getApplicationCompositor()
                                                 .sphericalToOverlay(glm::vec2(eulers.y, -eulers.x)));
     }
-    return QScriptValue::NullValue;
+    return QJSValue::NullValue;
 }
 
-QScriptValue HMDScriptingInterface::getHUDLookAtPosition3D(QScriptContext* context, QScriptEngine* engine) {
+QJSValue HMDScriptingInterface::getHUDLookAtPosition3D(QScriptContext* context, QJSEngine* engine) {
     glm::vec3 result;
     if ((&HMDScriptingInterface::getInstance())->getHUDLookAtPosition3D(result)) {
         return qScriptValueFromValue<glm::vec3>(engine, result);
     }
-    return QScriptValue::NullValue;
+    return QJSValue::NullValue;
 }
+#endif

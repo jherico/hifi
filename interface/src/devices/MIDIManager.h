@@ -13,7 +13,7 @@
 #define hifi_MIDIManager_h
 
 #include <QtCore/QObject>
-#include <QtScript/QScriptEngine>
+#include <QtQml/QJSEngine>
 
 #include <MIDIEvent.h>
 

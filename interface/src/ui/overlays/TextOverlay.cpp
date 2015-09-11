@@ -156,17 +156,17 @@ void TextOverlay::render(RenderArgs* args) {
 }
 
 
-void TextOverlay::setProperties(const QScriptValue& properties) {
+void TextOverlay::setProperties(const QJSValue& properties) {
     Overlay2D::setProperties(properties);
     _qmlElement->setX(_bounds.left());
     _qmlElement->setY(_bounds.top());
     _qmlElement->setWidth(_bounds.width());
     _qmlElement->setHeight(_bounds.height());
     _qmlElement->settextColor(toQmlColor(vec4(toGlm(_color), _alpha)));
-    QScriptValue font = properties.property("font");
+    QJSValue font = properties.property("font");
     if (font.isObject()) {
-        if (font.property("size").isValid()) {
-            setFontSize(font.property("size").toInt32());
+        if (!font.property("size").isUndefined()) {
+            setFontSize(font.property("size").toInt());
         }
         QFont font(_qmlElement->fontFamily());
         font.setPixelSize(_qmlElement->fontSize());
@@ -174,33 +174,33 @@ void TextOverlay::setProperties(const QScriptValue& properties) {
         _qmlElement->setlineHeight(fm.lineSpacing() * 1.2);
     }
 
-    QScriptValue text = properties.property("text");
-    if (text.isValid()) {
+    QJSValue text = properties.property("text");
+    if (!text.isUndefined()) {
         setText(text.toVariant().toString());
     }
 
-    QScriptValue backgroundColor = properties.property("backgroundColor");
-    if (backgroundColor.isValid()) {
-        QScriptValue red = backgroundColor.property("red");
-        QScriptValue green = backgroundColor.property("green");
-        QScriptValue blue = backgroundColor.property("blue");
-        if (red.isValid() && green.isValid() && blue.isValid()) {
+    QJSValue backgroundColor = properties.property("backgroundColor");
+    if (!backgroundColor.isUndefined()) {
+        QJSValue red = backgroundColor.property("red");
+        QJSValue green = backgroundColor.property("green");
+        QJSValue blue = backgroundColor.property("blue");
+        if (!red.isUndefined() && !green.isUndefined() && !blue.isUndefined()) {
             _backgroundColor.red = red.toVariant().toInt();
             _backgroundColor.green = green.toVariant().toInt();
             _backgroundColor.blue = blue.toVariant().toInt();
         }
     }
 
-    if (properties.property("backgroundAlpha").isValid()) {
+    if (!properties.property("backgroundAlpha").isUndefined()) {
         _backgroundAlpha = properties.property("backgroundAlpha").toVariant().toFloat();
     }
     _qmlElement->setbackgroundColor(toQmlColor(vec4(toGlm(_backgroundColor), _backgroundAlpha)));
 
-    if (properties.property("leftMargin").isValid()) {
+    if (!properties.property("leftMargin").isUndefined()) {
         setLeftMargin(properties.property("leftMargin").toVariant().toInt());
     }
 
-    if (properties.property("topMargin").isValid()) {
+    if (!properties.property("topMargin").isUndefined()) {
         setTopMargin(properties.property("topMargin").toVariant().toInt());
     }
 }
@@ -209,9 +209,9 @@ TextOverlay* TextOverlay::createClone() const {
     return new TextOverlay(this);
 }
 
-QScriptValue TextOverlay::getProperty(const QString& property) {
+QJSValue TextOverlay::getProperty(const QString& property) {
     if (property == "font") {
-        QScriptValue font = _scriptEngine->newObject();
+        QJSValue font = _scriptEngine->newObject();
         font.setProperty("size", _fontSize);
         return font;
     }

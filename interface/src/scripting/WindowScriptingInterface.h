@@ -13,7 +13,7 @@
 #define hifi_WindowScriptingInterface_h
 
 #include <QObject>
-#include <QScriptValue>
+
 #include <QString>
 #include <QFileDialog>
 #include <QComboBox>
@@ -37,25 +37,25 @@ public:
     bool isCursorVisible() const;
 
 public slots:
-    QScriptValue getCursorPositionX();
-    QScriptValue getCursorPositionY();
+    QJSValue getCursorPositionX();
+    QJSValue getCursorPositionY();
     void setCursorPosition(int x, int y);
     void setCursorVisible(bool visible);
-    QScriptValue hasFocus();
+    QJSValue hasFocus();
     void setFocus();
     void raiseMainWindow();
-    QScriptValue alert(const QString& message = "");
-    QScriptValue confirm(const QString& message = "");
-    QScriptValue form(const QString& title, QScriptValue array);
-    QScriptValue prompt(const QString& message = "", const QString& defaultText = "");
-    QScriptValue browse(const QString& title = "", const QString& directory = "",  const QString& nameFilter = "");
-    QScriptValue save(const QString& title = "", const QString& directory = "",  const QString& nameFilter = "");
-    QScriptValue s3Browse(const QString& nameFilter = "");
+    QJSValue alert(const QString& message = "");
+    QJSValue confirm(const QString& message = "");
+    QJSValue form(const QString& title, QJSValue array);
+    QJSValue prompt(const QString& message = "", const QString& defaultText = "");
+    QJSValue browse(const QString& title = "", const QString& directory = "",  const QString& nameFilter = "");
+    QJSValue save(const QString& title = "", const QString& directory = "",  const QString& nameFilter = "");
+    QJSValue s3Browse(const QString& nameFilter = "");
 
-    void nonBlockingForm(const QString& title, QScriptValue array);
-    void reloadNonBlockingForm(QScriptValue array);
-    QScriptValue getNonBlockingFormResult(QScriptValue array);
-    QScriptValue peekNonBlockingFormResult(QScriptValue array);
+    void nonBlockingForm(const QString& title, QJSValue array);
+    void reloadNonBlockingForm(QJSValue array);
+    QJSValue getNonBlockingFormResult(QJSValue array);
+    QJSValue peekNonBlockingFormResult(QJSValue array);
 
 signals:
     void domainChanged(const QString& domainHostname);
@@ -65,19 +65,19 @@ signals:
     void domainConnectionRefused(const QString& reason);
 
 private slots:
-    QScriptValue showAlert(const QString& message);
-    QScriptValue showConfirm(const QString& message);
-    QScriptValue showForm(const QString& title, QScriptValue form);
-    QScriptValue showPrompt(const QString& message, const QString& defaultText);
-    QScriptValue showBrowse(const QString& title, const QString& directory, const QString& nameFilter,
+    QJSValue showAlert(const QString& message);
+    QJSValue showConfirm(const QString& message);
+    QJSValue showForm(const QString& title, QJSValue form);
+    QJSValue showPrompt(const QString& message, const QString& defaultText);
+    QJSValue showBrowse(const QString& title, const QString& directory, const QString& nameFilter,
                             QFileDialog::AcceptMode acceptMode = QFileDialog::AcceptOpen);
-    QScriptValue showS3Browse(const QString& nameFilter);
+    QJSValue showS3Browse(const QString& nameFilter);
 
-    void showNonBlockingForm(const QString& title, QScriptValue array);
-    void doReloadNonBlockingForm(QScriptValue array);
+    void showNonBlockingForm(const QString& title, QJSValue array);
+    void doReloadNonBlockingForm(QJSValue array);
     bool nonBlockingFormActive();
-    QScriptValue doGetNonBlockingFormResult(QScriptValue array);
-    QScriptValue doPeekNonBlockingFormResult(QScriptValue array);
+    QJSValue doGetNonBlockingFormResult(QJSValue array);
+    QJSValue doPeekNonBlockingFormResult(QJSValue array);
 
     void chooseDirectory();
     void inlineButtonClicked();
@@ -89,10 +89,10 @@ private slots:
     
 private:
     QString jsRegExp2QtRegExp(QString string);
-    QDialog* createForm(const QString& title, QScriptValue form);
+    QDialog* createForm(const QString& title, QJSValue form);
     
     QDialog* _editDialog;
-    QScriptValue _form;
+    QJSValue _form;
     bool _nonBlockingFormActive;
     int _formResult;
     QVector<QComboBox*> _combos;

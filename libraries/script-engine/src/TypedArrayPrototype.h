@@ -14,20 +14,24 @@
 
 #include "ArrayBufferViewClass.h"
 
+// FIXME JSENGINE
+#if 0
 class TypedArrayPrototype : public QObject, public QScriptable {
     Q_OBJECT
 public:
     TypedArrayPrototype(QObject* parent = NULL);
     
 public slots:
-    void set(QScriptValue array, qint32 offset = 0);
-    QScriptValue subarray(qint32 begin);
-    QScriptValue subarray(qint32 begin, qint32 end);
+    void set(QJSValue array, qint32 offset = 0);
+    QJSValue subarray(qint32 begin);
+    QJSValue subarray(qint32 begin, qint32 end);
     
-    QScriptValue get(quint32 index);
-    void set(quint32 index, QScriptValue& value);
+    QJSValue get(quint32 index);
+    void set(quint32 index, QJSValue& value);
 private:
     QByteArray* thisArrayBuffer() const;
 };
+
+#endif
 
 #endif // hifi_TypedArrayPrototype_h

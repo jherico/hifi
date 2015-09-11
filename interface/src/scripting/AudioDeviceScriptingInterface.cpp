@@ -93,3 +93,10 @@ void AudioDeviceScriptingInterface::toggleMute() {
 bool AudioDeviceScriptingInterface::getMuted() {
     return DependencyManager::get<AudioClient>()->isMuted();
 }
+
+
+QJSValue AudioDeviceScriptingInterface::newAudioEffectOptions() {
+    QJSEngine* engine = nullptr;
+    QObject* object = new AudioEffectOptions();
+    return engine->newQObject(object);
+}

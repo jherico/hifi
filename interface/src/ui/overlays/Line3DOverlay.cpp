@@ -63,47 +63,43 @@ void Line3DOverlay::render(RenderArgs* args) {
     }
 }
 
-void Line3DOverlay::setProperties(const QScriptValue& properties) {
+void Line3DOverlay::setProperties(const QJSValue& properties) {
     Base3DOverlay::setProperties(properties);
 
-    QScriptValue start = properties.property("start");
+    QJSValue start = properties.property("start");
     // if "start" property was not there, check to see if they included aliases: startPoint
-    if (!start.isValid()) {
+    if (start.isUndefined()) {
         start = properties.property("startPoint");
-    }
-    if (start.isValid()) {
-        QScriptValue x = start.property("x");
-        QScriptValue y = start.property("y");
-        QScriptValue z = start.property("z");
-        if (x.isValid() && y.isValid() && z.isValid()) {
+    } 
+    if (!start.isUndefined()) {
+        QJSValue x = start.property("x");
+        QJSValue y = start.property("y");
+        QJSValue z = start.property("z");
+        if (!x.isUndefined() && !y.isUndefined() && !z.isUndefined()) {
             glm::vec3 newStart;
-            newStart.x = x.toVariant().toFloat();
-            newStart.y = y.toVariant().toFloat();
-            newStart.z = z.toVariant().toFloat();
+            vec3FromScriptValue(start, newStart);
             setStart(newStart);
         }
     }
 
-    QScriptValue end = properties.property("end");
+    QJSValue end = properties.property("end");
     // if "end" property was not there, check to see if they included aliases: endPoint
-    if (!end.isValid()) {
+    if (end.isUndefined()) {
         end = properties.property("endPoint");
     }
-    if (end.isValid()) {
-        QScriptValue x = end.property("x");
-        QScriptValue y = end.property("y");
-        QScriptValue z = end.property("z");
-        if (x.isValid() && y.isValid() && z.isValid()) {
+    if (!end.isUndefined()) {
+        QJSValue x = end.property("x");
+        QJSValue y = end.property("y");
+        QJSValue z = end.property("z");
+        if (!x.isUndefined() && !y.isUndefined() && !z.isUndefined()) {
             glm::vec3 newEnd;
-            newEnd.x = x.toVariant().toFloat();
-            newEnd.y = y.toVariant().toFloat();
-            newEnd.z = z.toVariant().toFloat();
+            vec3FromScriptValue(start, newEnd);
             setEnd(newEnd);
         }
     }
 }
 
-QScriptValue Line3DOverlay::getProperty(const QString& property) {
+QJSValue Line3DOverlay::getProperty(const QString& property) {
     if (property == "end" || property == "endPoint" || property == "p2") {
         return vec3toScriptValue(_scriptEngine, _end);
     }

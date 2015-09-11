@@ -13,7 +13,7 @@
 #define hifi_HFActionEvent_h
 
 
-#include <qscriptengine.h>
+#include <QtQml/QJSEngine.h>
 
 #include <RegisteredMetaTypes.h>
 
@@ -27,8 +27,8 @@ public:
     static QEvent::Type startType();
     static QEvent::Type endType();
     
-    static QScriptValue toScriptValue(QScriptEngine* engine, const HFActionEvent& event);
-    static void fromScriptValue(const QScriptValue& object, HFActionEvent& event);
+    static QJSValue toScriptValue(QJSEngine* engine, const HFActionEvent& event);
+    static void fromScriptValue(const QJSValue& object, HFActionEvent& event);
     
     PickRay actionRay;
 };

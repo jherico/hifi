@@ -14,7 +14,7 @@
 
 #include <QUndoCommand>
 #include <QUndoStack>
-#include <QScriptValue>
+
 
 class UndoStackScriptingInterface : public QObject {
     Q_OBJECT
@@ -22,7 +22,7 @@ public:
     UndoStackScriptingInterface(QUndoStack* undoStack);
 
 public slots:
-    void pushCommand(QScriptValue undoFunction, QScriptValue undoData, QScriptValue redoFunction, QScriptValue redoData);
+    void pushCommand(QJSValue undoFunction, QJSValue undoData, QJSValue redoFunction, QJSValue redoData);
 
 private:
     QUndoStack* _undoStack;
@@ -31,7 +31,7 @@ private:
 class ScriptUndoCommand : public QObject, public QUndoCommand {
     Q_OBJECT
 public:
-    ScriptUndoCommand(QScriptValue undoFunction, QScriptValue undoData, QScriptValue redoFunction, QScriptValue redoData);
+    ScriptUndoCommand(QJSValue undoFunction, QJSValue undoData, QJSValue redoFunction, QJSValue redoData);
 
     virtual void undo();
     virtual void redo();
@@ -44,10 +44,10 @@ public slots:
 
 private:
     bool _hasRedone;
-    QScriptValue _undoFunction;
-    QScriptValue _undoData;
-    QScriptValue _redoFunction;
-    QScriptValue _redoData;
+    QJSValue _undoFunction;
+    QJSValue _undoData;
+    QJSValue _redoFunction;
+    QJSValue _redoData;
 };
 
 #endif // hifi_UndoStackScriptingInterface_h

@@ -10,9 +10,9 @@
 //
 
 #include <QVariant>
-#include <QScriptValue>
-#include <QScriptEngine>
 
-QScriptValue variantToScriptValue(QVariant& qValue, QScriptEngine& scriptEngine);
-QScriptValue variantMapToScriptValue(QVariantMap& variantMap, QScriptEngine& scriptEngine);
-QScriptValue variantListToScriptValue(QVariantList& variantList, QScriptEngine& scriptEngine);
+#include <QtQml/QJSEngine>
+
+QJSValue variantToScriptValue(QVariant& qValue, QJSEngine& scriptEngine);
+QJSValue variantMapToScriptValue(QVariantMap& variantMap, QJSEngine& scriptEngine);
+QJSValue variantListToScriptValue(QVariantList& variantList, QJSEngine& scriptEngine);

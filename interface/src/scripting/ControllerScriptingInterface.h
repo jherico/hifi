@@ -56,7 +56,7 @@ class ControllerScriptingInterface : public AbstractControllerScriptingInterface
 public:    
     ControllerScriptingInterface();
     
-    virtual void registerControllerTypes(QScriptEngine* engine);
+    virtual void registerControllerTypes(QJSEngine* engine);
     
     void emitKeyPressEvent(QKeyEvent* event) { emit keyPressEvent(KeyEvent(*event)); }
     void emitKeyReleaseEvent(QKeyEvent* event) { emit keyReleaseEvent(KeyEvent(*event)); }

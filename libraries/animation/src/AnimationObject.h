@@ -13,12 +13,13 @@
 #define hifi_AnimationObject_h
 
 #include <QObject>
-#include <QScriptable>
 
 #include <FBXReader.h>
 
-class QScriptEngine;
+class QJSEngine;
 
+// FIXME JSENGINE
+#if 0
 /// Scriptable wrapper for animation pointers.
 class AnimationObject : public QObject, protected QScriptable {
     Q_OBJECT
@@ -41,7 +42,8 @@ public:
     
     Q_INVOKABLE QVector<glm::quat> getRotations() const;
 };
+#endif
 
-void registerAnimationTypes(QScriptEngine* engine);
+void registerAnimationTypes(QJSEngine* engine);
 
 #endif // hifi_AnimationObject_h

@@ -13,7 +13,9 @@
 #define hifi_DataViewPrototype_h
 
 #include <QtCore/QObject>
-#include <QtScript/QScriptable>
+
+// FIXME JSENGINE
+#if 0
 
 class DataViewPrototype : public QObject, public QScriptable {
     Q_OBJECT
@@ -37,8 +39,8 @@ public slots:
     quint32 getUint16(qint32 byteOffset, bool littleEndian = false);
     qint32 getInt32(qint32 byteOffset, bool littleEndian = false);
     quint32 getUint32(qint32 byteOffset, bool littleEndian = false);
-    QScriptValue getFloat32(qint32 byteOffset, bool littleEndian = false);
-    QScriptValue getFloat64(qint32 byteOffset, bool littleEndian = false);
+    QJSValue getFloat32(qint32 byteOffset, bool littleEndian = false);
+    QJSValue getFloat64(qint32 byteOffset, bool littleEndian = false);
     
     // Stores a value of the given type at the specified byte offset
     // from the start of the view. There is no alignment constraint;
@@ -64,5 +66,6 @@ private:
     QByteArray* thisArrayBuffer() const;
     bool realOffset(qint32& offset, size_t size) const;
 };
+#endif
 
 #endif // hifi_DataViewPrototype_h

@@ -50,9 +50,9 @@ public:
     void setTopMargin(int margin);
     void setFontSize(int fontSize);
 
-    virtual void setProperties(const QScriptValue& properties);
+    virtual void setProperties(const QJSValue& properties);
     virtual TextOverlay* createClone() const;
-    virtual QScriptValue getProperty(const QString& property);
+    virtual QJSValue getProperty(const QString& property);
 
     QSizeF textSize(const QString& text) const;  // Pixels
 

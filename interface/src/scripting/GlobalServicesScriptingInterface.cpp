@@ -93,10 +93,10 @@ DownloadInfoResult::DownloadInfoResult() :
 {
 }
 
-QScriptValue DownloadInfoResultToScriptValue(QScriptEngine* engine, const DownloadInfoResult& result) {
-    QScriptValue object = engine->newObject();
+QJSValue DownloadInfoResultToScriptValue(QJSEngine* engine, const DownloadInfoResult& result) {
+    QJSValue object = engine->newObject();
 
-    QScriptValue array = engine->newArray(result.downloading.count());
+    QJSValue array = engine->newArray(result.downloading.count());
     for (int i = 0; i < result.downloading.count(); i += 1) {
         array.setProperty(i, result.downloading[i]);
     }
@@ -106,7 +106,7 @@ QScriptValue DownloadInfoResultToScriptValue(QScriptEngine* engine, const Downlo
     return object;
 }
 
-void DownloadInfoResultFromScriptValue(const QScriptValue& object, DownloadInfoResult& result) {
+void DownloadInfoResultFromScriptValue(const QJSValue& object, DownloadInfoResult& result) {
     QList<QVariant> downloading = object.property("downloading").toVariant().toList();
     result.downloading.clear();
     for (int i = 0; i < downloading.count(); i += 1) {

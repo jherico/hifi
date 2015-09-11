@@ -21,7 +21,7 @@ static const QString TAIL_LEVEL_HANDLE = "tailLevel";
 static const QString DRY_LEVEL_HANDLE = "dryLevel";
 static const QString WET_LEVEL_HANDLE = "wetLevel";
 
-AudioEffectOptions::AudioEffectOptions(QScriptValue arguments) :
+AudioEffectOptions::AudioEffectOptions(QJSValue arguments) :
     _maxRoomSize(50.0f),
     _roomSize(50.0f),
     _reverbTime(4.0f),
@@ -83,6 +83,3 @@ AudioEffectOptions& AudioEffectOptions::operator=(const AudioEffectOptions &othe
     return *this;
 }
 
-QScriptValue AudioEffectOptions::constructor(QScriptContext* context, QScriptEngine* engine) {
-    return engine->newQObject(new AudioEffectOptions(context->argument(0)));
-}

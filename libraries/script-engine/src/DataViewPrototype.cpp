@@ -18,11 +18,14 @@
 
 Q_DECLARE_METATYPE(QByteArray*)
 
+// FIXME JSENGINE
+#if 0
+
 DataViewPrototype::DataViewPrototype(QObject* parent) : QObject(parent) {
 }
 
 QByteArray* DataViewPrototype::thisArrayBuffer() const {
-    QScriptValue bufferObject = thisObject().data().property(BUFFER_PROPERTY_NAME);
+    QJSValue bufferObject = thisObject().data().property(BUFFER_PROPERTY_NAME);
     return qscriptvalue_cast<QByteArray*>(bufferObject.data());
 }
 
@@ -118,7 +121,7 @@ quint32 DataViewPrototype::getUint32(qint32 byteOffset, bool littleEndian) {
     return 0;
 }
 
-QScriptValue DataViewPrototype::getFloat32(qint32 byteOffset, bool littleEndian) {
+QJSValue DataViewPrototype::getFloat32(qint32 byteOffset, bool littleEndian) {
     if (realOffset(byteOffset, sizeof(float))) {
         QDataStream stream(*thisArrayBuffer());
         stream.skipRawData(byteOffset);
@@ -128,16 +131,16 @@ QScriptValue DataViewPrototype::getFloat32(qint32 byteOffset, bool littleEndian)
         float result;
         stream >> result;
         if (isNaN(result)) {
-            return QScriptValue();
+            return QJSValue();
         }
         
-        return QScriptValue(result);
+        return QJSValue(result);
     }
     thisObject().engine()->evaluate("throw \"RangeError: byteOffset out of range\"");
-    return QScriptValue();
+    return QJSValue();
 }
 
-QScriptValue DataViewPrototype::getFloat64(qint32 byteOffset, bool littleEndian) {
+QJSValue DataViewPrototype::getFloat64(qint32 byteOffset, bool littleEndian) {
     if (realOffset(byteOffset, sizeof(double))) {
         QDataStream stream(*thisArrayBuffer());
         stream.skipRawData(byteOffset);
@@ -147,13 +150,13 @@ QScriptValue DataViewPrototype::getFloat64(qint32 byteOffset, bool littleEndian)
         double result;
         stream >> result;
         if (isNaN(result)) {
-            return QScriptValue();
+            return QJSValue();
         }
         
         return result;
     }
     thisObject().engine()->evaluate("throw \"RangeError: byteOffset out of range\"");
-    return QScriptValue();
+    return QJSValue();
 }
 
 void DataViewPrototype::setInt8(qint32 byteOffset, qint32 value) {
@@ -253,3 +256,4 @@ void DataViewPrototype::setFloat64(qint32 byteOffset, double value, bool littleE
 }
 
 
+#endif

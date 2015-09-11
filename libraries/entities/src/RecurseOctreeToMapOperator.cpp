@@ -14,7 +14,7 @@
 
 RecurseOctreeToMapOperator::RecurseOctreeToMapOperator(QVariantMap& map,
                                                        OctreeElementPointer top,
-                                                       QScriptEngine* engine,
+                                                       QJSEngine* engine,
                                                        bool skipDefaultValues) :
         RecurseOctreeOperator(),
         _map(map),
@@ -47,7 +47,7 @@ bool RecurseOctreeToMapOperator::postRecursion(OctreeElementPointer element) {
 
     entityTreeElement->forEachEntity([&](EntityItemPointer entityItem) {
         EntityItemProperties properties = entityItem->getProperties();
-        QScriptValue qScriptValues;
+        QJSValue qScriptValues;
         if (_skipDefaultValues) {
             qScriptValues = EntityItemNonDefaultPropertiesToScriptValue(_engine, properties);
         } else {

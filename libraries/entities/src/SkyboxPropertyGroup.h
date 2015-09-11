@@ -12,7 +12,7 @@
 #ifndef hifi_SkyboxPropertyGroup_h
 #define hifi_SkyboxPropertyGroup_h
 
-#include <QtScript/QScriptEngine>
+#include <QtQml/QJSEngine>
 
 #include "PropertyGroup.h"
 #include "EntityItemPropertiesMacros.h"
@@ -33,8 +33,8 @@ public:
     virtual ~SkyboxPropertyGroup() {}
 
     // EntityItemProperty related helpers
-    virtual void copyToScriptValue(QScriptValue& properties, QScriptEngine* engine, bool skipDefaults, EntityItemProperties& defaultEntityProperties) const;
-    virtual void copyFromScriptValue(const QScriptValue& object, bool& _defaultSettings);
+    virtual void copyToScriptValue(QJSValue& properties, QJSEngine* engine, bool skipDefaults, EntityItemProperties& defaultEntityProperties) const;
+    virtual void copyFromScriptValue(const QJSValue& object, bool& _defaultSettings);
     virtual void debugDump() const;
 
     virtual bool appentToEditPacket(OctreePacketData* packetData,                                     

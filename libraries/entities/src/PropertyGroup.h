@@ -12,7 +12,7 @@
 #ifndef hifi_PropertyGroup_h
 #define hifi_PropertyGroup_h
 
-#include <QtScript/QScriptEngine>
+#include <QtQml/QJSEngine>
 
 //#include "EntityItemProperties.h"
 #include "EntityPropertyFlags.h"
@@ -55,8 +55,8 @@ public:
     virtual ~PropertyGroup() {}
 
     // EntityItemProperty related helpers
-    virtual void copyToScriptValue(QScriptValue& properties, QScriptEngine* engine, bool skipDefaults, EntityItemProperties& defaultEntityProperties) const = 0;
-    virtual void copyFromScriptValue(const QScriptValue& object, bool& _defaultSettings) = 0;
+    virtual void copyToScriptValue(QJSValue& properties, QJSEngine* engine, bool skipDefaults, EntityItemProperties& defaultEntityProperties) const = 0;
+    virtual void copyFromScriptValue(const QJSValue& object, bool& _defaultSettings) = 0;
     virtual void debugDump() const { }
 
     virtual bool appentToEditPacket(OctreePacketData* packetData,                                     

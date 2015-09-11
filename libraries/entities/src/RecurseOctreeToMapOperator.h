@@ -13,13 +13,13 @@
 
 class RecurseOctreeToMapOperator : public RecurseOctreeOperator {
 public:
-    RecurseOctreeToMapOperator(QVariantMap& map, OctreeElementPointer top, QScriptEngine* engine, bool skipDefaultValues);
+    RecurseOctreeToMapOperator(QVariantMap& map, OctreeElementPointer top, QJSEngine* engine, bool skipDefaultValues);
     bool preRecursion(OctreeElementPointer element);
     bool postRecursion(OctreeElementPointer element);
  private:
     QVariantMap& _map;
     OctreeElementPointer _top;
-    QScriptEngine* _engine;
+    QJSEngine* _engine;
     bool _withinTop;
     bool _skipDefaultValues;
 };

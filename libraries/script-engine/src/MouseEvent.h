@@ -19,10 +19,10 @@ public:
     MouseEvent();
     MouseEvent(const QMouseEvent& event, const unsigned int deviceID = 0);
     
-    static QScriptValue toScriptValue(QScriptEngine* engine, const MouseEvent& event);
-    static void fromScriptValue(const QScriptValue& object, MouseEvent& event);
+    static QJSValue toScriptValue(QJSEngine* engine, const MouseEvent& event);
+    static void fromScriptValue(const QJSValue& object, MouseEvent& event);
 
-    QScriptValue toScriptValue(QScriptEngine* engine) const { return MouseEvent::toScriptValue(engine, *this); }
+    QJSValue toScriptValue(QJSEngine* engine) const { return MouseEvent::toScriptValue(engine, *this); }
     
     int x;
     int y;

@@ -30,7 +30,7 @@ class AvatarManager : public AvatarHashMap {
 
 public:
     /// Registers the script types associated with the avatar manager.
-    static void registerMetaTypes(QScriptEngine* engine);
+    static void registerMetaTypes(QJSEngine* engine);
 
     void init();
 

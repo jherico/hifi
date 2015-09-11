@@ -143,8 +143,8 @@ AnimationDetails::AnimationDetails(QString role, QUrl url, float fps, float prio
 }
 
 
-QScriptValue animationDetailsToScriptValue(QScriptEngine* engine, const AnimationDetails& details) {
-    QScriptValue obj = engine->newObject();
+QJSValue animationDetailsToScriptValue(QJSEngine* engine, const AnimationDetails& details) {
+    QJSValue obj = engine->newObject();
     obj.setProperty("role", details.role);
     obj.setProperty("url", details.url.toString());
     obj.setProperty("fps", details.fps);
@@ -159,7 +159,7 @@ QScriptValue animationDetailsToScriptValue(QScriptEngine* engine, const Animatio
     return obj;
 }
 
-void animationDetailsFromScriptValue(const QScriptValue& object, AnimationDetails& details) {
+void animationDetailsFromScriptValue(const QJSValue& object, AnimationDetails& details) {
     // nothing for now...
 }
 

@@ -14,6 +14,8 @@
 
 #include "ArrayBufferViewClass.h"
 
+#if 0
+
 static const QString BYTES_PER_ELEMENT_PROPERTY_NAME = "BYTES_PER_ELEMENT";
 static const QString LENGTH_PROPERTY_NAME = "length";
 
@@ -31,29 +33,29 @@ class TypedArray : public ArrayBufferViewClass {
     Q_OBJECT
 public:
     TypedArray(ScriptEngine* scriptEngine, QString name);
-    virtual QScriptValue newInstance(quint32 length);
-    virtual QScriptValue newInstance(QScriptValue array);
-    virtual QScriptValue newInstance(QScriptValue buffer, quint32 byteOffset, quint32 length);
+    virtual QJSValue newInstance(quint32 length);
+    virtual QJSValue newInstance(QJSValue array);
+    virtual QJSValue newInstance(QJSValue buffer, quint32 byteOffset, quint32 length);
     
-    virtual QueryFlags queryProperty(const QScriptValue& object,
+    virtual QueryFlags queryProperty(const QJSValue& object,
                              const QScriptString& name,
                              QueryFlags flags, uint* id);
-    virtual QScriptValue property(const QScriptValue& object,
+    virtual QJSValue property(const QJSValue& object,
                                   const QScriptString& name, uint id);
-    virtual void setProperty(QScriptValue& object, const QScriptString& name, uint id, const QScriptValue& value) = 0;
-    virtual QScriptValue::PropertyFlags propertyFlags(const QScriptValue& object,
+    virtual void setProperty(QJSValue& object, const QScriptString& name, uint id, const QJSValue& value) = 0;
+    virtual QJSValue::PropertyFlags propertyFlags(const QJSValue& object,
                                                       const QScriptString& name, uint id);
     
     QString name() const;
-    QScriptValue prototype() const;
+    QJSValue prototype() const;
     
 protected:
-    static QScriptValue construct(QScriptContext* context, QScriptEngine* engine);
+    static QJSValue construct(QScriptContext* context, QJSEngine* engine);
     
     void setBytesPerElement(quint32 bytesPerElement);
     
-    QScriptValue _proto;
-    QScriptValue _ctor;
+    QJSValue _proto;
+    QJSValue _ctor;
     
     QScriptString _name;
     QScriptString _bytesPerElementName;
@@ -69,8 +71,8 @@ class Int8ArrayClass : public TypedArray {
 public:
     Int8ArrayClass(ScriptEngine* scriptEngine);
     
-    QScriptValue property(const QScriptValue& object, const QScriptString& name, uint id);
-    void setProperty(QScriptValue& object, const QScriptString& name, uint id, const QScriptValue& value);
+    QJSValue property(const QJSValue& object, const QScriptString& name, uint id);
+    void setProperty(QJSValue& object, const QScriptString& name, uint id, const QJSValue& value);
 };
 
 class Uint8ArrayClass : public TypedArray {
@@ -78,8 +80,8 @@ class Uint8ArrayClass : public TypedArray {
 public:
     Uint8ArrayClass(ScriptEngine* scriptEngine);
     
-    QScriptValue property(const QScriptValue& object, const QScriptString& name, uint id);
-    void setProperty(QScriptValue& object, const QScriptString& name, uint id, const QScriptValue& value);
+    QJSValue property(const QJSValue& object, const QScriptString& name, uint id);
+    void setProperty(QJSValue& object, const QScriptString& name, uint id, const QJSValue& value);
 };
 
 class Uint8ClampedArrayClass : public TypedArray {
@@ -87,8 +89,8 @@ class Uint8ClampedArrayClass : public TypedArray {
 public:
     Uint8ClampedArrayClass(ScriptEngine* scriptEngine);
     
-    QScriptValue property(const QScriptValue& object, const QScriptString& name, uint id);
-    void setProperty(QScriptValue& object, const QScriptString& name, uint id, const QScriptValue& value);
+    QJSValue property(const QJSValue& object, const QScriptString& name, uint id);
+    void setProperty(QJSValue& object, const QScriptString& name, uint id, const QJSValue& value);
 };
 
 class Int16ArrayClass : public TypedArray {
@@ -96,8 +98,8 @@ class Int16ArrayClass : public TypedArray {
 public:
     Int16ArrayClass(ScriptEngine* scriptEngine);
     
-    QScriptValue property(const QScriptValue& object, const QScriptString& name, uint id);
-    void setProperty(QScriptValue& object, const QScriptString& name, uint id, const QScriptValue& value);
+    QJSValue property(const QJSValue& object, const QScriptString& name, uint id);
+    void setProperty(QJSValue& object, const QScriptString& name, uint id, const QJSValue& value);
 };
 
 class Uint16ArrayClass : public TypedArray {
@@ -105,8 +107,8 @@ class Uint16ArrayClass : public TypedArray {
 public:
     Uint16ArrayClass(ScriptEngine* scriptEngine);
     
-    QScriptValue property(const QScriptValue& object, const QScriptString& name, uint id);
-    void setProperty(QScriptValue& object, const QScriptString& name, uint id, const QScriptValue& value);
+    QJSValue property(const QJSValue& object, const QScriptString& name, uint id);
+    void setProperty(QJSValue& object, const QScriptString& name, uint id, const QJSValue& value);
 };
 
 class Int32ArrayClass : public TypedArray {
@@ -114,8 +116,8 @@ class Int32ArrayClass : public TypedArray {
 public:
     Int32ArrayClass(ScriptEngine* scriptEngine);
     
-    QScriptValue property(const QScriptValue& object, const QScriptString& name, uint id);
-    void setProperty(QScriptValue& object, const QScriptString& name, uint id, const QScriptValue& value);
+    QJSValue property(const QJSValue& object, const QScriptString& name, uint id);
+    void setProperty(QJSValue& object, const QScriptString& name, uint id, const QJSValue& value);
 };
 
 class Uint32ArrayClass : public TypedArray {
@@ -123,8 +125,8 @@ class Uint32ArrayClass : public TypedArray {
 public:
     Uint32ArrayClass(ScriptEngine* scriptEngine);
     
-    QScriptValue property(const QScriptValue& object, const QScriptString& name, uint id);
-    void setProperty(QScriptValue& object, const QScriptString& name, uint id, const QScriptValue& value);
+    QJSValue property(const QJSValue& object, const QScriptString& name, uint id);
+    void setProperty(QJSValue& object, const QScriptString& name, uint id, const QJSValue& value);
 };
 
 class Float32ArrayClass : public TypedArray {
@@ -132,8 +134,8 @@ class Float32ArrayClass : public TypedArray {
 public:
     Float32ArrayClass(ScriptEngine* scriptEngine);
     
-    QScriptValue property(const QScriptValue& object, const QScriptString& name, uint id);
-    void setProperty(QScriptValue& object, const QScriptString& name, uint id, const QScriptValue& value);
+    QJSValue property(const QJSValue& object, const QScriptString& name, uint id);
+    void setProperty(QJSValue& object, const QScriptString& name, uint id, const QJSValue& value);
 };
 
 class Float64ArrayClass : public TypedArray {
@@ -141,8 +143,10 @@ class Float64ArrayClass : public TypedArray {
 public:
     Float64ArrayClass(ScriptEngine* scriptEngine);
     
-    QScriptValue property(const QScriptValue& object, const QScriptString& name, uint id);
-    void setProperty(QScriptValue& object, const QScriptString& name, uint id, const QScriptValue& value);
+    QJSValue property(const QJSValue& object, const QScriptString& name, uint id);
+    void setProperty(QJSValue& object, const QScriptString& name, uint id, const QJSValue& value);
 };
+
+#endif
 
 #endif // hifi_TypedArrays_h

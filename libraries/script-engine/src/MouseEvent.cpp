@@ -9,8 +9,8 @@
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 //
 
-#include <qscriptengine.h>
-#include <qscriptvalue.h>
+#include <QJSEngine.h>
+#include <QJSValue.h>
 
 #include "MouseEvent.h"
 
@@ -61,8 +61,8 @@ MouseEvent::MouseEvent(const QMouseEvent& event, const unsigned int deviceID) :
     }
 }
 
-QScriptValue MouseEvent::toScriptValue(QScriptEngine* engine, const MouseEvent& event) {
-    QScriptValue obj = engine->newObject();
+QJSValue MouseEvent::toScriptValue(QJSEngine* engine, const MouseEvent& event) {
+    QJSValue obj = engine->newObject();
     obj.setProperty("x", event.x);
     obj.setProperty("y", event.y);
     obj.setProperty("button", event.button);
@@ -78,6 +78,6 @@ QScriptValue MouseEvent::toScriptValue(QScriptEngine* engine, const MouseEvent& 
     return obj;
 }
 
-void MouseEvent::fromScriptValue(const QScriptValue& object, MouseEvent& event) {
+void MouseEvent::fromScriptValue(const QJSValue& object, MouseEvent& event) {
     // nothing for now...
 }

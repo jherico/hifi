@@ -2,7 +2,7 @@
 set(TARGET_NAME "ui-test")
 
 # This is not a testcase -- just set it up as a regular hifi project
-setup_hifi_project(Widgets OpenGL Network Qml Quick Script)
+setup_hifi_project(Widgets OpenGL Network Qml Quick)
 
 set_target_properties(${TARGET_NAME} PROPERTIES FOLDER "Tests/manual-tests/")
 

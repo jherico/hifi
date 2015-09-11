@@ -40,7 +40,7 @@ else ()
   list(REMOVE_ITEM INTERFACE_SRCS ${SPEECHRECOGNIZER_CPP})
 endif ()
 
-find_package(Qt5 COMPONENTS Gui Multimedia Network OpenGL Qml Quick Script Svg WebKitWidgets WebSockets)
+find_package(Qt5 COMPONENTS Gui Multimedia Network OpenGL Qml Quick Svg WebKitWidgets WebSockets)
 
 # grab the ui files in resources/ui
 file (GLOB_RECURSE QT_UI_FILES ui/*.ui)
@@ -170,7 +170,7 @@ include_directories("${PROJECT_SOURCE_DIR}/src")
 
 target_link_libraries(
   ${TARGET_NAME}
-  Qt5::Gui Qt5::Network Qt5::Multimedia Qt5::OpenGL Qt5::Script Qt5::Svg Qt5::WebKitWidgets
+  Qt5::Gui Qt5::Network Qt5::Multimedia Qt5::OpenGL Qt5::Qml Qt5::Svg Qt5::WebKitWidgets
 )
 
 # assume we are using a Qt build without bearer management

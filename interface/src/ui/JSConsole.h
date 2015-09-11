@@ -47,7 +47,7 @@ protected:
 protected slots:
     void scrollToBottom();
     void resizeTextInput();
-    void handleEvalutationFinished(QScriptValue result, bool isException);
+    void handleEvalutationFinished(QJSValue result, bool isException);
     void handlePrint(const QString& message);
     void handleError(const QString& message);
 

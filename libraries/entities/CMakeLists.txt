@@ -1,7 +1,7 @@
 set(TARGET_NAME entities)
 
 # use setup_hifi_library macro to setup our project and link appropriate Qt modules
-setup_hifi_library(Network Script)
+setup_hifi_library(Network Qml)
 
 add_dependency_external_projects(glm)
 find_package(GLM REQUIRED)

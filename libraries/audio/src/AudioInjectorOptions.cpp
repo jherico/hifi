@@ -26,8 +26,8 @@ AudioInjectorOptions::AudioInjectorOptions() :
 
 }
 
-QScriptValue injectorOptionsToScriptValue(QScriptEngine* engine, const AudioInjectorOptions& injectorOptions) {
-    QScriptValue obj = engine->newObject();
+QJSValue injectorOptionsToScriptValue(QJSEngine* engine, const AudioInjectorOptions& injectorOptions) {
+    QJSValue obj = engine->newObject();
     obj.setProperty("position", vec3toScriptValue(engine, injectorOptions.position));
     obj.setProperty("volume", injectorOptions.volume);
     obj.setProperty("loop", injectorOptions.loop);
@@ -38,32 +38,32 @@ QScriptValue injectorOptionsToScriptValue(QScriptEngine* engine, const AudioInje
     return obj;
 }
 
-void injectorOptionsFromScriptValue(const QScriptValue& object, AudioInjectorOptions& injectorOptions) {
-    if (object.property("position").isValid()) {
+void injectorOptionsFromScriptValue(const QJSValue& object, AudioInjectorOptions& injectorOptions) {
+    if (!object.property("position").isUndefined()) {
         vec3FromScriptValue(object.property("position"), injectorOptions.position);
     }
     
-    if (object.property("volume").isValid()) {
+    if (!object.property("volume").isUndefined()) {
         injectorOptions.volume = object.property("volume").toNumber();
     }
     
-    if (object.property("loop").isValid()) {
+    if (!object.property("loop").isUndefined()) {
         injectorOptions.loop = object.property("loop").toBool();
     }
     
-    if (object.property("orientation").isValid()) {
+    if (!object.property("orientation").isUndefined()) {
         quatFromScriptValue(object.property("orientation"), injectorOptions.orientation);
     }
     
-    if (object.property("ignorePenumbra").isValid()) {
+    if (!object.property("ignorePenumbra").isUndefined()) {
         injectorOptions.ignorePenumbra = object.property("ignorePenumbra").toBool();
     }
     
-    if (object.property("localOnly").isValid()) {
+    if (!object.property("localOnly").isUndefined()) {
         injectorOptions.localOnly = object.property("localOnly").toBool();
     }
     
-    if (object.property("secondOffset").isValid()) {
+    if (!object.property("secondOffset").isUndefined()) {
         injectorOptions.secondOffset = object.property("secondOffset").toNumber();
     }
  }

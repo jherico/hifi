@@ -176,22 +176,27 @@ void WebWindowClass::raise() {
     QMetaObject::invokeMethod(_windowWidget, "raise", Qt::AutoConnection);
 }
 
-QScriptValue WebWindowClass::constructor(QScriptContext* context, QScriptEngine* engine) {
-    WebWindowClass* retVal;
-    QString file = context->argument(0).toString();
-    QMetaObject::invokeMethod(DependencyManager::get<WindowScriptingInterface>().data(), "doCreateWebWindow", Qt::BlockingQueuedConnection,
-            Q_RETURN_ARG(WebWindowClass*, retVal),
-            Q_ARG(const QString&, file),
-            Q_ARG(QString, context->argument(1).toString()),
-            Q_ARG(int, context->argument(2).toInteger()),
-            Q_ARG(int, context->argument(3).toInteger()),
-            Q_ARG(bool, context->argument(4).toBool()));
-
-    connect(engine, &QScriptEngine::destroyed, retVal, &WebWindowClass::deleteLater);
-
-    return engine->newQObject(retVal);
-}
-
 void WebWindowClass::setTitle(const QString& title) {
     _windowWidget->setWindowTitle(title);
 }
+
+
+// FIXME JSENGINE
+#if 0
+
+QJSValue WebWindowClass::constructor(QScriptContext* context, QJSEngine* engine) {
+    WebWindowClass* retVal;
+    QString file = context->argument(0).toString();
+    QMetaObject::invokeMethod(DependencyManager::get<WindowScriptingInterface>().data(), "doCreateWebWindow", Qt::BlockingQueuedConnection,
+        Q_RETURN_ARG(WebWindowClass*, retVal),
+        Q_ARG(const QString&, file),
+        Q_ARG(QString, context->argument(1).toString()),
+        Q_ARG(int, context->argument(2).toInteger()),
+        Q_ARG(int, context->argument(3).toInteger()),
+        Q_ARG(bool, context->argument(4).toBool()));
+
+    connect(engine, &QJSEngine::destroyed, retVal, &WebWindowClass::deleteLater);
+
+    return engine->newQObject(retVal);
+}
+#endif

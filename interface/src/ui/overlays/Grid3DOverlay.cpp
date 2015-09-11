@@ -11,7 +11,7 @@
 
 #include "Grid3DOverlay.h"
 
-#include <QScriptValue>
+
 
 #include <DependencyManager.h>
 #include <GeometryCache.h>
@@ -93,19 +93,19 @@ void Grid3DOverlay::render(RenderArgs* args) {
     }
 }
 
-void Grid3DOverlay::setProperties(const QScriptValue& properties) {
+void Grid3DOverlay::setProperties(const QJSValue& properties) {
     Planar3DOverlay::setProperties(properties);
 
-    if (properties.property("minorGridWidth").isValid()) {
+    if (!properties.property("minorGridWidth").isUndefined()) {
         _minorGridWidth = properties.property("minorGridWidth").toVariant().toFloat();
     }
 
-    if (properties.property("majorGridEvery").isValid()) {
+    if (!properties.property("majorGridEvery").isUndefined()) {
         _majorGridEvery = properties.property("majorGridEvery").toVariant().toInt();
     }
 }
 
-QScriptValue Grid3DOverlay::getProperty(const QString& property) {
+QJSValue Grid3DOverlay::getProperty(const QString& property) {
     if (property == "minorGridWidth") {
         return _minorGridWidth;
     }

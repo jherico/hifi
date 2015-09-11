@@ -9,12 +9,11 @@
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 //
 
-#include <qdebug.h>
-#include <qscriptengine.h>
+#include "KeyEvent.h"
 
+#include <qdebug.h>
 #include "ScriptEngineLogging.h"
 
-#include "KeyEvent.h"
 
 KeyEvent::KeyEvent() :
     key(0),
@@ -150,8 +149,8 @@ KeyEvent::operator QKeySequence() const {
     return QKeySequence(resultCode);
 }
 
-QScriptValue KeyEvent::toScriptValue(QScriptEngine* engine, const KeyEvent& event) {
-    QScriptValue obj = engine->newObject();
+QJSValue KeyEvent::toScriptValue(QJSEngine* engine, const KeyEvent& event) {
+    QJSValue obj = engine->newObject();
     obj.setProperty("key", event.key);
     obj.setProperty("text", event.text);
     obj.setProperty("isShifted", event.isShifted);
@@ -163,7 +162,7 @@ QScriptValue KeyEvent::toScriptValue(QScriptEngine* engine, const KeyEvent& even
     return obj;
 }
 
-void KeyEvent::fromScriptValue(const QScriptValue& object, KeyEvent& event) {
+void KeyEvent::fromScriptValue(const QJSValue& object, KeyEvent& event) {
     
     event.isValid = false; // assume the worst
     event.isMeta = object.property("isMeta").toVariant().toBool();
@@ -172,14 +171,14 @@ void KeyEvent::fromScriptValue(const QScriptValue& object, KeyEvent& event) {
     event.isKeypad = object.property("isKeypad").toVariant().toBool();
     event.isAutoRepeat = object.property("isAutoRepeat").toVariant().toBool();
     
-    QScriptValue key = object.property("key");
-    if (key.isValid()) {
+    QJSValue key = object.property("key");
+    if (!key.isUndefined()) {
         event.key = key.toVariant().toInt();
         event.text = QString(QChar(event.key));
         event.isValid = true;
     } else {
-        QScriptValue text = object.property("text");
-        if (text.isValid()) {
+        QJSValue text = object.property("text");
+        if (!text.isUndefined()) {
             event.text = object.property("text").toVariant().toString();
             
             // if the text is a special command, then map it here...
@@ -259,8 +258,8 @@ void KeyEvent::fromScriptValue(const QScriptValue& object, KeyEvent& event) {
         }
     }
     
-    QScriptValue isShifted = object.property("isShifted");
-    if (isShifted.isValid()) {
+    QJSValue isShifted = object.property("isShifted");
+    if (!isShifted.isUndefined()) {
         event.isShifted = isShifted.toVariant().toBool();
     } else {
         // if no isShifted was included, get it from the text

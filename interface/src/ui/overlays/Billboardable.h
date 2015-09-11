@@ -12,8 +12,8 @@
 #ifndef hifi_Billboardable_h
 #define hifi_Billboardable_h
 
-#include <QScriptValue>
-#include <QScriptEngine>
+
+#include <QtQml/QJSEngine>
 
 #include <Transform.h>
 
@@ -23,8 +23,8 @@ public:
     void setIsFacingAvatar(bool isFacingAvatar) { _isFacingAvatar = isFacingAvatar; }
 
 protected:
-    void setProperties(const QScriptValue& properties);
-    QScriptValue getProperty(QScriptEngine* scriptEngine, const QString& property);
+    void setProperties(const QJSValue& properties);
+    QJSValue getProperty(QJSEngine* scriptEngine, const QString& property);
 
     void pointTransformAtCamera(Transform& transform, glm::quat offsetRotation = {1, 0, 0, 0});
 

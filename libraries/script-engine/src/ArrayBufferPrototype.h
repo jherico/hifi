@@ -13,9 +13,11 @@
 #define hifi_ArrayBufferPrototype_h
 
 #include <QtCore/QObject>
-#include <QtScript/QScriptable>
 
-class ArrayBufferPrototype : public QObject, public QScriptable {
+// FIXME JSENGINE
+#if 0
+
+class ArrayBufferPrototype : public QObject {
     Q_OBJECT
 public:
     ArrayBufferPrototype(QObject* parent = NULL);
@@ -29,5 +31,7 @@ public slots:
 private:
     QByteArray* thisArrayBuffer() const;
 };
+
+#endif
 
 #endif // hifi_ArrayBufferPrototype_h

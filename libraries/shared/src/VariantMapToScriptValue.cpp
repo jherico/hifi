@@ -14,7 +14,7 @@
 #include "VariantMapToScriptValue.h"
 
 
-QScriptValue variantToScriptValue(QVariant& qValue, QScriptEngine& scriptEngine) {
+QJSValue variantToScriptValue(QVariant& qValue, QJSEngine& scriptEngine) {
     switch(qValue.type()) {
         case QVariant::Bool:
             return qValue.toBool();
@@ -26,7 +26,7 @@ QScriptValue variantToScriptValue(QVariant& qValue, QScriptEngine& scriptEngine)
             return qValue.toDouble();
             break;
         case QVariant::String: {
-            return scriptEngine.newVariant(qValue);
+            return qValue.toString();
             break;
         }
         case QVariant::Map: {
@@ -44,12 +44,12 @@ QScriptValue variantToScriptValue(QVariant& qValue, QScriptEngine& scriptEngine)
             break;
     }
 
-    return QScriptValue();
+    return QJSValue();
 }
 
 
-QScriptValue variantMapToScriptValue(QVariantMap& variantMap, QScriptEngine& scriptEngine) {
-    QScriptValue scriptValue = scriptEngine.newObject();
+QJSValue variantMapToScriptValue(QVariantMap& variantMap, QJSEngine& scriptEngine) {
+    QJSValue scriptValue = scriptEngine.newObject();
 
     for (QVariantMap::const_iterator iter = variantMap.begin(); iter != variantMap.end(); ++iter) {
         QString key = iter.key();
@@ -61,8 +61,8 @@ QScriptValue variantMapToScriptValue(QVariantMap& variantMap, QScriptEngine& scr
 }
 
 
-QScriptValue variantListToScriptValue(QVariantList& variantList, QScriptEngine& scriptEngine) {
-    QScriptValue scriptValue = scriptEngine.newObject();
+QJSValue variantListToScriptValue(QVariantList& variantList, QJSEngine& scriptEngine) {
+    QJSValue scriptValue = scriptEngine.newObject();
 
     scriptValue.setProperty("length", variantList.size());
     int i = 0;

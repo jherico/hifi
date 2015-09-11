@@ -338,14 +338,14 @@ RayToEntityIntersectionResult::RayToEntityIntersectionResult() :
 {
 }
 
-QScriptValue RayToEntityIntersectionResultToScriptValue(QScriptEngine* engine, const RayToEntityIntersectionResult& value) {
-    QScriptValue obj = engine->newObject();
+QJSValue RayToEntityIntersectionResultToScriptValue(QJSEngine* engine, const RayToEntityIntersectionResult& value) {
+    QJSValue obj = engine->newObject();
     obj.setProperty("intersects", value.intersects);
     obj.setProperty("accurate", value.accurate);
-    QScriptValue entityItemValue = EntityItemIDtoScriptValue(engine, value.entityID);
+    QJSValue entityItemValue = EntityItemIDtoScriptValue(engine, value.entityID);
     obj.setProperty("entityID", entityItemValue);
 
-    QScriptValue propertiesValue = EntityItemPropertiesToScriptValue(engine, value.properties);
+    QJSValue propertiesValue = EntityItemPropertiesToScriptValue(engine, value.properties);
     obj.setProperty("properties", propertiesValue);
 
     obj.setProperty("distance", value.distance);
@@ -377,19 +377,19 @@ QScriptValue RayToEntityIntersectionResultToScriptValue(QScriptEngine* engine, c
     }
     obj.setProperty("face", faceName);
 
-    QScriptValue intersection = vec3toScriptValue(engine, value.intersection);
+    QJSValue intersection = vec3toScriptValue(engine, value.intersection);
     obj.setProperty("intersection", intersection);
     return obj;
 }
 
-void RayToEntityIntersectionResultFromScriptValue(const QScriptValue& object, RayToEntityIntersectionResult& value) {
+void RayToEntityIntersectionResultFromScriptValue(const QJSValue& object, RayToEntityIntersectionResult& value) {
     value.intersects = object.property("intersects").toVariant().toBool();
     value.accurate = object.property("accurate").toVariant().toBool();
-    QScriptValue entityIDValue = object.property("entityID");
+    QJSValue entityIDValue = object.property("entityID");
     // EntityItemIDfromScriptValue(entityIDValue, value.entityID);
     quuidFromScriptValue(entityIDValue, value.entityID);
-    QScriptValue entityPropertiesValue = object.property("properties");
-    if (entityPropertiesValue.isValid()) {
+    QJSValue entityPropertiesValue = object.property("properties");
+    if (!entityPropertiesValue.isUndefined()) {
         EntityItemPropertiesFromScriptValueHonorReadOnly(entityPropertiesValue, value.properties);
     }
     value.distance = object.property("distance").toVariant().toFloat();
@@ -408,8 +408,8 @@ void RayToEntityIntersectionResultFromScriptValue(const QScriptValue& object, Ra
     } else {
         value.face = MAX_Z_FACE;
     };
-    QScriptValue intersection = object.property("intersection");
-    if (intersection.isValid()) {
+    QJSValue intersection = object.property("intersection");
+    if (!intersection.isUndefined()) {
         vec3FromScriptValue(intersection, value.intersection);
     }
 }

@@ -12,7 +12,7 @@
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 
 // http://wiki.audacityteam.org/wiki/GVerb#Instant_reverb_settings
-var audioOptions = new AudioEffectOptions({
+var audioOptions = AudioDevice.newAudioEffectOptions({
                                           // Square Meters
                                           maxRoomSize: 50,
                                           roomSize: 50,

@@ -13,7 +13,7 @@
 #define hifi_WebSocketServerClass_h
 
 #include <QObject>
-#include <QScriptEngine>
+#include <QtQml/QJSEngine>
 #include <QWebSocketServer>
 #include "WebSocketClass.h"
 
@@ -24,21 +24,24 @@ class WebSocketServerClass : public QObject {
     Q_PROPERTY(bool listening READ isListening)
 
 public:
-    WebSocketServerClass(QScriptEngine* engine, const QString& serverName, const quint16 port);
+    WebSocketServerClass(QJSEngine* engine, const QString& serverName, const quint16 port);
     ~WebSocketServerClass();
 
     QString getURL() { return _webSocketServer.serverUrl().toDisplayString(); }
     quint16 getPort() { return _webSocketServer.serverPort(); }
     bool isListening() { return _webSocketServer.isListening(); }
 
-    static QScriptValue constructor(QScriptContext* context, QScriptEngine* engine);
+    // FIXME JSENGINE
+#if 0
+    static QJSValue constructor(QScriptContext* context, QJSEngine* engine);
+#endif
 
 public slots:
     void close();
 
 private:
     QWebSocketServer _webSocketServer;
-    QScriptEngine* _engine;
+    QJSEngine* _engine;
     QList<WebSocketClass*> _clients;
 
 private slots:

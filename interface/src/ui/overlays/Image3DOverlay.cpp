@@ -12,7 +12,7 @@
 
 #include "Image3DOverlay.h"
 
-#include <QScriptValue>
+
 
 #include <DeferredLightingEffect.h>
 #include <DependencyManager.h>
@@ -103,40 +103,40 @@ void Image3DOverlay::render(RenderArgs* args) {
     batch->setResourceTexture(0, args->_whiteTexture); // restore default white color after me
 }
 
-void Image3DOverlay::setProperties(const QScriptValue &properties) {
+void Image3DOverlay::setProperties(const QJSValue &properties) {
     Billboard3DOverlay::setProperties(properties);
 
-    QScriptValue urlValue = properties.property("url");
-    if (urlValue.isValid()) {
+    QJSValue urlValue = properties.property("url");
+    if (!urlValue.isUndefined()) {
         QString newURL = urlValue.toVariant().toString();
         if (newURL != _url) {
             setURL(newURL);
         }
     }
 
-    QScriptValue subImageBounds = properties.property("subImage");
-    if (subImageBounds.isValid()) {
+    QJSValue subImageBounds = properties.property("subImage");
+    if (!subImageBounds.isUndefined()) {
         if (subImageBounds.isNull()) {
             _fromImage = QRect();
         } else {
             QRect oldSubImageRect = _fromImage;
             QRect subImageRect = _fromImage;
-            if (subImageBounds.property("x").isValid()) {
+            if (!subImageBounds.property("x").isUndefined()) {
                 subImageRect.setX(subImageBounds.property("x").toVariant().toInt());
             } else {
                 subImageRect.setX(oldSubImageRect.x());
             }
-            if (subImageBounds.property("y").isValid()) {
+            if (!subImageBounds.property("y").isUndefined()) {
                 subImageRect.setY(subImageBounds.property("y").toVariant().toInt());
             } else {
                 subImageRect.setY(oldSubImageRect.y());
             }
-            if (subImageBounds.property("width").isValid()) {
+            if (!subImageBounds.property("width").isUndefined()) {
                 subImageRect.setWidth(subImageBounds.property("width").toVariant().toInt());
             } else {
                 subImageRect.setWidth(oldSubImageRect.width());
             }
-            if (subImageBounds.property("height").isValid()) {
+            if (!subImageBounds.property("height").isUndefined()) {
                 subImageRect.setHeight(subImageBounds.property("height").toVariant().toInt());
             } else {
                 subImageRect.setHeight(oldSubImageRect.height());
@@ -146,7 +146,7 @@ void Image3DOverlay::setProperties(const QScriptValue &properties) {
     }
 }
 
-QScriptValue Image3DOverlay::getProperty(const QString& property) {
+QJSValue Image3DOverlay::getProperty(const QString& property) {
     if (property == "url") {
         return _url;
     }

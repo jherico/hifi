@@ -16,7 +16,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
-#include <QScriptValue>
+
 #include <QUuid>
 
 #include "PanelAttachable.h"
@@ -30,8 +30,8 @@ public:
     QUuid entity;
 };
 
-QScriptValue propertyBindingToScriptValue(QScriptEngine* engine, const PropertyBinding& value);
-void propertyBindingFromScriptValue(const QScriptValue& object, PropertyBinding& value);
+QJSValue propertyBindingToScriptValue(QJSEngine* engine, const PropertyBinding& value);
+void propertyBindingFromScriptValue(const QJSValue& object, PropertyBinding& value);
 
 
 class OverlayPanel : public QObject, public PanelAttachable, public Billboardable {
@@ -40,7 +40,7 @@ class OverlayPanel : public QObject, public PanelAttachable, public Billboardabl
 public:
     typedef std::shared_ptr<OverlayPanel> Pointer;
 
-    void init(QScriptEngine* scriptEngine) { _scriptEngine = scriptEngine; }
+    void init(QJSEngine* scriptEngine) { _scriptEngine = scriptEngine; }
 
     // getters
     glm::vec3 getAnchorPosition() const { return _anchorTransform.getTranslation(); }
@@ -60,8 +60,8 @@ public:
     void removeChild(unsigned int childId);
     unsigned int popLastChild() { return _children.takeLast(); }
 
-    QScriptValue getProperty(const QString& property);
-    void setProperties(const QScriptValue& properties);
+    QJSValue getProperty(const QString& property);
+    void setProperties(const QJSValue& properties);
 
     virtual void applyTransformTo(Transform& transform, bool force = false);
 
@@ -77,7 +77,7 @@ private:
     bool _visible = true;
     QList<unsigned int> _children;
 
-    QScriptEngine* _scriptEngine;
+    QJSEngine* _scriptEngine;
 };
 
 #endif // hifi_OverlayPanel_h

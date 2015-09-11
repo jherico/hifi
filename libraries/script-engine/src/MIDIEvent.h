@@ -9,7 +9,7 @@
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 //
 
-#include <QtScript/QScriptEngine>
+#include <QtQml/QJSEngine>
 
 #ifndef hifi_MIDIEvent_h
 #define hifi_MIDIEvent_h
@@ -24,9 +24,9 @@ public:
 
 Q_DECLARE_METATYPE(MIDIEvent)
 
-void registerMIDIMetaTypes(QScriptEngine* engine);
+void registerMIDIMetaTypes(QJSEngine* engine);
 
-QScriptValue midiEventToScriptValue(QScriptEngine* engine, const MIDIEvent& event);
-void midiEventFromScriptValue(const QScriptValue &object, MIDIEvent& event);
+QJSValue midiEventToScriptValue(QJSEngine* engine, const MIDIEvent& event);
+void midiEventFromScriptValue(const QJSValue &object, MIDIEvent& event);
 
 #endif // hifi_MIDIEvent_h

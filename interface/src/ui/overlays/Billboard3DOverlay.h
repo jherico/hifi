@@ -23,8 +23,8 @@ public:
     Billboard3DOverlay() {}
     Billboard3DOverlay(const Billboard3DOverlay* billboard3DOverlay);
 
-    virtual void setProperties(const QScriptValue& properties);
-    virtual QScriptValue getProperty(const QString& property);
+    virtual void setProperties(const QJSValue& properties);
+    virtual QJSValue getProperty(const QString& property);
 
 protected:
     virtual void applyTransformTo(Transform& transform, bool force = false);

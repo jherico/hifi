@@ -12,8 +12,7 @@
 #define hifi_AudioEffectOptions_h
 
 #include <QObject>
-#include <QtScript/QScriptContext>
-#include <QtScript/QScriptEngine>
+#include <QtQml/QJSEngine>
 
 class AudioEffectOptions : public QObject {
     Q_OBJECT
@@ -41,11 +40,9 @@ class AudioEffectOptions : public QObject {
     Q_PROPERTY(float wetLevel READ getWetLevel WRITE setWetLevel)
 
 public:
-    AudioEffectOptions(QScriptValue arguments = QScriptValue());
+    AudioEffectOptions(QJSValue arguments = QJSValue());
     AudioEffectOptions(const AudioEffectOptions &other);
     AudioEffectOptions& operator=(const AudioEffectOptions &other);
-
-    static QScriptValue constructor(QScriptContext* context, QScriptEngine* engine);
 
     float getRoomSize() const { return _roomSize; }
     void setRoomSize(float roomSize ) { _roomSize = roomSize; }

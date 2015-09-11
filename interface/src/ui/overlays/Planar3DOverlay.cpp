@@ -35,34 +35,34 @@ AABox Planar3DOverlay::getBounds() const {
     return AABox(extents);
 }
 
-void Planar3DOverlay::setProperties(const QScriptValue& properties) {
+void Planar3DOverlay::setProperties(const QJSValue& properties) {
     Base3DOverlay::setProperties(properties);
 
-    QScriptValue dimensions = properties.property("dimensions");
+    QJSValue dimensions = properties.property("dimensions");
 
     // if "dimensions" property was not there, check to see if they included aliases: scale
-    if (!dimensions.isValid()) {
+    if (dimensions.isUndefined()) {
         dimensions = properties.property("scale");
-        if (!dimensions.isValid()) {
+        if (dimensions.isUndefined()) {
             dimensions = properties.property("size");
         }
     }
 
-    if (dimensions.isValid()) {
+    if (!dimensions.isUndefined()) {
         bool validDimensions = false;
         glm::vec2 newDimensions;
 
-        QScriptValue x = dimensions.property("x");
-        QScriptValue y = dimensions.property("y");
+        QJSValue x = dimensions.property("x");
+        QJSValue y = dimensions.property("y");
 
-        if (x.isValid() && y.isValid()) {
+        if (!x.isUndefined() && !y.isUndefined()) {
             newDimensions.x = x.toVariant().toFloat();
             newDimensions.y = y.toVariant().toFloat();
             validDimensions = true;
         } else {
-            QScriptValue width = dimensions.property("width");
-            QScriptValue height = dimensions.property("height");
-            if (width.isValid() && height.isValid()) {
+            QJSValue width = dimensions.property("width");
+            QJSValue height = dimensions.property("height");
+            if (!width.isUndefined() && !height.isUndefined()) {
                 newDimensions.x = width.toVariant().toFloat();
                 newDimensions.y = height.toVariant().toFloat();
                 validDimensions = true;
@@ -83,7 +83,7 @@ void Planar3DOverlay::setProperties(const QScriptValue& properties) {
     }
 }
 
-QScriptValue Planar3DOverlay::getProperty(const QString& property) {
+QJSValue Planar3DOverlay::getProperty(const QString& property) {
     if (property == "dimensions" || property == "scale" || property == "size") {
         return vec2toScriptValue(_scriptEngine, getDimensions());
     }

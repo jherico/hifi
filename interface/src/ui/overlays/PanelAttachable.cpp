@@ -23,7 +23,7 @@ bool PanelAttachable::getParentVisible() const {
     }
 }
 
-QScriptValue PanelAttachable::getProperty(QScriptEngine* scriptEngine, const QString &property) {
+QJSValue PanelAttachable::getProperty(QJSEngine* scriptEngine, const QString &property) {
     if (property == "offsetPosition") {
         return vec3toScriptValue(scriptEngine, getOffsetPosition());
     }
@@ -33,36 +33,36 @@ QScriptValue PanelAttachable::getProperty(QScriptEngine* scriptEngine, const QSt
     if (property == "offsetScale") {
         return vec3toScriptValue(scriptEngine, getOffsetScale());
     }
-    return QScriptValue();
+    return QJSValue();
 }
 
-void PanelAttachable::setProperties(const QScriptValue &properties) {
-    QScriptValue offsetPosition = properties.property("offsetPosition");
-    if (offsetPosition.isValid() &&
-        offsetPosition.property("x").isValid() &&
-        offsetPosition.property("y").isValid() &&
-        offsetPosition.property("z").isValid()) {
+void PanelAttachable::setProperties(const QJSValue &properties) {
+    QJSValue offsetPosition = properties.property("offsetPosition");
+    if (!offsetPosition.isUndefined() &&
+        !offsetPosition.property("x").isUndefined() &&
+        !offsetPosition.property("y").isUndefined() &&
+        !offsetPosition.property("z").isUndefined()) {
         glm::vec3 newPosition;
         vec3FromScriptValue(offsetPosition, newPosition);
         setOffsetPosition(newPosition);
     }
 
-    QScriptValue offsetRotation = properties.property("offsetRotation");
-    if (offsetRotation.isValid() &&
-        offsetRotation.property("x").isValid() &&
-        offsetRotation.property("y").isValid() &&
-        offsetRotation.property("z").isValid() &&
-        offsetRotation.property("w").isValid()) {
+    QJSValue offsetRotation = properties.property("offsetRotation");
+    if (!offsetRotation.isUndefined() &&
+        !offsetRotation.property("x").isUndefined() &&
+        !offsetRotation.property("y").isUndefined() &&
+        !offsetRotation.property("z").isUndefined() &&
+        !offsetRotation.property("w").isUndefined()) {
         glm::quat newRotation;
         quatFromScriptValue(offsetRotation, newRotation);
         setOffsetRotation(newRotation);
     }
 
-    QScriptValue offsetScale = properties.property("offsetScale");
-    if (offsetScale.isValid()) {
-        if (offsetScale.property("x").isValid() &&
-            offsetScale.property("y").isValid() &&
-            offsetScale.property("z").isValid()) {
+    QJSValue offsetScale = properties.property("offsetScale");
+    if (!offsetScale.isUndefined()) {
+        if (!offsetScale.property("x").isUndefined() &&
+            !offsetScale.property("y").isUndefined() &&
+            !offsetScale.property("z").isUndefined()) {
             glm::vec3 newScale;
             vec3FromScriptValue(offsetScale, newScale);
             setOffsetScale(newScale);

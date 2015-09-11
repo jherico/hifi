@@ -19,20 +19,20 @@ Billboard3DOverlay::Billboard3DOverlay(const Billboard3DOverlay* billboard3DOver
 {
 }
 
-void Billboard3DOverlay::setProperties(const QScriptValue &properties) {
+void Billboard3DOverlay::setProperties(const QJSValue &properties) {
     Planar3DOverlay::setProperties(properties);
     PanelAttachable::setProperties(properties);
     Billboardable::setProperties(properties);
 }
 
-QScriptValue Billboard3DOverlay::getProperty(const QString &property) {
-    QScriptValue value;
+QJSValue Billboard3DOverlay::getProperty(const QString &property) {
+    QJSValue value;
     value = Billboardable::getProperty(_scriptEngine, property);
-    if (value.isValid()) {
+    if (!value.isUndefined()) {
         return value;
     }
     value = PanelAttachable::getProperty(_scriptEngine, property);
-    if (value.isValid()) {
+    if (!value.isUndefined()) {
         return value;
     }
     return Planar3DOverlay::getProperty(property);

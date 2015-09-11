@@ -12,7 +12,6 @@
 
 #include "Web3DOverlay.h"
 
-#include <QtScript/QScriptValue>
 #include <QtGui/QOpenGLContext>
 #include <QtQuick/QQuickItem>
 
@@ -112,30 +111,30 @@ void Web3DOverlay::render(RenderArgs* args) {
     batch.setResourceTexture(0, args->_whiteTexture); // restore default white color after me
 }
 
-void Web3DOverlay::setProperties(const QScriptValue &properties) {
+void Web3DOverlay::setProperties(const QJSValue &properties) {
     Billboard3DOverlay::setProperties(properties);
 
-    QScriptValue urlValue = properties.property("url");
-    if (urlValue.isValid()) {
+    QJSValue urlValue = properties.property("url");
+    if (!urlValue.isUndefined()) {
         QString newURL = urlValue.toVariant().toString();
         if (newURL != _url) {
             setURL(newURL);
         }
     }
 
-    QScriptValue resolution = properties.property("resolution");
-    if (resolution.isValid()) {
+    QJSValue resolution = properties.property("resolution");
+    if (!resolution.isUndefined()) {
         vec2FromScriptValue(resolution, _resolution);
     }
 
 
-    QScriptValue dpi = properties.property("dpi");
-    if (dpi.isValid()) {
+    QJSValue dpi = properties.property("dpi");
+    if (!dpi.isUndefined()) {
         _dpi = dpi.toVariant().toFloat();
     }
 }
 
-QScriptValue Web3DOverlay::getProperty(const QString& property) {
+QJSValue Web3DOverlay::getProperty(const QString& property) {
     if (property == "url") {
         return _url;
     }

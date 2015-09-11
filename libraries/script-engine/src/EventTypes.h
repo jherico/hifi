@@ -12,8 +12,8 @@
 #ifndef hifi_EventTypes_h
 #define hifi_EventTypes_h
 
-#include <QScriptEngine>
+#include <QtQml/QJSEngine>
 
-void registerEventTypes(QScriptEngine* engine);
+void registerEventTypes(QJSEngine* engine);
 
 #endif // hifi_EventTypes_h

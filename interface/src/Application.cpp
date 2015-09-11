@@ -164,22 +164,6 @@ extern "C" {
 }
 #endif
 
-enum CustomEventTypes {
-    Lambda = QEvent::User + 1
-};
-
-class LambdaEvent : public QEvent {
-    std::function<void()> _fun;
-public:
-    LambdaEvent(const std::function<void()> & fun) :
-        QEvent(static_cast<QEvent::Type>(Lambda)), _fun(fun) {
-    }
-    LambdaEvent(std::function<void()> && fun) :
-        QEvent(static_cast<QEvent::Type>(Lambda)), _fun(fun) {
-    }
-    void call() { _fun(); }
-};
-
 using namespace std;
 
 //  Starfield information
@@ -4007,118 +3991,133 @@ void Application::saveScripts() {
     settings.endArray();
 }
 
-QScriptValue joystickToScriptValue(QScriptEngine *engine, Joystick* const &in) {
+QJSValue joystickToScriptValue(QJSEngine *engine, Joystick* const &in) {
     return engine->newQObject(in);
 }
 
-void joystickFromScriptValue(const QScriptValue &object, Joystick* &out) {
+void joystickFromScriptValue(const QJSValue &object, Joystick* &out) {
     out = qobject_cast<Joystick*>(object.toQObject());
 }
 
 void Application::registerScriptEngineWithApplicationServices(ScriptEngine* scriptEngine) {
-    // setup the packet senders and jurisdiction listeners of the script engine's scripting interfaces so
-    // we can use the same ones from the application.
-    auto entityScriptingInterface = DependencyManager::get<EntityScriptingInterface>();
-    entityScriptingInterface->setPacketSender(&_entityEditSender);
-    entityScriptingInterface->setEntityTree(_entities.getTree());
-
-    // AvatarManager has some custom types
-    AvatarManager::registerMetaTypes(scriptEngine);
-
-    // hook our avatar and avatar hash map object into this script engine
-    scriptEngine->setAvatarData(_myAvatar, "MyAvatar"); // leave it as a MyAvatar class to expose thrust features
-    scriptEngine->setAvatarHashMap(DependencyManager::get<AvatarManager>().data(), "AvatarList");
-
-    scriptEngine->registerGlobalObject("Camera", &_myCamera);
-
-#if defined(Q_OS_MAC) || defined(Q_OS_WIN)
-    scriptEngine->registerGlobalObject("SpeechRecognizer", DependencyManager::get<SpeechRecognizer>().data());
-#endif
-
-    ClipboardScriptingInterface* clipboardScriptable = new ClipboardScriptingInterface();
-    scriptEngine->registerGlobalObject("Clipboard", clipboardScriptable);
-    connect(scriptEngine, SIGNAL(finished(const QString&)), clipboardScriptable, SLOT(deleteLater()));
-
-    connect(scriptEngine, SIGNAL(finished(const QString&)), this, SLOT(scriptFinished(const QString&)));
-
-    connect(scriptEngine, SIGNAL(loadScript(const QString&, bool)), this, SLOT(loadScript(const QString&, bool)));
-    connect(scriptEngine, SIGNAL(reloadScript(const QString&, bool)), this, SLOT(reloadScript(const QString&, bool)));
-
-    scriptEngine->registerGlobalObject("Overlays", &_overlays);
-    qScriptRegisterMetaType(scriptEngine, OverlayPropertyResultToScriptValue, OverlayPropertyResultFromScriptValue);
-    qScriptRegisterMetaType(scriptEngine, RayToOverlayIntersectionResultToScriptValue,
-                            RayToOverlayIntersectionResultFromScriptValue);
-
-    scriptEngine->registerGlobalObject("Desktop", DependencyManager::get<DesktopScriptingInterface>().data());
-
-    QScriptValue windowValue = scriptEngine->registerGlobalObject("Window", DependencyManager::get<WindowScriptingInterface>().data());
-    scriptEngine->registerGetterSetter("location", LocationScriptingInterface::locationGetter,
-                                       LocationScriptingInterface::locationSetter, windowValue);
-    // register `location` on the global object.
-    scriptEngine->registerGetterSetter("location", LocationScriptingInterface::locationGetter,
-                                       LocationScriptingInterface::locationSetter);
-
-    scriptEngine->registerFunction("WebWindow", WebWindowClass::constructor, 1);
-
-    scriptEngine->registerGlobalObject("Menu", MenuScriptingInterface::getInstance());
-    scriptEngine->registerGlobalObject("Settings", SettingsScriptingInterface::getInstance());
-    scriptEngine->registerGlobalObject("AudioDevice", AudioDeviceScriptingInterface::getInstance());
-    scriptEngine->registerGlobalObject("AnimationCache", DependencyManager::get<AnimationCache>().data());
-    scriptEngine->registerGlobalObject("SoundCache", DependencyManager::get<SoundCache>().data());
-    scriptEngine->registerGlobalObject("Account", AccountScriptingInterface::getInstance());
-    scriptEngine->registerGlobalObject("DialogsManager", _dialogsManagerScriptingInterface);
-
-    scriptEngine->registerGlobalObject("GlobalServices", GlobalServicesScriptingInterface::getInstance());
-    qScriptRegisterMetaType(scriptEngine, DownloadInfoResultToScriptValue, DownloadInfoResultFromScriptValue);
-
-    scriptEngine->registerGlobalObject("FaceTracker", DependencyManager::get<DdeFaceTracker>().data());
-
-    scriptEngine->registerGlobalObject("AvatarManager", DependencyManager::get<AvatarManager>().data());
-
-    qScriptRegisterMetaType(scriptEngine, joystickToScriptValue, joystickFromScriptValue);
-
-    scriptEngine->registerGlobalObject("UndoStack", &_undoStackScriptingInterface);
-
-    scriptEngine->registerGlobalObject("LODManager", DependencyManager::get<LODManager>().data());
-
-    scriptEngine->registerGlobalObject("Paths", DependencyManager::get<PathUtils>().data());
-
-    QScriptValue hmdInterface = scriptEngine->registerGlobalObject("HMD", &HMDScriptingInterface::getInstance());
-    scriptEngine->registerFunction(hmdInterface, "getHUDLookAtPosition2D", HMDScriptingInterface::getHUDLookAtPosition2D, 0);
-    scriptEngine->registerFunction(hmdInterface, "getHUDLookAtPosition3D", HMDScriptingInterface::getHUDLookAtPosition3D, 0);
-
-    scriptEngine->registerGlobalObject("Scene", DependencyManager::get<SceneScriptingInterface>().data());
-
-    scriptEngine->registerGlobalObject("ScriptDiscoveryService", this->getRunningScriptsWidget());
-
-#ifdef HAVE_RTMIDI
-    scriptEngine->registerGlobalObject("MIDI", &MIDIManager::getInstance());
-#endif
-
-    // TODO: Consider moving some of this functionality into the ScriptEngine class instead. It seems wrong that this
-    // work is being done in the Application class when really these dependencies are more related to the ScriptEngine's
-    // implementation
-    QThread* workerThread = new QThread(this);
-    QString scriptEngineName = QString("Script Thread:") + scriptEngine->getFilename();
-    workerThread->setObjectName(scriptEngineName);
-
-    // when the worker thread is started, call our engine's run..
-    connect(workerThread, &QThread::started, scriptEngine, &ScriptEngine::run);
-    
-    // when the thread is terminated, add both scriptEngine and thread to the deleteLater queue
-    connect(scriptEngine, &ScriptEngine::doneRunning, scriptEngine, &ScriptEngine::deleteLater);
-    connect(workerThread, &QThread::finished, workerThread, &QThread::deleteLater);
-    
-    // tell the thread to stop when the script engine is done
-    connect(scriptEngine, &ScriptEngine::destroyed, workerThread, &QThread::quit);
-
-    auto nodeList = DependencyManager::get<NodeList>();
-    connect(nodeList.data(), &NodeList::nodeKilled, scriptEngine, &ScriptEngine::nodeKilled);
-
-    scriptEngine->moveToThread(workerThread);
-
-    // Starts an event loop, and emits workerThread->started()
-    workerThread->start();
+//    // setup the packet senders and jurisdiction listeners of the script engine's scripting interfaces so
+//    // we can use the same ones from the application.
+//    auto entityScriptingInterface = DependencyManager::get<EntityScriptingInterface>();
+//    entityScriptingInterface->setPacketSender(&_entityEditSender);
+//    entityScriptingInterface->setEntityTree(_entities.getTree());
+//
+//    // AvatarManager has some custom types
+//    AvatarManager::registerMetaTypes(scriptEngine);
+//
+//    // hook our avatar and avatar hash map object into this script engine
+//    scriptEngine->setAvatarData(_myAvatar, "MyAvatar"); // leave it as a MyAvatar class to expose thrust features
+//    scriptEngine->setAvatarHashMap(DependencyManager::get<AvatarManager>().data(), "AvatarList");
+//
+//    scriptEngine->registerGlobalObject("Camera", &_myCamera);
+//
+//#if defined(Q_OS_MAC) || defined(Q_OS_WIN)
+//    scriptEngine->registerGlobalObject("SpeechRecognizer", DependencyManager::get<SpeechRecognizer>().data());
+//#endif
+//
+//    ClipboardScriptingInterface* clipboardScriptable = new ClipboardScriptingInterface();
+//    scriptEngine->registerGlobalObject("Clipboard", clipboardScriptable);
+//    connect(scriptEngine, SIGNAL(finished(const QString&)), clipboardScriptable, SLOT(deleteLater()));
+//
+//    connect(scriptEngine, SIGNAL(finished(const QString&)), this, SLOT(scriptFinished(const QString&)));
+//
+//    connect(scriptEngine, SIGNAL(loadScript(const QString&, bool)), this, SLOT(loadScript(const QString&, bool)));
+//    connect(scriptEngine, SIGNAL(reloadScript(const QString&, bool)), this, SLOT(reloadScript(const QString&, bool)));
+//
+//    scriptEngine->registerGlobalObject("Overlays", &_overlays);
+//    // FIXME JSENGINE
+//#if 0
+//    qScriptRegisterMetaType(scriptEngine, OverlayPropertyResultToScriptValue, OverlayPropertyResultFromScriptValue);
+//    qScriptRegisterMetaType(scriptEngine, RayToOverlayIntersectionResultToScriptValue,
+//                            RayToOverlayIntersectionResultFromScriptValue);
+//#endif
+//
+//    scriptEngine->registerGlobalObject("Desktop", DependencyManager::get<DesktopScriptingInterface>().data());
+//
+//    QJSValue windowValue = scriptEngine->registerGlobalObject("Window", DependencyManager::get<WindowScriptingInterface>().data());
+//    // FIXME JSENGINE
+//#if 0
+//    scriptEngine->registerGetterSetter("location", LocationScriptingInterface::locationGetter,
+//                                       LocationScriptingInterface::locationSetter, windowValue);
+//    // register `location` on the global object.
+//    scriptEngine->registerGetterSetter("location", LocationScriptingInterface::locationGetter,
+//                                       LocationScriptingInterface::locationSetter);
+//
+//    scriptEngine->registerFunction("WebWindow", WebWindowClass::constructor, 1);
+//#endif
+//
+//    scriptEngine->registerGlobalObject("Menu", MenuScriptingInterface::getInstance());
+//    scriptEngine->registerGlobalObject("Settings", SettingsScriptingInterface::getInstance());
+//    scriptEngine->registerGlobalObject("AudioDevice", AudioDeviceScriptingInterface::getInstance());
+//    scriptEngine->registerGlobalObject("AnimationCache", DependencyManager::get<AnimationCache>().data());
+//    scriptEngine->registerGlobalObject("SoundCache", DependencyManager::get<SoundCache>().data());
+//    scriptEngine->registerGlobalObject("Account", AccountScriptingInterface::getInstance());
+//    scriptEngine->registerGlobalObject("DialogsManager", _dialogsManagerScriptingInterface);
+//
+//    scriptEngine->registerGlobalObject("GlobalServices", GlobalServicesScriptingInterface::getInstance());
+//    // FIXME JSENGINE
+//#if 0
+//    qScriptRegisterMetaType(scriptEngine, DownloadInfoResultToScriptValue, DownloadInfoResultFromScriptValue);
+//#endif
+//
+//    scriptEngine->registerGlobalObject("FaceTracker", DependencyManager::get<DdeFaceTracker>().data());
+//
+//    scriptEngine->registerGlobalObject("AvatarManager", DependencyManager::get<AvatarManager>().data());
+//
+//    // FIXME JSENGINE
+//#if 0
+//    qScriptRegisterMetaType(scriptEngine, joystickToScriptValue, joystickFromScriptValue);
+//#endif
+//
+//    scriptEngine->registerGlobalObject("UndoStack", &_undoStackScriptingInterface);
+//
+//    scriptEngine->registerGlobalObject("LODManager", DependencyManager::get<LODManager>().data());
+//
+//    scriptEngine->registerGlobalObject("Paths", DependencyManager::get<PathUtils>().data());
+//
+//    QJSValue hmdInterface = scriptEngine->registerGlobalObject("HMD", &HMDScriptingInterface::getInstance());
+//    // FIXME JSENGINE
+//#if 0
+//    scriptEngine->registerFunction(hmdInterface, "getHUDLookAtPosition2D", HMDScriptingInterface::getHUDLookAtPosition2D, 0);
+//    scriptEngine->registerFunction(hmdInterface, "getHUDLookAtPosition3D", HMDScriptingInterface::getHUDLookAtPosition3D, 0);
+//#endif
+//
+//    scriptEngine->registerGlobalObject("Scene", DependencyManager::get<SceneScriptingInterface>().data());
+//
+//    scriptEngine->registerGlobalObject("ScriptDiscoveryService", this->getRunningScriptsWidget());
+//
+//#ifdef HAVE_RTMIDI
+//    scriptEngine->registerGlobalObject("MIDI", &MIDIManager::getInstance());
+//#endif
+//
+//    // TODO: Consider moving some of this functionality into the ScriptEngine class instead. It seems wrong that this
+//    // work is being done in the Application class when really these dependencies are more related to the ScriptEngine's
+//    // implementation
+//    QThread* workerThread = new QThread(this);
+//    QString scriptEngineName = QString("Script Thread:") + scriptEngine->getFilename();
+//    workerThread->setObjectName(scriptEngineName);
+//
+//    // when the worker thread is started, call our engine's run..
+//    connect(workerThread, &QThread::started, scriptEngine, &ScriptEngine::run);
+//    
+//    // when the thread is terminated, add both scriptEngine and thread to the deleteLater queue
+//    connect(scriptEngine, &ScriptEngine::doneRunning, scriptEngine, &ScriptEngine::deleteLater);
+//    connect(workerThread, &QThread::finished, workerThread, &QThread::deleteLater);
+//    
+//    // tell the thread to stop when the script engine is done
+//    connect(scriptEngine, &ScriptEngine::destroyed, workerThread, &QThread::quit);
+//
+//    auto nodeList = DependencyManager::get<NodeList>();
+//    connect(nodeList.data(), &NodeList::nodeKilled, scriptEngine, &ScriptEngine::nodeKilled);
+//
+//    scriptEngine->moveToThread(workerThread);
+//
+//    // Starts an event loop, and emits workerThread->started()
+//    workerThread->start();
 }
 
 void Application::initializeAcceptedFiles() {
@@ -4245,6 +4244,26 @@ bool Application::askToLoadScript(const QString& scriptFilenameOrURL) {
     return true;
 }
 
+class LambdaThread : public QThread {
+public:
+    using Lambda = std::function<void()>;
+    LambdaThread(Lambda lambda, QObject* parent = nullptr) : QThread(parent), _lambda(lambda) {
+        connect(this, &QThread::started, [this] {
+            _lambda();
+        });
+        connect(this, &QThread::finished, [this] {
+            deleteLater();
+        });
+    }
+
+    void runLambda() {
+        _lambda();
+    }
+
+private:
+    Lambda _lambda;
+};
+
 ScriptEngine* Application::loadScript(const QString& scriptFilename, bool isUserLoaded,
                                         bool loadScriptFromEditor, bool activateMainWindow, bool reload) {
 
@@ -4260,30 +4279,44 @@ ScriptEngine* Application::loadScript(const QString& scriptFilename, bool isUser
         return _scriptEnginesHash[scriptURLString];
     }
 
-    ScriptEngine* scriptEngine = new ScriptEngine(NO_SCRIPT, "", &_controllerScriptingInterface);
-    scriptEngine->setUserLoaded(isUserLoaded);
+    auto scriptThread = new LambdaThread([=] {
+        ScriptEngine* scriptEngine = new ScriptEngine(NO_SCRIPT, "", &_controllerScriptingInterface);
+        scriptEngine->setUserLoaded(isUserLoaded);
+        if (scriptFilename.isNull()) {
+            // this had better be the script editor (we should de-couple so somebody who thinks they are loading a script
+            // doesn't just get an empty script engine)
 
-    if (scriptFilename.isNull()) {
-        // this had better be the script editor (we should de-couple so somebody who thinks they are loading a script
-        // doesn't just get an empty script engine)
+            // we can complete setup now since there isn't a script we have to load
+            registerScriptEngineWithApplicationServices(scriptEngine);
+        } else {
+            // connect to the appropriate signals of this script engine
+            connect(scriptEngine, &ScriptEngine::errorLoadingScript, [=] {
+                postLambdaEvent([=] {
+                    handleScriptLoadError(scriptFilename);
+                });
+            });
 
-        // we can complete setup now since there isn't a script we have to load
-        registerScriptEngineWithApplicationServices(scriptEngine);
-    } else {
-        // connect to the appropriate signals of this script engine
-        connect(scriptEngine, &ScriptEngine::scriptLoaded, this, &Application::handleScriptEngineLoaded);
-        connect(scriptEngine, &ScriptEngine::errorLoadingScript, this, &Application::handleScriptLoadError);
-
-        // get the script engine object to load the script at the designated script URL
-        scriptEngine->loadURL(scriptUrl, reload);
-    }
+            connect(scriptEngine, &ScriptEngine::scriptLoaded, [=] {
+                postLambdaEvent([=] {
+                    _scriptEnginesHash.insertMulti(scriptFilename, scriptEngine);
+                    _runningScriptsWidget->setRunningScripts(getRunningScripts());
+                    UserActivityLogger::getInstance().loadedScript(scriptFilename);
+                });
+            });
+                
+            // get the script engine object to load the script at the designated script URL
+            scriptEngine->loadURL(scriptUrl, reload);
+            scriptEngine->run();
+        }
+    }, this);
+    scriptThread->start();
 
     // restore the main window's active state
     if (activateMainWindow && !loadScriptFromEditor) {
         _window->activateWindow();
     }
 
-    return scriptEngine;
+    return nullptr;
 }
 
 void Application::reloadScript(const QString& scriptName, bool isUserLoaded) {
@@ -4298,7 +4331,7 @@ void Application::handleScriptEngineLoaded(const QString& scriptFilename) {
     UserActivityLogger::getInstance().loadedScript(scriptFilename);
 
     // register our application services and set it off on its own thread
-    registerScriptEngineWithApplicationServices(scriptEngine);
+    // registerScriptEngineWithApplicationServices(scriptEngine);
 }
 
 void Application::handleScriptLoadError(const QString& scriptFilename) {

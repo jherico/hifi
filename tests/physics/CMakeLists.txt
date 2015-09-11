@@ -21,4 +21,4 @@ macro (SETUP_TESTCASE_DEPENDENCIES)
   copy_dlls_beside_windows_executable()
 endmacro ()
 
-setup_hifi_testcase(Script)
+setup_hifi_testcase(Qml)

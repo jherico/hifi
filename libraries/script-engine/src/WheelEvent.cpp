@@ -9,8 +9,8 @@
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 //
 
-#include <qscriptengine.h>
-#include <qscriptvalue.h>
+#include <QJSEngine.h>
+#include <QJSValue.h>
 
 #include "WheelEvent.h"
 
@@ -54,8 +54,8 @@ WheelEvent::WheelEvent(const QWheelEvent& event) {
 }
 
 
-QScriptValue WheelEvent::toScriptValue(QScriptEngine* engine, const WheelEvent& event) {
-    QScriptValue obj = engine->newObject();
+QJSValue WheelEvent::toScriptValue(QJSEngine* engine, const WheelEvent& event) {
+    QJSValue obj = engine->newObject();
     obj.setProperty("x", event.x);
     obj.setProperty("y", event.y);
     obj.setProperty("delta", event.delta);
@@ -70,6 +70,6 @@ QScriptValue WheelEvent::toScriptValue(QScriptEngine* engine, const WheelEvent& 
     return obj;
 }
 
-void WheelEvent::fromScriptValue(const QScriptValue& object, WheelEvent& event) {
+void WheelEvent::fromScriptValue(const QJSValue& object, WheelEvent& event) {
     // nothing for now...
 }

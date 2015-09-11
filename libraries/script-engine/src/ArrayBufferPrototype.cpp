@@ -22,6 +22,8 @@ static const int QCOMPRESS_HEADER_SIZE = 4;
 
 Q_DECLARE_METATYPE(QByteArray*)
 
+// FIXME JSENGINE
+#if 0
 ArrayBufferPrototype::ArrayBufferPrototype(QObject* parent) : QObject(parent) {
 }
 
@@ -87,3 +89,4 @@ QByteArray ArrayBufferPrototype::recodeImage(const QString& sourceFormat, const 
 QByteArray* ArrayBufferPrototype::thisArrayBuffer() const {
     return qscriptvalue_cast<QByteArray*>(thisObject().data());
 }
+#endif

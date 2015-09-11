@@ -12,20 +12,20 @@
 #include "ScriptEngineLogging.h"
 #include "ScriptAudioInjector.h"
 
-QScriptValue injectorToScriptValue(QScriptEngine* engine, ScriptAudioInjector* const& in) {
+QJSValue injectorToScriptValue(QJSEngine* engine, ScriptAudioInjector* const& in) {
     // The AudioScriptingInterface::playSound method can return null, so we need to account for that.
     if (!in) {
-        return QScriptValue(QScriptValue::NullValue);
+        return QJSValue(QJSValue::NullValue);
     }
 
     // when the script goes down we want to cleanup the injector
-    QObject::connect(engine, &QScriptEngine::destroyed, in, &ScriptAudioInjector::stopInjectorImmediately,
+    QObject::connect(engine, &QJSEngine::destroyed, in, &ScriptAudioInjector::stopInjectorImmediately,
                      Qt::DirectConnection);
     
-    return engine->newQObject(in, QScriptEngine::ScriptOwnership);
+    return engine->newQObject(in);
 }
 
-void injectorFromScriptValue(const QScriptValue& object, ScriptAudioInjector*& out) {
+void injectorFromScriptValue(const QJSValue& object, ScriptAudioInjector*& out) {
     out = qobject_cast<ScriptAudioInjector*>(object.toQObject());
 }
 

@@ -12,7 +12,7 @@
 #ifndef hifi_AudioInjectorOptions_h
 #define hifi_AudioInjectorOptions_h
 
-#include <QtScript/qscriptengine.h>
+#include <QtQml/QJSEngine.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -32,7 +32,7 @@ public:
 
 Q_DECLARE_METATYPE(AudioInjectorOptions);
 
-QScriptValue injectorOptionsToScriptValue(QScriptEngine* engine, const AudioInjectorOptions& injectorOptions);
-void injectorOptionsFromScriptValue(const QScriptValue& object, AudioInjectorOptions& injectorOptions);
+QJSValue injectorOptionsToScriptValue(QJSEngine* engine, const AudioInjectorOptions& injectorOptions);
+void injectorOptionsFromScriptValue(const QJSValue& object, AudioInjectorOptions& injectorOptions);
 
 #endif // hifi_AudioInjectorOptions_h

@@ -418,8 +418,8 @@ EntityPropertyFlags EntityItemProperties::getChangedProperties() const {
     return changedProperties;
 }
 
-QScriptValue EntityItemProperties::copyToScriptValue(QScriptEngine* engine, bool skipDefaults) const {
-    QScriptValue properties = engine->newObject();
+QJSValue EntityItemProperties::copyToScriptValue(QJSEngine* engine, bool skipDefaults) const {
+    QJSValue properties = engine->newObject();
     EntityItemProperties defaultEntityProperties;
 
     if (_idSet) {
@@ -525,9 +525,9 @@ QScriptValue EntityItemProperties::copyToScriptValue(QScriptEngine* engine, bool
 
     // Sitting properties support
     if (!skipDefaults) {
-        QScriptValue sittingPoints = engine->newObject();
+        QJSValue sittingPoints = engine->newObject();
         for (int i = 0; i < _sittingPoints.size(); ++i) {
-            QScriptValue sittingPoint = engine->newObject();
+            QJSValue sittingPoint = engine->newObject();
             sittingPoint.setProperty("name", _sittingPoints.at(i).name);
             sittingPoint.setProperty("position", vec3toScriptValue(engine, _sittingPoints.at(i).position));
             sittingPoint.setProperty("rotation", quatToScriptValue(engine, _sittingPoints.at(i).rotation));
@@ -539,11 +539,11 @@ QScriptValue EntityItemProperties::copyToScriptValue(QScriptEngine* engine, bool
 
     if (!skipDefaults) {
         AABox aaBox = getAABox();
-        QScriptValue boundingBox = engine->newObject();
-        QScriptValue bottomRightNear = vec3toScriptValue(engine, aaBox.getCorner());
-        QScriptValue topFarLeft = vec3toScriptValue(engine, aaBox.calcTopFarLeft());
-        QScriptValue center = vec3toScriptValue(engine, aaBox.calcCenter());
-        QScriptValue boundingBoxDimensions = vec3toScriptValue(engine, aaBox.getDimensions());
+        QJSValue boundingBox = engine->newObject();
+        QJSValue bottomRightNear = vec3toScriptValue(engine, aaBox.getCorner());
+        QJSValue topFarLeft = vec3toScriptValue(engine, aaBox.calcTopFarLeft());
+        QJSValue center = vec3toScriptValue(engine, aaBox.calcCenter());
+        QJSValue boundingBoxDimensions = vec3toScriptValue(engine, aaBox.getDimensions());
         boundingBox.setProperty("brn", bottomRightNear);
         boundingBox.setProperty("tfl", topFarLeft);
         boundingBox.setProperty("center", center);
@@ -575,10 +575,10 @@ QScriptValue EntityItemProperties::copyToScriptValue(QScriptEngine* engine, bool
     return properties;
 }
 
-void EntityItemProperties::copyFromScriptValue(const QScriptValue& object, bool honorReadOnly) {
-    QScriptValue typeScriptValue = object.property("type");
-    if (typeScriptValue.isValid()) {
-        setType(typeScriptValue.toVariant().toString());
+void EntityItemProperties::copyFromScriptValue(const QJSValue& object, bool honorReadOnly) {
+    QJSValue typeScriptValue = object.property("type");
+    if (!typeScriptValue.isUndefined()) {
+        setType(typeScriptValue.toString());
     }
 
     COPY_PROPERTY_FROM_QSCRIPTVALUE(position, glmVec3, setPosition);
@@ -668,7 +668,7 @@ void EntityItemProperties::copyFromScriptValue(const QScriptValue& object, bool 
                 auto result = QDateTime::fromMSecsSinceEpoch(_created / 1000, Qt::UTC); // usec per msec
                 return result;
             });
-        // TODO: expose this to QScriptValue for JSON saves?
+        // TODO: expose this to QJSValue for JSON saves?
         //COPY_PROPERTY_FROM_QSCRIPTVALUE(simulationOwner, ???, setSimulatorPriority);
     }
 
@@ -692,19 +692,19 @@ void EntityItemProperties::copyFromScriptValue(const QScriptValue& object, bool 
     _lastEdited = usecTimestampNow();
 }
 
-QScriptValue EntityItemPropertiesToScriptValue(QScriptEngine* engine, const EntityItemProperties& properties) {
+QJSValue EntityItemPropertiesToScriptValue(QJSEngine* engine, const EntityItemProperties& properties) {
     return properties.copyToScriptValue(engine, false);
 }
 
-QScriptValue EntityItemNonDefaultPropertiesToScriptValue(QScriptEngine* engine, const EntityItemProperties& properties) {
+QJSValue EntityItemNonDefaultPropertiesToScriptValue(QJSEngine* engine, const EntityItemProperties& properties) {
     return properties.copyToScriptValue(engine, true);
 }
 
-void EntityItemPropertiesFromScriptValueIgnoreReadOnly(const QScriptValue &object, EntityItemProperties& properties) {
+void EntityItemPropertiesFromScriptValueIgnoreReadOnly(const QJSValue &object, EntityItemProperties& properties) {
     properties.copyFromScriptValue(object, false);
 }
 
-void EntityItemPropertiesFromScriptValueHonorReadOnly(const QScriptValue &object, EntityItemProperties& properties) {
+void EntityItemPropertiesFromScriptValueHonorReadOnly(const QJSValue &object, EntityItemProperties& properties) {
     properties.copyFromScriptValue(object, true);
 }
 

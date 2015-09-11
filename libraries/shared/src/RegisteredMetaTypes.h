@@ -12,7 +12,7 @@
 #ifndef hifi_RegisteredMetaTypes_h
 #define hifi_RegisteredMetaTypes_h
 
-#include <QtScript/QScriptEngine>
+#include <QtQml/QJSEngine>
 #include <QtCore/QUuid>
 
 #include <glm/glm.hpp>
@@ -31,39 +31,39 @@ Q_DECLARE_METATYPE(xColor)
 Q_DECLARE_METATYPE(QVector<glm::vec3>)
 Q_DECLARE_METATYPE(QVector<float>)
 
-void registerMetaTypes(QScriptEngine* engine);
+void registerMetaTypes(QJSEngine* engine);
 
-QScriptValue vec4toScriptValue(QScriptEngine* engine, const glm::vec4& vec4);
-void vec4FromScriptValue(const QScriptValue& object, glm::vec4& vec4);
+QJSValue vec4toScriptValue(QJSEngine* engine, const glm::vec4& vec4);
+void vec4FromScriptValue(const QJSValue& object, glm::vec4& vec4);
 
-QScriptValue vec3toScriptValue(QScriptEngine* engine, const glm::vec3 &vec3);
-void vec3FromScriptValue(const QScriptValue &object, glm::vec3 &vec3);
+QJSValue vec3toScriptValue(QJSEngine* engine, const glm::vec3 &vec3);
+void vec3FromScriptValue(const QJSValue &object, glm::vec3 &vec3);
 
-QScriptValue vec2toScriptValue(QScriptEngine* engine, const glm::vec2 &vec2);
-void vec2FromScriptValue(const QScriptValue &object, glm::vec2 &vec2);
+QJSValue vec2toScriptValue(QJSEngine* engine, const glm::vec2 &vec2);
+void vec2FromScriptValue(const QJSValue &object, glm::vec2 &vec2);
 
-QScriptValue quatToScriptValue(QScriptEngine* engine, const glm::quat& quat);
-void quatFromScriptValue(const QScriptValue &object, glm::quat& quat);
+QJSValue quatToScriptValue(QJSEngine* engine, const glm::quat& quat);
+void quatFromScriptValue(const QJSValue &object, glm::quat& quat);
 
-QScriptValue qRectToScriptValue(QScriptEngine* engine, const QRect& rect);
-void qRectFromScriptValue(const QScriptValue& object, QRect& rect);
+QJSValue qRectToScriptValue(QJSEngine* engine, const QRect& rect);
+void qRectFromScriptValue(const QJSValue& object, QRect& rect);
 
-QScriptValue xColorToScriptValue(QScriptEngine* engine, const xColor& color);
-void xColorFromScriptValue(const QScriptValue &object, xColor& color);
+QJSValue xColorToScriptValue(QJSEngine* engine, const xColor& color);
+void xColorFromScriptValue(const QJSValue &object, xColor& color);
 
-QScriptValue qColorToScriptValue(QScriptEngine* engine, const QColor& color);
-void qColorFromScriptValue(const QScriptValue& object, QColor& color);
+QJSValue qColorToScriptValue(QJSEngine* engine, const QColor& color);
+void qColorFromScriptValue(const QJSValue& object, QColor& color);
 
-QScriptValue qURLToScriptValue(QScriptEngine* engine, const QUrl& url);
-void qURLFromScriptValue(const QScriptValue& object, QUrl& url);
+QJSValue qURLToScriptValue(QJSEngine* engine, const QUrl& url);
+void qURLFromScriptValue(const QJSValue& object, QUrl& url);
 
-QScriptValue qVectorVec3ToScriptValue(QScriptEngine* engine, const QVector<glm::vec3>& vector);
-void qVectorVec3FromScriptValue(const QScriptValue& array, QVector<glm::vec3>& vector);
-QVector<glm::vec3> qVectorVec3FromScriptValue( const QScriptValue& array);
+QJSValue qVectorVec3ToScriptValue(QJSEngine* engine, const QVector<glm::vec3>& vector);
+void qVectorVec3FromScriptValue(const QJSValue& array, QVector<glm::vec3>& vector);
+QVector<glm::vec3> qVectorVec3FromScriptValue( const QJSValue& array);
 
-QScriptValue qVectorFloatToScriptValue(QScriptEngine* engine, const QVector<float>& vector);
-void qVectorFloatFromScriptValue(const QScriptValue& array, QVector<float>& vector);
-QVector<float> qVectorFloatFromScriptValue(const QScriptValue& array);
+QJSValue qVectorFloatToScriptValue(QJSEngine* engine, const QVector<float>& vector);
+void qVectorFloatFromScriptValue(const QJSValue& array, QVector<float>& vector);
+QVector<float> qVectorFloatFromScriptValue(const QJSValue& array);
 
 class PickRay {
 public:
@@ -73,8 +73,8 @@ public:
     glm::vec3 direction;
 };
 Q_DECLARE_METATYPE(PickRay)
-QScriptValue pickRayToScriptValue(QScriptEngine* engine, const PickRay& pickRay);
-void pickRayFromScriptValue(const QScriptValue& object, PickRay& pickRay);
+QJSValue pickRayToScriptValue(QJSEngine* engine, const PickRay& pickRay);
+void pickRayFromScriptValue(const QJSValue& object, PickRay& pickRay);
 
 enum ContactEventType {
     CONTACT_EVENT_TYPE_START, 
@@ -97,15 +97,15 @@ public:
     glm::vec3 velocityChange;
 };
 Q_DECLARE_METATYPE(Collision)
-QScriptValue collisionToScriptValue(QScriptEngine* engine, const Collision& collision);
-void collisionFromScriptValue(const QScriptValue &object, Collision& collision);
+QJSValue collisionToScriptValue(QJSEngine* engine, const Collision& collision);
+void collisionFromScriptValue(const QJSValue &object, Collision& collision);
 
 //Q_DECLARE_METATYPE(QUuid) // don't need to do this for QUuid since it's already a meta type
-QScriptValue quuidToScriptValue(QScriptEngine* engine, const QUuid& uuid);
-void quuidFromScriptValue(const QScriptValue& object, QUuid& uuid);
+QJSValue quuidToScriptValue(QJSEngine* engine, const QUuid& uuid);
+void quuidFromScriptValue(const QJSValue& object, QUuid& uuid);
 
 //Q_DECLARE_METATYPE(QSizeF) // Don't need to to this becase it's arleady a meta type
-QScriptValue qSizeFToScriptValue(QScriptEngine* engine, const QSizeF& qSizeF);
-void qSizeFFromScriptValue(const QScriptValue& object, QSizeF& qSizeF);
+QJSValue qSizeFToScriptValue(QJSEngine* engine, const QSizeF& qSizeF);
+void qSizeFFromScriptValue(const QJSValue& object, QSizeF& qSizeF);
 
 #endif // hifi_RegisteredMetaTypes_h

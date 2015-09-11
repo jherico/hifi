@@ -88,7 +88,7 @@ void Rectangle3DOverlay::render(RenderArgs* args) {
     }
 }
 
-void Rectangle3DOverlay::setProperties(const QScriptValue &properties) {
+void Rectangle3DOverlay::setProperties(const QJSValue &properties) {
     Planar3DOverlay::setProperties(properties);
 }
 

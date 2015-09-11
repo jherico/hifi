@@ -21,8 +21,8 @@ public:
     TouchEvent(const QTouchEvent& event);
     TouchEvent(const QTouchEvent& event, const TouchEvent& other);
     
-    static QScriptValue toScriptValue(QScriptEngine* engine, const TouchEvent& event);
-    static void fromScriptValue(const QScriptValue& object, TouchEvent& event);
+    static QJSValue toScriptValue(QJSEngine* engine, const TouchEvent& event);
+    static void fromScriptValue(const QJSValue& object, TouchEvent& event);
     
     float x;
     float y;

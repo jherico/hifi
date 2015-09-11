@@ -18,7 +18,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/extented_min_max.hpp>
 
-#include <QtScript/QScriptEngine>
+#include <QtQml/QJSEngine>
 #include <QtCore/QObject>
 #include <QVector>
 #include <QString>

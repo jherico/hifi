@@ -11,7 +11,7 @@
 
 #include <string>
 
-#include <QScriptEngine>
+#include <QtQml/QJSEngine>
 
 #if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic push
@@ -44,21 +44,24 @@ static const quint64 MIN_TIME_BETWEEN_MY_AVATAR_DATA_SENDS = (1000 * 1000) / 70;
 // We add _myAvatar into the hash with all the other AvatarData, and we use the default NULL QUid as the key.
 const QUuid MY_AVATAR_KEY;  // NULL key
 
-static QScriptValue localLightToScriptValue(QScriptEngine* engine, const AvatarManager::LocalLight& light) {
-    QScriptValue object = engine->newObject();
+static QJSValue localLightToScriptValue(QJSEngine* engine, const AvatarManager::LocalLight& light) {
+    QJSValue object = engine->newObject();
     object.setProperty("direction", vec3toScriptValue(engine, light.direction));
     object.setProperty("color", vec3toScriptValue(engine, light.color));
     return object;
 }
 
-static void localLightFromScriptValue(const QScriptValue& value, AvatarManager::LocalLight& light) {
+static void localLightFromScriptValue(const QJSValue& value, AvatarManager::LocalLight& light) {
     vec3FromScriptValue(value.property("direction"), light.direction);
     vec3FromScriptValue(value.property("color"), light.color);
 }
 
-void AvatarManager::registerMetaTypes(QScriptEngine* engine) {
+void AvatarManager::registerMetaTypes(QJSEngine* engine) {
+    // FIXME JSENGINE
+#if 0
     qScriptRegisterMetaType(engine, localLightToScriptValue, localLightFromScriptValue);
     qScriptRegisterSequenceMetaType<QVector<AvatarManager::LocalLight> >(engine);
+#endif
 }
 
 AvatarManager::AvatarManager(QObject* parent) :

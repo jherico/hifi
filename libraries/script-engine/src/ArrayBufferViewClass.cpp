@@ -13,6 +13,8 @@
 
 Q_DECLARE_METATYPE(QByteArray*)
 
+// FIXME JSENGINE
+#if 0
 ArrayBufferViewClass::ArrayBufferViewClass(ScriptEngine* scriptEngine) :
 QObject(scriptEngine),
 QScriptClass(scriptEngine),
@@ -23,7 +25,7 @@ _scriptEngine(scriptEngine) {
     _byteLengthName = engine()->toStringHandle(BYTE_LENGTH_PROPERTY_NAME.toLatin1());
 }
 
-QScriptClass::QueryFlags ArrayBufferViewClass::queryProperty(const QScriptValue& object,
+QScriptClass::QueryFlags ArrayBufferViewClass::queryProperty(const QJSValue& object,
                                                              const QScriptString& name,
                                                              QueryFlags flags, uint* id) {
     if (name == _bufferName || name == _byteOffsetName || name == _byteLengthName) {
@@ -32,7 +34,7 @@ QScriptClass::QueryFlags ArrayBufferViewClass::queryProperty(const QScriptValue&
     return 0; // No access
 }
 
-QScriptValue ArrayBufferViewClass::property(const QScriptValue& object,
+QJSValue ArrayBufferViewClass::property(const QJSValue& object,
                                             const QScriptString& name, uint id) {
     if (name == _bufferName) {
         return object.data().property(_bufferName);
@@ -43,10 +45,11 @@ QScriptValue ArrayBufferViewClass::property(const QScriptValue& object,
     if (name == _byteLengthName) {
         return object.data().property(_byteLengthName);
     }
-    return QScriptValue();
+    return QJSValue();
 }
 
-QScriptValue::PropertyFlags ArrayBufferViewClass::propertyFlags(const QScriptValue& object,
+QJSValue::PropertyFlags ArrayBufferViewClass::propertyFlags(const QJSValue& object,
                                                                 const QScriptString& name, uint id) {
-    return QScriptValue::Undeletable;
+    return QJSValue::Undeletable;
 }
+#endif

@@ -22,12 +22,14 @@ static const QString CLASS_NAME = "ArrayBuffer";
 
 Q_DECLARE_METATYPE(QByteArray*)
 
+// FIXME JSENGINE
+#if 0
 ArrayBufferClass::ArrayBufferClass(ScriptEngine* scriptEngine) :
 QObject(scriptEngine),
 QScriptClass(scriptEngine),
 _scriptEngine(scriptEngine) {
     qScriptRegisterMetaType<QByteArray>(engine(), toScriptValue, fromScriptValue);
-    QScriptValue global = engine()->globalObject();
+    QJSValue global = engine()->globalObject();
     
     // Save string handles for quick lookup
     _name = engine()->toStringHandle(CLASS_NAME.toLatin1());
@@ -35,10 +37,10 @@ _scriptEngine(scriptEngine) {
     
     // build prototype
     _proto = engine()->newQObject(new ArrayBufferPrototype(this),
-                                QScriptEngine::QtOwnership,
-                                QScriptEngine::SkipMethodsInEnumeration |
-                                QScriptEngine::ExcludeSuperClassMethods |
-                                QScriptEngine::ExcludeSuperClassProperties);
+                                QJSEngine::QtOwnership,
+                                QJSEngine::SkipMethodsInEnumeration |
+                                QJSEngine::ExcludeSuperClassMethods |
+                                QJSEngine::ExcludeSuperClassProperties);
     _proto.setPrototype(global.property("Object").property("prototype"));
     
     // Register constructor
@@ -61,42 +63,42 @@ _scriptEngine(scriptEngine) {
     new Float64ArrayClass(scriptEngine);
 }
 
-QScriptValue ArrayBufferClass::newInstance(qint32 size) {
+QJSValue ArrayBufferClass::newInstance(qint32 size) {
     const qint32 MAX_LENGTH = 100000000;
     if (size < 0) {
         engine()->evaluate("throw \"ArgumentError: negative length\"");
-        return QScriptValue();
+        return QJSValue();
     }
     if (size > MAX_LENGTH) {
         engine()->evaluate("throw \"ArgumentError: absurd length\"");
-        return QScriptValue();
+        return QJSValue();
     }
     
     engine()->reportAdditionalMemoryCost(size);
-    QScriptEngine* eng = engine();
+    QJSEngine* eng = engine();
     QVariant variant = QVariant::fromValue(QByteArray(size, 0));
-    QScriptValue data =  eng->newVariant(variant);
+    QJSValue data =  eng->newVariant(variant);
     return engine()->newObject(this, data);
 }
 
-QScriptValue ArrayBufferClass::newInstance(const QByteArray& ba) {
-    QScriptValue data = engine()->newVariant(QVariant::fromValue(ba));
+QJSValue ArrayBufferClass::newInstance(const QByteArray& ba) {
+    QJSValue data = engine()->newVariant(QVariant::fromValue(ba));
     return engine()->newObject(this, data);
 }
 
-QScriptValue ArrayBufferClass::construct(QScriptContext* context, QScriptEngine* engine) {
+QJSValue ArrayBufferClass::construct(QScriptContext* context, QJSEngine* engine) {
     ArrayBufferClass* cls = qscriptvalue_cast<ArrayBufferClass*>(context->callee().data());
     if (!cls) {
         // return if callee (function called) is not of type ArrayBuffer
-        return QScriptValue();
+        return QJSValue();
     }
-    QScriptValue arg = context->argument(0);
+    QJSValue arg = context->argument(0);
     if (!arg.isValid() || !arg.isNumber()) {
-        return QScriptValue();
+        return QJSValue();
     }
     
     quint32 size = arg.toInt32();
-    QScriptValue newObject = cls->newInstance(size);
+    QJSValue newObject = cls->newInstance(size);
     
     if (context->isCalledAsConstructor()) {
         // if called with keyword new, replace this object.
@@ -107,7 +109,7 @@ QScriptValue ArrayBufferClass::construct(QScriptContext* context, QScriptEngine*
     return newObject;
 }
 
-QScriptClass::QueryFlags ArrayBufferClass::queryProperty(const QScriptValue& object,
+QScriptClass::QueryFlags ArrayBufferClass::queryProperty(const QJSValue& object,
                                                     const QScriptString& name,
                                                     QueryFlags flags, uint* id) {
     QByteArray* ba = qscriptvalue_cast<QByteArray*>(object.data());
@@ -118,30 +120,30 @@ QScriptClass::QueryFlags ArrayBufferClass::queryProperty(const QScriptValue& obj
     return 0; // No access
 }
 
-QScriptValue ArrayBufferClass::property(const QScriptValue& object,
+QJSValue ArrayBufferClass::property(const QJSValue& object,
                                    const QScriptString& name, uint id) {
     QByteArray* ba = qscriptvalue_cast<QByteArray*>(object.data());
     if (ba && name == _byteLength) {
         return ba->length();
     }
-    return QScriptValue();
+    return QJSValue();
 }
 
-QScriptValue::PropertyFlags ArrayBufferClass::propertyFlags(const QScriptValue& object,
+QJSValue::PropertyFlags ArrayBufferClass::propertyFlags(const QJSValue& object,
                                                        const QScriptString& name, uint id) {
-    return QScriptValue::Undeletable;
+    return QJSValue::Undeletable;
 }
 
 QString ArrayBufferClass::name() const {
     return _name.toString();
 }
 
-QScriptValue ArrayBufferClass::prototype() const {
+QJSValue ArrayBufferClass::prototype() const {
     return _proto;
 }
 
-QScriptValue ArrayBufferClass::toScriptValue(QScriptEngine* engine, const QByteArray& ba) {
-    QScriptValue ctor = engine->globalObject().property(CLASS_NAME);
+QJSValue ArrayBufferClass::toScriptValue(QJSEngine* engine, const QByteArray& ba) {
+    QJSValue ctor = engine->globalObject().property(CLASS_NAME);
     ArrayBufferClass* cls = qscriptvalue_cast<ArrayBufferClass*>(ctor.data());
     if (!cls) {
         return engine->newVariant(QVariant::fromValue(ba));
@@ -149,7 +151,8 @@ QScriptValue ArrayBufferClass::toScriptValue(QScriptEngine* engine, const QByteA
     return cls->newInstance(ba);
 }
 
-void ArrayBufferClass::fromScriptValue(const QScriptValue& obj, QByteArray& ba) {
+void ArrayBufferClass::fromScriptValue(const QJSValue& obj, QByteArray& ba) {
     ba = qvariant_cast<QByteArray>(obj.data().toVariant());
 }
 
+#endif

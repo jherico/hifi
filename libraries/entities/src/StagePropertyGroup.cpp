@@ -36,7 +36,7 @@ StagePropertyGroup::StagePropertyGroup() {
     _automaticHourDay = false;
 }
 
-void StagePropertyGroup::copyToScriptValue(QScriptValue& properties, QScriptEngine* engine, bool skipDefaults, EntityItemProperties& defaultEntityProperties) const {
+void StagePropertyGroup::copyToScriptValue(QJSValue& properties, QJSEngine* engine, bool skipDefaults, EntityItemProperties& defaultEntityProperties) const {
     COPY_GROUP_PROPERTY_TO_QSCRIPTVALUE(Stage, stage, SunModelEnabled, sunModelEnabled);
     COPY_GROUP_PROPERTY_TO_QSCRIPTVALUE(Stage, stage, Latitude, latitude);
     COPY_GROUP_PROPERTY_TO_QSCRIPTVALUE(Stage, stage, Longitude, longitude);
@@ -46,7 +46,7 @@ void StagePropertyGroup::copyToScriptValue(QScriptValue& properties, QScriptEngi
     COPY_GROUP_PROPERTY_TO_QSCRIPTVALUE(Stage, stage, AutomaticHourDay, automaticHourDay);
 }
 
-void StagePropertyGroup::copyFromScriptValue(const QScriptValue& object, bool& _defaultSettings) {
+void StagePropertyGroup::copyFromScriptValue(const QJSValue& object, bool& _defaultSettings) {
 
     // Backward compatibility support for the old way of doing stage properties
     COPY_PROPERTY_FROM_QSCRIPTVALUE_GETTER(stageSunModelEnabled, bool, setSunModelEnabled, getSunModelEnabled);

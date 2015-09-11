@@ -14,7 +14,7 @@
 
 #include <QtCore/QObject>
 #include <QtNetwork/QNetworkReply>
-#include <QtScript/qscriptengine.h>
+#include <QtQml/QJSEngine.h>
 
 #include <ResourceCache.h>
 
@@ -45,12 +45,12 @@ private:
 typedef QSharedPointer<Sound> SharedSoundPointer;
 
 Q_DECLARE_METATYPE(SharedSoundPointer)
-QScriptValue soundSharedPointerToScriptValue(QScriptEngine* engine, SharedSoundPointer const& in);
-void soundSharedPointerFromScriptValue(const QScriptValue& object, SharedSoundPointer &out);
+QJSValue soundSharedPointerToScriptValue(QJSEngine* engine, SharedSoundPointer const& in);
+void soundSharedPointerFromScriptValue(const QJSValue& object, SharedSoundPointer &out);
 
 Q_DECLARE_METATYPE(Sound*)
-QScriptValue soundPointerToScriptValue(QScriptEngine* engine, Sound* const& in);
-void soundPointerFromScriptValue(const QScriptValue& object, Sound* &out);
+QJSValue soundPointerToScriptValue(QJSEngine* engine, Sound* const& in);
+void soundPointerFromScriptValue(const QJSValue& object, Sound* &out);
 
 
 #endif // hifi_Sound_h
