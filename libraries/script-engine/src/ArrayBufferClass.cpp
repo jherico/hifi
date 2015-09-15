@@ -91,7 +91,7 @@ QScriptValue ArrayBufferClass::construct(QScriptContext* context, QScriptEngine*
         return QScriptValue();
     }
     QScriptValue arg = context->argument(0);
-    if (!arg.isValid() || !arg.isNumber()) {
+    if (arg.isUndefined() || !arg.isNumber()) {
         return QScriptValue();
     }
     

@@ -387,7 +387,7 @@ OverlayPropertyResult::OverlayPropertyResult() :
 
 QScriptValue OverlayPropertyResultToScriptValue(QScriptEngine* engine, const OverlayPropertyResult& result)
 {
-    if (!result.value.isValid()) {
+    if (result.value.isUndefined()) {
         return QScriptValue::UndefinedValue;
     }
 
@@ -513,7 +513,7 @@ void RayToOverlayIntersectionResultFromScriptValue(const QScriptValue& object, R
         value.face = UNKNOWN_FACE;
     };
     QScriptValue intersection = object.property("intersection");
-    if (intersection.isValid()) {
+    if (!intersection.isUndefined()) {
         vec3FromScriptValue(intersection, value.intersection);
     }
     value.extraInfo = object.property("extraInfo").toVariant().toString();

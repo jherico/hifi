@@ -378,7 +378,7 @@ void ScriptEngine::registerFunction(const QString& parent, const QString& name, 
     #endif
 
     QScriptValue object = globalObject().property(parent);
-    if (object.isValid()) {
+    if (!object.isUndefined()) {
         QScriptValue scriptFun = newFunction(functionSignature, numArguments);
         object.setProperty(name, scriptFun);
     }
@@ -407,7 +407,7 @@ void ScriptEngine::registerGetterSetter(const QString& name, QScriptEngine::Func
 
     if (!parent.isNull()) {
         QScriptValue object = globalObject().property(parent);
-        if (object.isValid()) {
+        if (!object.isUndefined()) {
             object.setProperty(name, setterFunction, QScriptValue::PropertySetter);
             object.setProperty(name, getterFunction, QScriptValue::PropertyGetter);
         }
@@ -689,7 +689,7 @@ void ScriptEngine::timerFired() {
     }
 
     // call the associated JS function, if it exists
-    if (timerFunction.isValid()) {
+    if (!timerFunction.isUndefined()) {
         timerFunction.call();
     }
 }

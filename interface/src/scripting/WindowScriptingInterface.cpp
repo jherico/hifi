@@ -256,7 +256,7 @@ void WindowScriptingInterface::doReloadNonBlockingForm(QScriptValue newValues) {
         if (item.property("oldIndex").isValid()) {
             int oldIndex = item.property("oldIndex").toInt32();
             QScriptValue oldItem = _form.property(oldIndex);
-            if (oldItem.isValid()) {
+            if (!oldItem.isUndefined()) {
                 QLineEdit* originalEdit = _edits[oldItem.property("editIndex").toInt32()];
                 originalEdit->setText(item.property("value").toString());
             }

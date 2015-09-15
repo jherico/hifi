@@ -32,14 +32,14 @@ void Volume3DOverlay::setProperties(const QScriptValue& properties) {
     QScriptValue dimensions = properties.property("dimensions");
 
     // if "dimensions" property was not there, check to see if they included aliases: scale
-    if (!dimensions.isValid()) {
+    if (dimensions.isUndefined()) {
         dimensions = properties.property("scale");
-        if (!dimensions.isValid()) {
+        if (dimensions.isUndefined()) {
             dimensions = properties.property("size");
         }
     }
 
-    if (dimensions.isValid()) {
+    if (!dimensions.isUndefined()) {
         bool validDimensions = false;
         glm::vec3 newDimensions;
 
@@ -48,9 +48,9 @@ void Volume3DOverlay::setProperties(const QScriptValue& properties) {
         QScriptValue z = dimensions.property("z");
 
 
-        if (x.isValid() && x.isNumber() &&
-            y.isValid() && y.isNumber() &&
-            z.isValid() && z.isNumber()) {
+        if (!x.isUndefined() && x.isNumber() &&
+            !y.isUndefined() && y.isNumber() &&
+            !z.isUndefined() && z.isNumber()) {
             newDimensions.x = x.toNumber();
             newDimensions.y = y.toNumber();
             newDimensions.z = z.toNumber();
@@ -59,9 +59,9 @@ void Volume3DOverlay::setProperties(const QScriptValue& properties) {
             QScriptValue width = dimensions.property("width");
             QScriptValue height = dimensions.property("height");
             QScriptValue depth = dimensions.property("depth");
-            if (width.isValid() && width.isNumber() &&
-                height.isValid() && height.isNumber() &&
-                depth.isValid() && depth.isNumber()) {
+            if (!width.isUndefined() && width.isNumber() &&
+                !height.isUndefined() && height.isNumber() &&
+                !depth.isUndefined() && depth.isNumber()) {
                 newDimensions.x = width.toNumber();
                 newDimensions.y = height.toNumber();
                 newDimensions.z = depth.toNumber();

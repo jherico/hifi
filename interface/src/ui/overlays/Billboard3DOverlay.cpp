@@ -28,11 +28,11 @@ void Billboard3DOverlay::setProperties(const QScriptValue &properties) {
 QScriptValue Billboard3DOverlay::getProperty(const QString &property) {
     QScriptValue value;
     value = Billboardable::getProperty(_scriptEngine, property);
-    if (value.isValid()) {
+    if (!value.isUndefined()) {
         return value;
     }
     value = PanelAttachable::getProperty(_scriptEngine, property);
-    if (value.isValid()) {
+    if (!value.isUndefined()) {
         return value;
     }
     return Planar3DOverlay::getProperty(property);

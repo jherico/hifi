@@ -41,28 +41,28 @@ void Planar3DOverlay::setProperties(const QScriptValue& properties) {
     QScriptValue dimensions = properties.property("dimensions");
 
     // if "dimensions" property was not there, check to see if they included aliases: scale
-    if (!dimensions.isValid()) {
+    if (dimensions.isUndefined()) {
         dimensions = properties.property("scale");
-        if (!dimensions.isValid()) {
+        if (dimensions.isUndefined()) {
             dimensions = properties.property("size");
         }
     }
 
-    if (dimensions.isValid()) {
+    if (!dimensions.isUndefined()) {
         bool validDimensions = false;
         glm::vec2 newDimensions;
 
         QScriptValue x = dimensions.property("x");
         QScriptValue y = dimensions.property("y");
 
-        if (x.isValid() && y.isValid()) {
+        if (!x.isUndefined() && !y.isUndefined()) {
             newDimensions.x = x.toVariant().toFloat();
             newDimensions.y = y.toVariant().toFloat();
             validDimensions = true;
         } else {
             QScriptValue width = dimensions.property("width");
             QScriptValue height = dimensions.property("height");
-            if (width.isValid() && height.isValid()) {
+            if (!width.isUndefined() && !height.isUndefined()) {
                 newDimensions.x = width.toVariant().toFloat();
                 newDimensions.y = height.toVariant().toFloat();
                 validDimensions = true;

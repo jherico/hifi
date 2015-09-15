@@ -128,16 +128,16 @@ void Text3DOverlay::setProperties(const QScriptValue& properties) {
     Billboard3DOverlay::setProperties(properties);
 
     QScriptValue text = properties.property("text");
-    if (text.isValid()) {
+    if (!text.isUndefined()) {
         setText(text.toVariant().toString());
     }
 
     QScriptValue backgroundColor = properties.property("backgroundColor");
-    if (backgroundColor.isValid()) {
+    if (!backgroundColor.isUndefined()) {
         QScriptValue red = backgroundColor.property("red");
         QScriptValue green = backgroundColor.property("green");
         QScriptValue blue = backgroundColor.property("blue");
-        if (red.isValid() && green.isValid() && blue.isValid()) {
+        if (!red.isUndefined() && !green.isUndefined() && !blue.isUndefined()) {
             _backgroundColor.red = red.toVariant().toInt();
             _backgroundColor.green = green.toVariant().toInt();
             _backgroundColor.blue = blue.toVariant().toInt();

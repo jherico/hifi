@@ -68,14 +68,14 @@ void Line3DOverlay::setProperties(const QScriptValue& properties) {
 
     QScriptValue start = properties.property("start");
     // if "start" property was not there, check to see if they included aliases: startPoint
-    if (!start.isValid()) {
+    if (start.isUndefined()) {
         start = properties.property("startPoint");
     }
-    if (start.isValid()) {
+    if (!start.isUndefined()) {
         QScriptValue x = start.property("x");
         QScriptValue y = start.property("y");
         QScriptValue z = start.property("z");
-        if (x.isValid() && y.isValid() && z.isValid()) {
+        if (!x.isUndefined() && !y.isUndefined() && !z.isUndefined()) {
             glm::vec3 newStart;
             newStart.x = x.toVariant().toFloat();
             newStart.y = y.toVariant().toFloat();
@@ -86,14 +86,14 @@ void Line3DOverlay::setProperties(const QScriptValue& properties) {
 
     QScriptValue end = properties.property("end");
     // if "end" property was not there, check to see if they included aliases: endPoint
-    if (!end.isValid()) {
+    if (end.isUndefined()) {
         end = properties.property("endPoint");
     }
-    if (end.isValid()) {
+    if (!end.isUndefined()) {
         QScriptValue x = end.property("x");
         QScriptValue y = end.property("y");
         QScriptValue z = end.property("z");
-        if (x.isValid() && y.isValid() && z.isValid()) {
+        if (!x.isUndefined() && !y.isUndefined() && !z.isUndefined()) {
             glm::vec3 newEnd;
             newEnd.x = x.toVariant().toFloat();
             newEnd.y = y.toVariant().toFloat();

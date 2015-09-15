@@ -129,7 +129,7 @@ void ImageOverlay::setProperties(const QScriptValue& properties) {
     Overlay2D::setProperties(properties);
 
     QScriptValue subImageBounds = properties.property("subImage");
-    if (subImageBounds.isValid()) {
+    if (!subImageBounds.isUndefined()) {
         QRect oldSubImageRect = _fromImage;
         QRect subImageRect = _fromImage;
         if (subImageBounds.property("x").isValid()) {
@@ -156,7 +156,7 @@ void ImageOverlay::setProperties(const QScriptValue& properties) {
     }
 
     QScriptValue imageURL = properties.property("imageURL");
-    if (imageURL.isValid()) {
+    if (!imageURL.isUndefined()) {
         setImageURL(imageURL.toVariant().toString());
     }
 }

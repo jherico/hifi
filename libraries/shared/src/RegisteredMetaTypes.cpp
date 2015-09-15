@@ -196,7 +196,7 @@ QScriptValue xColorToScriptValue(QScriptEngine *engine, const xColor& color) {
 }
 
 void xColorFromScriptValue(const QScriptValue &object, xColor& color) {
-    if (!object.isValid()) {
+    if (object.isUndefined()) {
         return;
     }
     if (object.isNumber()) {
@@ -257,22 +257,22 @@ QScriptValue pickRayToScriptValue(QScriptEngine* engine, const PickRay& pickRay)
 
 void pickRayFromScriptValue(const QScriptValue& object, PickRay& pickRay) {
     QScriptValue originValue = object.property("origin");
-    if (originValue.isValid()) {
+    if (!originValue.isUndefined()) {
         auto x = originValue.property("x");
         auto y = originValue.property("y");
         auto z = originValue.property("z");
-        if (x.isValid() && y.isValid() && z.isValid()) {
+        if (!x.isUndefined() && !y.isUndefined() && !z.isUndefined()) {
             pickRay.origin.x = x.toVariant().toFloat();
             pickRay.origin.y = y.toVariant().toFloat();
             pickRay.origin.z = z.toVariant().toFloat();
         }
     }
     QScriptValue directionValue = object.property("direction");
-    if (directionValue.isValid()) {
+    if (!directionValue.isUndefined()) {
         auto x = directionValue.property("x");
         auto y = directionValue.property("y");
         auto z = directionValue.property("z");
-        if (x.isValid() && y.isValid() && z.isValid()) {
+        if (!x.isUndefined() && !y.isUndefined() && !z.isUndefined()) {
             pickRay.direction.x = x.toVariant().toFloat();
             pickRay.direction.y = y.toVariant().toFloat();
             pickRay.direction.z = z.toVariant().toFloat();

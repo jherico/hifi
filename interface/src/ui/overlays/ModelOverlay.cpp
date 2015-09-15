@@ -113,14 +113,14 @@ void ModelOverlay::setProperties(const QScriptValue &properties) {
     }
     
     QScriptValue urlValue = properties.property("url");
-    if (urlValue.isValid() && urlValue.isString()) {
+    if (!urlValue.isUndefined() && urlValue.isString()) {
         _url = urlValue.toString();
         _updateModel = true;
         _isLoaded = false;
     }
     
     QScriptValue texturesValue = properties.property("textures");
-    if (texturesValue.isValid() && texturesValue.toVariant().canConvert(QVariant::Map)) {
+    if (!texturesValue.isUndefined() && texturesValue.toVariant().canConvert(QVariant::Map)) {
         QVariantMap textureMap = texturesValue.toVariant().toMap();
         foreach(const QString& key, textureMap.keys()) {
             

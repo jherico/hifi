@@ -114,7 +114,7 @@ inline QScriptValue convertScriptValue(QScriptEngine* e, const EntityItemID& v) 
 #define COPY_GROUP_PROPERTY_TO_QSCRIPTVALUE(G,g,P,p) \
     if (!skipDefaults || defaultEntityProperties.get##G().get##P() != get##P()) { \
         QScriptValue groupProperties = properties.property(#g); \
-        if (!groupProperties.isValid()) { \
+        if (groupProperties.isUndefined()) { \
             groupProperties = engine->newObject(); \
         } \
         QScriptValue V = convertScriptValue(engine, get##P()); \
@@ -172,7 +172,7 @@ inline glmVec3 glmVec3_convertFromScriptValue(const QScriptValue& v, bool& isVal
     QScriptValue x = v.property("x");
     QScriptValue y = v.property("y");
     QScriptValue z = v.property("z");
-    if (x.isValid() && y.isValid() && z.isValid()) {
+    if (!x.isUndefined() && !y.isUndefined() && !z.isUndefined()) {
         glm::vec3 newValue(0);
         newValue.x = x.toVariant().toFloat();
         newValue.y = y.toVariant().toFloat();
@@ -203,7 +203,7 @@ inline glmQuat glmQuat_convertFromScriptValue(const QScriptValue& v, bool& isVal
     QScriptValue y = v.property("y");
     QScriptValue z = v.property("z");
     QScriptValue w = v.property("w");
-    if (x.isValid() && y.isValid() && z.isValid() && w.isValid()) {
+    if (!x.isUndefined() && !y.isUndefined() && !z.isUndefined() && !w.isUndefined()) {
         glm::quat newValue;
         newValue.x = x.toVariant().toFloat();
         newValue.y = y.toVariant().toFloat();
@@ -226,7 +226,7 @@ inline xColor xColor_convertFromScriptValue(const QScriptValue& v, bool& isValid
     QScriptValue r = v.property("red");
     QScriptValue g = v.property("green");
     QScriptValue b = v.property("blue");
-    if (r.isValid() && g.isValid() && b.isValid()) {
+    if (!r.isUndefined() && !g.isUndefined() && !b.isUndefined()) {
         newValue.red = r.toVariant().toInt();
         newValue.green = g.toVariant().toInt();
         newValue.blue = b.toVariant().toInt();
@@ -239,7 +239,7 @@ inline xColor xColor_convertFromScriptValue(const QScriptValue& v, bool& isValid
 #define COPY_PROPERTY_FROM_QSCRIPTVALUE(P, T, S) \
     {                                                   \
         QScriptValue V = object.property(#P);           \
-        if (V.isValid()) {                              \
+        if (!V.isUndefined()) {                              \
             bool isValid = false;                       \
             T newValue = T##_convertFromScriptValue(V, isValid); \
             if (isValid && (_defaultSettings || newValue != _##P)) { \
@@ -251,7 +251,7 @@ inline xColor xColor_convertFromScriptValue(const QScriptValue& v, bool& isValid
 #define COPY_PROPERTY_FROM_QSCRIPTVALUE_GETTER(P, T, S, G) \
 { \
     QScriptValue V = object.property(#P);           \
-    if (V.isValid()) {                              \
+    if (!V.isUndefined()) {                              \
         bool isValid = false;                       \
         T newValue = T##_convertFromScriptValue(V, isValid); \
         if (isValid && (_defaultSettings || newValue != G())) { \
@@ -263,9 +263,9 @@ inline xColor xColor_convertFromScriptValue(const QScriptValue& v, bool& isValid
 #define COPY_GROUP_PROPERTY_FROM_QSCRIPTVALUE(G, P, T, S)  \
     {                                                         \
         QScriptValue G = object.property(#G);                 \
-        if (G.isValid()) {                                    \
+        if (!G.isUndefined()) {                                    \
             QScriptValue V = G.property(#P);                  \
-            if (V.isValid()) {                                \
+            if (!V.isUndefined()) {                                \
                 bool isValid = false;                       \
                 T newValue = T##_convertFromScriptValue(V, isValid); \
                 if (isValid && (_defaultSettings || newValue != _##P)) { \
@@ -277,7 +277,7 @@ inline xColor xColor_convertFromScriptValue(const QScriptValue& v, bool& isValid
 
 #define COPY_PROPERTY_FROM_QSCRITPTVALUE_ENUM(P, S)               \
     QScriptValue P = object.property(#P);                         \
-    if (P.isValid()) {                                            \
+    if (!P.isUndefined()) {                                            \
         QString newValue = P.toVariant().toString();              \
         if (_defaultSettings || newValue != get##S##AsString()) { \
             set##S##FromString(newValue);                         \

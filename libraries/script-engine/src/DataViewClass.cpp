@@ -56,7 +56,7 @@ QScriptValue DataViewClass::construct(QScriptContext* context, QScriptEngine* en
     QScriptValue byteOffsetArg = (context->argumentCount() >= 2) ? context->argument(1) : QScriptValue();
     QScriptValue byteLengthArg = (context->argumentCount() >= 3) ? context->argument(2) : QScriptValue();
     
-    QByteArray* arrayBuffer = (bufferArg.isValid()) ? qscriptvalue_cast<QByteArray*>(bufferArg.data()) :NULL;
+    QByteArray* arrayBuffer = (!bufferArg.isUndefined()) ? qscriptvalue_cast<QByteArray*>(bufferArg.data()) :NULL;
     if (!arrayBuffer) {
         engine->evaluate("throw \"TypeError: 1st argument not a ArrayBuffer\"");
         return QScriptValue();

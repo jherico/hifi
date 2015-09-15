@@ -284,56 +284,56 @@ void Circle3DOverlay::setProperties(const QScriptValue &properties) {
     Planar3DOverlay::setProperties(properties);
 
     QScriptValue startAt = properties.property("startAt");
-    if (startAt.isValid()) {
+    if (!startAt.isUndefined()) {
         setStartAt(startAt.toVariant().toFloat());
     }
 
     QScriptValue endAt = properties.property("endAt");
-    if (endAt.isValid()) {
+    if (!endAt.isUndefined()) {
         setEndAt(endAt.toVariant().toFloat());
     }
 
     QScriptValue outerRadius = properties.property("outerRadius");
-    if (outerRadius.isValid()) {
+    if (!outerRadius.isUndefined()) {
         setOuterRadius(outerRadius.toVariant().toFloat());
     }
 
     QScriptValue innerRadius = properties.property("innerRadius");
-    if (innerRadius.isValid()) {
+    if (!innerRadius.isUndefined()) {
         setInnerRadius(innerRadius.toVariant().toFloat());
     }
 
     QScriptValue hasTickMarks = properties.property("hasTickMarks");
-    if (hasTickMarks.isValid()) {
+    if (!hasTickMarks.isUndefined()) {
         setHasTickMarks(hasTickMarks.toVariant().toBool());
     }
 
     QScriptValue majorTickMarksAngle = properties.property("majorTickMarksAngle");
-    if (majorTickMarksAngle.isValid()) {
+    if (!majorTickMarksAngle.isUndefined()) {
         setMajorTickMarksAngle(majorTickMarksAngle.toVariant().toFloat());
     }
 
     QScriptValue minorTickMarksAngle = properties.property("minorTickMarksAngle");
-    if (minorTickMarksAngle.isValid()) {
+    if (!minorTickMarksAngle.isUndefined()) {
         setMinorTickMarksAngle(minorTickMarksAngle.toVariant().toFloat());
     }
 
     QScriptValue majorTickMarksLength = properties.property("majorTickMarksLength");
-    if (majorTickMarksLength.isValid()) {
+    if (!majorTickMarksLength.isUndefined()) {
         setMajorTickMarksLength(majorTickMarksLength.toVariant().toFloat());
     }
 
     QScriptValue minorTickMarksLength = properties.property("minorTickMarksLength");
-    if (minorTickMarksLength.isValid()) {
+    if (!minorTickMarksLength.isUndefined()) {
         setMinorTickMarksLength(minorTickMarksLength.toVariant().toFloat());
     }
 
     QScriptValue majorTickMarksColor = properties.property("majorTickMarksColor");
-    if (majorTickMarksColor.isValid()) {
+    if (!majorTickMarksColor.isUndefined()) {
         QScriptValue red = majorTickMarksColor.property("red");
         QScriptValue green = majorTickMarksColor.property("green");
         QScriptValue blue = majorTickMarksColor.property("blue");
-        if (red.isValid() && green.isValid() && blue.isValid()) {
+        if (!red.isUndefined() && !green.isUndefined() && !blue.isUndefined()) {
             _majorTickMarksColor.red = red.toVariant().toInt();
             _majorTickMarksColor.green = green.toVariant().toInt();
             _majorTickMarksColor.blue = blue.toVariant().toInt();
@@ -341,11 +341,11 @@ void Circle3DOverlay::setProperties(const QScriptValue &properties) {
     }
 
     QScriptValue minorTickMarksColor = properties.property("minorTickMarksColor");
-    if (minorTickMarksColor.isValid()) {
+    if (!minorTickMarksColor.isUndefined()) {
         QScriptValue red = minorTickMarksColor.property("red");
         QScriptValue green = minorTickMarksColor.property("green");
         QScriptValue blue = minorTickMarksColor.property("blue");
-        if (red.isValid() && green.isValid() && blue.isValid()) {
+        if (!red.isUndefined() && !green.isUndefined() && !blue.isUndefined()) {
             _minorTickMarksColor.red = red.toVariant().toInt();
             _minorTickMarksColor.green = green.toVariant().toInt();
             _minorTickMarksColor.blue = blue.toVariant().toInt();

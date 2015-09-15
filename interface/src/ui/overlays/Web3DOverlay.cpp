@@ -116,7 +116,7 @@ void Web3DOverlay::setProperties(const QScriptValue &properties) {
     Billboard3DOverlay::setProperties(properties);
 
     QScriptValue urlValue = properties.property("url");
-    if (urlValue.isValid()) {
+    if (!urlValue.isUndefined()) {
         QString newURL = urlValue.toVariant().toString();
         if (newURL != _url) {
             setURL(newURL);
@@ -124,13 +124,13 @@ void Web3DOverlay::setProperties(const QScriptValue &properties) {
     }
 
     QScriptValue resolution = properties.property("resolution");
-    if (resolution.isValid()) {
+    if (!resolution.isUndefined()) {
         vec2FromScriptValue(resolution, _resolution);
     }
 
 
     QScriptValue dpi = properties.property("dpi");
-    if (dpi.isValid()) {
+    if (!dpi.isUndefined()) {
         _dpi = dpi.toVariant().toFloat();
     }
 }

@@ -107,7 +107,7 @@ void Image3DOverlay::setProperties(const QScriptValue &properties) {
     Billboard3DOverlay::setProperties(properties);
 
     QScriptValue urlValue = properties.property("url");
-    if (urlValue.isValid()) {
+    if (!urlValue.isUndefined()) {
         QString newURL = urlValue.toVariant().toString();
         if (newURL != _url) {
             setURL(newURL);
@@ -115,7 +115,7 @@ void Image3DOverlay::setProperties(const QScriptValue &properties) {
     }
 
     QScriptValue subImageBounds = properties.property("subImage");
-    if (subImageBounds.isValid()) {
+    if (!subImageBounds.isUndefined()) {
         if (subImageBounds.isNull()) {
             _fromImage = QRect();
         } else {

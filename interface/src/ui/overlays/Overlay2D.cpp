@@ -27,7 +27,7 @@ void Overlay2D::setProperties(const QScriptValue& properties) {
     Overlay::setProperties(properties);
     
     QScriptValue bounds = properties.property("bounds");
-    if (bounds.isValid()) {
+    if (!bounds.isUndefined()) {
         QRect boundsRect;
         boundsRect.setX(bounds.property("x").toVariant().toInt());
         boundsRect.setY(bounds.property("y").toVariant().toInt());
@@ -38,22 +38,22 @@ void Overlay2D::setProperties(const QScriptValue& properties) {
         QRect oldBounds = _bounds;
         QRect newBounds = oldBounds;
         
-        if (properties.property("x").isValid()) {
+        if (!properties.property("x").isUndefined()) {
             newBounds.setX(properties.property("x").toVariant().toInt());
         } else {
             newBounds.setX(oldBounds.x());
         }
-        if (properties.property("y").isValid()) {
+        if (!properties.property("y").isUndefined()) {
             newBounds.setY(properties.property("y").toVariant().toInt());
         } else {
             newBounds.setY(oldBounds.y());
         }
-        if (properties.property("width").isValid()) {
+        if (!properties.property("width").isUndefined()) {
             newBounds.setWidth(properties.property("width").toVariant().toInt());
         } else {
             newBounds.setWidth(oldBounds.width());
         }
-        if (properties.property("height").isValid()) {
+        if (!properties.property("height").isUndefined()) {
             newBounds.setHeight(properties.property("height").toVariant().toInt());
         } else {
             newBounds.setHeight(oldBounds.height());

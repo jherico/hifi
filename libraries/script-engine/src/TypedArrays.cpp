@@ -230,7 +230,7 @@ Int8ArrayClass::Int8ArrayClass(ScriptEngine* scriptEngine) : TypedArray(scriptEn
 QScriptValue Int8ArrayClass::property(const QScriptValue& object, const QScriptString& name, uint id) {
     QByteArray* arrayBuffer = qscriptvalue_cast<QByteArray*>(object.data().property(_bufferName).data());
     QScriptValue result = propertyHelper<qint8>(arrayBuffer, name, id);
-    return (result.isValid()) ? result : TypedArray::property(object, name, id);
+    return (!result.isUndefined()) ? result : TypedArray::property(object, name, id);
 }
 
 void Int8ArrayClass::setProperty(QScriptValue &object, const QScriptString &name,
@@ -246,7 +246,7 @@ Uint8ArrayClass::Uint8ArrayClass(ScriptEngine* scriptEngine) : TypedArray(script
 QScriptValue Uint8ArrayClass::property(const QScriptValue& object, const QScriptString& name, uint id) {
     QByteArray* arrayBuffer = qscriptvalue_cast<QByteArray*>(object.data().property(_bufferName).data());
     QScriptValue result = propertyHelper<quint8>(arrayBuffer, name, id);
-    return (result.isValid()) ? result : TypedArray::property(object, name, id);
+    return (!result.isUndefined()) ? result : TypedArray::property(object, name, id);
 }
 
 void Uint8ArrayClass::setProperty(QScriptValue& object, const QScriptString& name,
@@ -262,7 +262,7 @@ Uint8ClampedArrayClass::Uint8ClampedArrayClass(ScriptEngine* scriptEngine) : Typ
 QScriptValue Uint8ClampedArrayClass::property(const QScriptValue& object, const QScriptString& name, uint id) {
     QByteArray* arrayBuffer = qscriptvalue_cast<QByteArray*>(object.data().property(_bufferName).data());
     QScriptValue result = propertyHelper<quint8>(arrayBuffer, name, id);
-    return (result.isValid()) ? result : TypedArray::property(object, name, id);
+    return (!result.isUndefined()) ? result : TypedArray::property(object, name, id);
 }
 
 void Uint8ClampedArrayClass::setProperty(QScriptValue& object, const QScriptString& name,
@@ -288,7 +288,7 @@ Int16ArrayClass::Int16ArrayClass(ScriptEngine* scriptEngine) : TypedArray(script
 QScriptValue Int16ArrayClass::property(const QScriptValue& object, const QScriptString& name, uint id) {
     QByteArray* arrayBuffer = qscriptvalue_cast<QByteArray*>(object.data().property(_bufferName).data());
     QScriptValue result = propertyHelper<qint16>(arrayBuffer, name, id);
-    return (result.isValid()) ? result : TypedArray::property(object, name, id);
+    return (!result.isUndefined()) ? result : TypedArray::property(object, name, id);
 }
 
 void Int16ArrayClass::setProperty(QScriptValue& object, const QScriptString& name,
@@ -304,7 +304,7 @@ Uint16ArrayClass::Uint16ArrayClass(ScriptEngine* scriptEngine) : TypedArray(scri
 QScriptValue Uint16ArrayClass::property(const QScriptValue& object, const QScriptString& name, uint id) {
     QByteArray* arrayBuffer = qscriptvalue_cast<QByteArray*>(object.data().property(_bufferName).data());
     QScriptValue result = propertyHelper<quint16>(arrayBuffer, name, id);
-    return (result.isValid()) ? result : TypedArray::property(object, name, id);
+    return (!result.isUndefined()) ? result : TypedArray::property(object, name, id);
 }
 
 void Uint16ArrayClass::setProperty(QScriptValue& object, const QScriptString& name,
@@ -320,7 +320,7 @@ Int32ArrayClass::Int32ArrayClass(ScriptEngine* scriptEngine) : TypedArray(script
 QScriptValue Int32ArrayClass::property(const QScriptValue& object, const QScriptString& name, uint id) {
     QByteArray* arrayBuffer = qscriptvalue_cast<QByteArray*>(object.data().property(_bufferName).data());
     QScriptValue result = propertyHelper<qint32>(arrayBuffer, name, id);
-    return (result.isValid()) ? result : TypedArray::property(object, name, id);
+    return (!result.isUndefined()) ? result : TypedArray::property(object, name, id);
 }
 
 void Int32ArrayClass::setProperty(QScriptValue& object, const QScriptString& name,
@@ -337,7 +337,7 @@ QScriptValue Uint32ArrayClass::property(const QScriptValue& object, const QScrip
     
     QByteArray* arrayBuffer = qscriptvalue_cast<QByteArray*>(object.data().property(_bufferName).data());
     QScriptValue result = propertyHelper<quint32>(arrayBuffer, name, id);
-    return (result.isValid()) ? result : TypedArray::property(object, name, id);
+    return (!result.isUndefined()) ? result : TypedArray::property(object, name, id);
 }
 
 void Uint32ArrayClass::setProperty(QScriptValue& object, const QScriptString& name,

@@ -115,7 +115,7 @@ void Cube3DOverlay::setProperties(const QScriptValue& properties) {
 
     QScriptValue borderSize = properties.property("borderSize");
 
-    if (borderSize.isValid()) {
+    if (!borderSize.isUndefined()) {
         float value = borderSize.toVariant().toFloat();
         setBorderSize(value);
     }

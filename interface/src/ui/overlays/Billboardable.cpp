@@ -15,7 +15,7 @@
 
 void Billboardable::setProperties(const QScriptValue &properties) {
     QScriptValue isFacingAvatar = properties.property("isFacingAvatar");
-    if (isFacingAvatar.isValid()) {
+    if (!isFacingAvatar.isUndefined()) {
         setIsFacingAvatar(isFacingAvatar.toVariant().toBool());
     }
 }

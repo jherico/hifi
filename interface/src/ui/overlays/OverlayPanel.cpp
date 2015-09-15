@@ -43,9 +43,9 @@ void propertyBindingFromScriptValue(const QScriptValue& object, PropertyBinding&
     QScriptValue avatar = object.property("avatar");
     QScriptValue entity = object.property("entity");
 
-    if (avatar.isValid() && !avatar.isNull()) {
+    if (!avatar.isUndefined() && !avatar.isNull()) {
         value.avatar = avatar.toVariant().toString();
-    } else if (entity.isValid() && !entity.isNull()) {
+    } else if (!entity.isUndefined() && !entity.isNull()) {
         value.entity = entity.toVariant().toUuid();
     }
 }
@@ -97,7 +97,7 @@ QScriptValue OverlayPanel::getProperty(const QString &property) {
     }
 
     QScriptValue value = Billboardable::getProperty(_scriptEngine, property);
-    if (value.isValid()) {
+    if (!value.isUndefined()) {
         return value;
     }
     return PanelAttachable::getProperty(_scriptEngine, property);
@@ -108,7 +108,7 @@ void OverlayPanel::setProperties(const QScriptValue &properties) {
     Billboardable::setProperties(properties);
 
     QScriptValue anchorPosition = properties.property("anchorPosition");
-    if (anchorPosition.isValid() &&
+    if (!anchorPosition.isUndefined() &&
         anchorPosition.property("x").isValid() &&
         anchorPosition.property("y").isValid() &&
         anchorPosition.property("z").isValid()) {
@@ -118,7 +118,7 @@ void OverlayPanel::setProperties(const QScriptValue &properties) {
     }
 
     QScriptValue anchorPositionBinding = properties.property("anchorPositionBinding");
-    if (anchorPositionBinding.isValid()) {
+    if (!anchorPositionBinding.isUndefined()) {
         PropertyBinding binding = {};
         propertyBindingFromScriptValue(anchorPositionBinding, binding);
         _anchorPositionBindMyAvatar = binding.avatar == "MyAvatar";
@@ -126,7 +126,7 @@ void OverlayPanel::setProperties(const QScriptValue &properties) {
     }
 
     QScriptValue anchorRotation = properties.property("anchorRotation");
-    if (anchorRotation.isValid() &&
+    if (!anchorRotation.isUndefined() &&
         anchorRotation.property("x").isValid() &&
         anchorRotation.property("y").isValid() &&
         anchorRotation.property("z").isValid() &&
@@ -137,7 +137,7 @@ void OverlayPanel::setProperties(const QScriptValue &properties) {
     }
 
     QScriptValue anchorRotationBinding = properties.property("anchorRotationBinding");
-    if (anchorRotationBinding.isValid()) {
+    if (!anchorRotationBinding.isUndefined()) {
         PropertyBinding binding = {};
         propertyBindingFromScriptValue(anchorPositionBinding, binding);
         _anchorRotationBindMyAvatar = binding.avatar == "MyAvatar";
@@ -145,7 +145,7 @@ void OverlayPanel::setProperties(const QScriptValue &properties) {
     }
 
     QScriptValue anchorScale = properties.property("anchorScale");
-    if (anchorScale.isValid()) {
+    if (!anchorScale.isUndefined()) {
         if (anchorScale.property("x").isValid() &&
             anchorScale.property("y").isValid() &&
             anchorScale.property("z").isValid()) {
@@ -158,7 +158,7 @@ void OverlayPanel::setProperties(const QScriptValue &properties) {
     }
 
     QScriptValue visible = properties.property("visible");
-    if (visible.isValid()) {
+    if (!visible.isUndefined()) {
         setVisible(visible.toVariant().toBool());
     }
 }

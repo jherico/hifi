@@ -79,12 +79,12 @@ void menuItemPropertiesFromScriptValue(const QScriptValue& object, MenuItemPrope
     
     // handle the shortcut key options in order...
     QScriptValue shortcutKeyValue = object.property("shortcutKey");
-    if (shortcutKeyValue.isValid()) {
+    if (!shortcutKeyValue.isUndefined()) {
         properties.shortcutKey = shortcutKeyValue.toVariant().toString();
         properties.shortcutKeySequence = properties.shortcutKey;
     } else {
         QScriptValue shortcutKeyEventValue = object.property("shortcutKeyEvent");
-        if (shortcutKeyEventValue.isValid()) {
+        if (!shortcutKeyEventValue.isUndefined()) {
             KeyEvent::fromScriptValue(shortcutKeyEventValue, properties.shortcutKeyEvent);
             properties.shortcutKeySequence = properties.shortcutKeyEvent;
         }

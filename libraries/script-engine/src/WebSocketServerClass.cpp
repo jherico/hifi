@@ -32,11 +32,11 @@ QScriptValue WebSocketServerClass::constructor(QScriptContext* context, QScriptE
     if (context->argumentCount() > 0) {
         QScriptValue options = context->argument(0);
         QScriptValue portOption = options.property(QStringLiteral("port"));
-        if (portOption.isValid() && portOption.isNumber()) {
+        if (!portOption.isUndefined() && portOption.isNumber()) {
             port = portOption.toNumber();
         }
         QScriptValue serverNameOption = options.property(QStringLiteral("serverName"));
-        if (serverNameOption.isValid() && serverNameOption.isString()) {
+        if (!serverNameOption.isUndefined() && serverNameOption.isString()) {
             serverName = serverNameOption.toString();
         }
     }

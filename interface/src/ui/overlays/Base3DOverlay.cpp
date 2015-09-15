@@ -48,14 +48,14 @@ void Base3DOverlay::setProperties(const QScriptValue& properties) {
 
     QScriptValue drawInFront = properties.property("drawInFront");
 
-    if (drawInFront.isValid()) {
+    if (!drawInFront.isUndefined()) {
         bool value = drawInFront.toVariant().toBool();
         setDrawInFront(value);
     }
 
     QScriptValue drawOnHUD = properties.property("drawOnHUD");
 
-    if (drawOnHUD.isValid()) {
+    if (!drawOnHUD.isUndefined()) {
         bool value = drawOnHUD.toVariant().toBool();
         setDrawOnHUD(value);
     }
@@ -63,18 +63,18 @@ void Base3DOverlay::setProperties(const QScriptValue& properties) {
     QScriptValue position = properties.property("position");
 
     // if "position" property was not there, check to see if they included aliases: point, p1
-    if (!position.isValid()) {
+    if (position.isUndefined()) {
         position = properties.property("p1");
-        if (!position.isValid()) {
+        if (position.isUndefined()) {
             position = properties.property("point");
         }
     }
 
-    if (position.isValid()) {
+    if (!position.isUndefined()) {
         QScriptValue x = position.property("x");
         QScriptValue y = position.property("y");
         QScriptValue z = position.property("z");
-        if (x.isValid() && y.isValid() && z.isValid()) {
+        if (!x.isUndefined() && !y.isUndefined() && !z.isUndefined()) {
             glm::vec3 newPosition;
             newPosition.x = x.toVariant().toFloat();
             newPosition.y = y.toVariant().toFloat();
@@ -89,7 +89,7 @@ void Base3DOverlay::setProperties(const QScriptValue& properties) {
 
     QScriptValue rotation = properties.property("rotation");
 
-    if (rotation.isValid()) {
+    if (!rotation.isUndefined()) {
         glm::quat newRotation;
 
         // size, scale, dimensions is special, it might just be a single scalar, or it might be a vector, check that here
@@ -99,7 +99,7 @@ void Base3DOverlay::setProperties(const QScriptValue& properties) {
         QScriptValue w = rotation.property("w");
 
 
-        if (x.isValid() && y.isValid() && z.isValid() && w.isValid()) {
+        if (!x.isUndefined() && !y.isUndefined() && !z.isUndefined() && !w.isUndefined()) {
             newRotation.x = x.toVariant().toFloat();
             newRotation.y = y.toVariant().toFloat();
             newRotation.z = z.toVariant().toFloat();

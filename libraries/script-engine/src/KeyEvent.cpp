@@ -173,13 +173,13 @@ void KeyEvent::fromScriptValue(const QScriptValue& object, KeyEvent& event) {
     event.isAutoRepeat = object.property("isAutoRepeat").toVariant().toBool();
     
     QScriptValue key = object.property("key");
-    if (key.isValid()) {
+    if (!key.isUndefined()) {
         event.key = key.toVariant().toInt();
         event.text = QString(QChar(event.key));
         event.isValid = true;
     } else {
         QScriptValue text = object.property("text");
-        if (text.isValid()) {
+        if (!text.isUndefined()) {
             event.text = object.property("text").toVariant().toString();
             
             // if the text is a special command, then map it here...
@@ -260,7 +260,7 @@ void KeyEvent::fromScriptValue(const QScriptValue& object, KeyEvent& event) {
     }
     
     QScriptValue isShifted = object.property("isShifted");
-    if (isShifted.isValid()) {
+    if (!isShifted.isUndefined()) {
         event.isShifted = isShifted.toVariant().toBool();
     } else {
         // if no isShifted was included, get it from the text

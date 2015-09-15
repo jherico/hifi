@@ -577,7 +577,7 @@ QScriptValue EntityItemProperties::copyToScriptValue(QScriptEngine* engine, bool
 
 void EntityItemProperties::copyFromScriptValue(const QScriptValue& object, bool honorReadOnly) {
     QScriptValue typeScriptValue = object.property("type");
-    if (typeScriptValue.isValid()) {
+    if (!typeScriptValue.isUndefined()) {
         setType(typeScriptValue.toVariant().toString());
     }
 
