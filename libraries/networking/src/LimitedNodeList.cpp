@@ -27,6 +27,7 @@
 #include <NumericalConstants.h>
 #include <SharedUtil.h>
 #include <UUID.h>
+#include <NetworkUtils.h>
 
 #include "AccountManager.h"
 #include "Assignment.h"

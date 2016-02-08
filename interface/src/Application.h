@@ -24,6 +24,7 @@
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QUndoStack>
 
+#include <HifiApplication.h>
 #include <AbstractScriptingServicesInterface.h>
 #include <AbstractViewStateInterface.h>
 #include <EntityEditPacketSender.h>
@@ -85,13 +86,14 @@ class Application;
 #endif
 #define qApp (static_cast<Application*>(QCoreApplication::instance()))
 
-class Application : public QApplication, public AbstractViewStateInterface, public AbstractScriptingServicesInterface, public AbstractUriHandler {
+class Application : public HifiApplication, public AbstractViewStateInterface, public AbstractScriptingServicesInterface {
     Q_OBJECT
 
     // TODO? Get rid of those
     friend class OctreePacketProcessor;
     friend class PluginContainerProxy;
 
+    using Parent = HifiApplication;
 public:
     // FIXME? Empty methods, do we still need them?
     static void initPlugins();
@@ -151,8 +153,6 @@ public:
     const ApplicationCompositor& getApplicationCompositor() const { return _compositor; }
     Overlays& getOverlays() { return _overlays; }
 
-    bool isForeground() const { return _isForeground; }
-
     uint32_t getFrameCount() { return _frameCount; }
     float getFps() const { return _fps; }
     float getTargetFrameRate(); // frames/second
@@ -177,15 +177,11 @@ public:
     DisplayPlugin* getActiveDisplayPlugin();
     const DisplayPlugin* getActiveDisplayPlugin() const;
 
-    FileLogger* getLogger() { return _logger; }
-
     glm::vec2 getViewportDimensions() const;
 
     NodeToJurisdictionMap& getEntityServerJurisdictions() { return _entityServerJurisdictions; }
 
     float getRenderResolutionScale() const;
-
-    bool isAboutToQuit() const { return _aboutToQuit; }
 
     // the isHMDmode is true whenever we use the interface from an HMD and not a standard flat display
     // rendering of several elements depend on that
@@ -198,8 +194,8 @@ public:
     QRect getDesirableApplicationGeometry();
     Bookmarks* getBookmarks() const { return _bookmarks; }
 
-    virtual bool canAcceptURL(const QString& url) const override;
-    virtual bool acceptURL(const QString& url, bool defaultUpload = false) override;
+    bool canAcceptURL(const QString& url) const override;
+    bool acceptURL(const QString& url, bool defaultUpload = false) override;
 
     void setMaxOctreePacketsPerSecond(int maxOctreePPS);
     int getMaxOctreePacketsPerSecond();
@@ -216,8 +212,6 @@ public:
     float getAvatarSimrate();
     void setAvatarSimrateSample(float sample);
 
-    float getAverageSimsPerSecond();
-
     void fakeMouseEvent(QMouseEvent* event);
 
 signals:
@@ -228,7 +222,6 @@ signals:
 
     void fullAvatarURLChanged(const QString& newValue, const QString& modelName);
 
-    void beforeAboutToQuit();
     void activeDisplayPluginChanged();
 
 public slots:
@@ -273,23 +266,19 @@ public slots:
 
     void reloadResourceCaches();
 
-    void crashApplication();
-
     void rotationModeChanged();
 
     void runTests();
 
 private slots:
     void clearDomainOctreeDetails();
-    void idle(uint64_t now);
-    void aboutToQuit();
+    void idle(uint64_t now, uint64_t elapsed) override;
+    void onAboutToQuit();
 
     void connectedToDomain(const QString& hostname);
 
     void audioMuteToggled();
     void faceTrackerMuteToggled();
-
-    void activeChanged(Qt::ApplicationState state);
 
     void domainSettingsReceived(const QJsonObject& domainSettingsObject);
     void handleDomainConnectionDeniedPacket(QSharedPointer<ReceivedMessage> message);
@@ -326,7 +315,7 @@ private:
 
     void emptyLocalCache();
 
-    void update(float deltaTime);
+    void update(float deltaTime) override;
 
     void setPalmData(Hand* hand, const controller::Pose& pose, float deltaTime, HandData::Hand whichHand, float triggerValue);
 
@@ -402,7 +391,6 @@ private:
     int _frameCount;
     float _fps;
     QElapsedTimer _timerStart;
-    QElapsedTimer _lastTimeUpdated;
     float _lastInstantaneousFps { 0.0f };
 
     ShapeManager _shapeManager;
@@ -452,14 +440,10 @@ private:
     ControllerScriptingInterface* _controllerScriptingInterface{ nullptr };
     QPointer<LogDialog> _logDialog;
 
-    FileLogger* _logger;
-
     TouchEvent _lastTouchEvent;
 
     quint64 _lastNackTime;
     quint64 _lastSendDownstreamAudioStats;
-
-    bool _aboutToQuit;
 
     Bookmarks* _bookmarks;
 
@@ -496,10 +480,6 @@ private:
 
     SimpleMovingAverage _framesPerSecond{10};
     quint64 _lastFramesPerSecondUpdate = 0;
-    SimpleMovingAverage _simsPerSecond{10};
-    int _simsPerSecondReport = 0;
-    quint64 _lastSimsPerSecondUpdate = 0;
-    bool _isForeground = true; // starts out assumed to be in foreground
     bool _inPaint = false;
     bool _isGLInitialized { false };
     bool _physicsEnabled { false };
@@ -510,8 +490,6 @@ private:
 
     bool _settingsLoaded { false };
     bool _pendingPaint { false };
-    QTimer* _idleTimer { nullptr };
-
     bool _fakedMouseEvent { false };
 };
 

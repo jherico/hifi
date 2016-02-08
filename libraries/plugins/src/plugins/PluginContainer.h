@@ -36,7 +36,6 @@ public:
     virtual void setIsOptionChecked(const QString& path, bool checked) = 0;
     virtual void setFullscreen(const QScreen* targetScreen, bool hideMenu = false) = 0;
     virtual void unsetFullscreen(const QScreen* avoidScreen = nullptr) = 0;
-    virtual void showDisplayPluginsTools() = 0;
     virtual void requestReset() = 0;
     virtual bool makeRenderingContextCurrent() = 0;
     virtual void releaseSceneTexture(uint32_t texture) = 0;

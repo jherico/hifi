@@ -22,7 +22,6 @@ class PluginContainerProxy : public QObject, PluginContainer {
     virtual void setIsOptionChecked(const QString& path, bool checked) override;
     virtual void setFullscreen(const QScreen* targetScreen, bool hideMenu = true) override;
     virtual void unsetFullscreen(const QScreen* avoidScreen = nullptr) override;
-    virtual void showDisplayPluginsTools() override;
     virtual void requestReset() override;
     virtual bool makeRenderingContextCurrent() override;
     virtual void releaseSceneTexture(uint32_t texture) override;

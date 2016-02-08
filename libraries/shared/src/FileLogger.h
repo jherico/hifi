@@ -13,7 +13,6 @@
 #define hifi_FileLogger_h
 
 #include "AbstractLoggerInterface.h"
-#include <GenericQueueThread.h>
 
 class FileLogger : public AbstractLoggerInterface {
     Q_OBJECT

@@ -146,10 +146,6 @@ void PluginContainerProxy::requestReset() {
     qApp->resetSensors(true);
 }
 
-void PluginContainerProxy::showDisplayPluginsTools() {
-    DependencyManager::get<DialogsManager>()->hmdTools(true);
-}
-
 GLWidget* PluginContainerProxy::getPrimaryWidget() {
     return qApp->_glWidget;
 }

@@ -38,7 +38,6 @@ class PresentThread : public QThread, public Dependency {
     using Condition = std::condition_variable;
     using Lock = std::unique_lock<Mutex>;
 public:
-
     PresentThread() {
         connect(qApp, &QCoreApplication::aboutToQuit, [this] {
             shutdown();
@@ -58,10 +57,9 @@ public:
         }
     }
 
-
     void setNewDisplayPlugin(OpenGLDisplayPlugin* plugin) {
         Lock lock(_mutex);
-        _newPlugin = plugin;
+        _newPluginQueue.push(plugin);
     }
 
     void setContext(QGLContext * context) {
@@ -96,20 +94,27 @@ public:
             }
 
             // Check before lock
-            if (_newPlugin != nullptr) {
+            if (!_newPluginQueue.empty()) {
                 Lock lock(_mutex);
                 _context->makeCurrent();
                 // Check if we have a new plugin to activate
-                if (_newPlugin != nullptr) {
+                if (!_newPluginQueue.empty()) {
                     // Deactivate the old plugin
                     if (currentPlugin != nullptr) {
                         currentPlugin->uncustomizeContext();
                         currentPlugin->enableDeactivate();
                     }
 
-                    _newPlugin->customizeContext();
-                    currentPlugin = _newPlugin;
-                    _newPlugin = nullptr;
+                    
+                    OpenGLDisplayPlugin* newPlugin { nullptr };
+                    while (!_newPluginQueue.empty()) {
+                        newPlugin = _newPluginQueue.front();
+                        _newPluginQueue.pop();
+                    }
+                    if (newPlugin) {
+                        newPlugin->customizeContext();
+                    }
+                    currentPlugin = newPlugin;
                 }
                 _context->doneCurrent();
                 lock.unlock();
@@ -177,7 +182,7 @@ private:
     bool _pendingMainThreadOperation { false };
     bool _finishedMainThreadOperation { false };
     QThread* _mainThread { nullptr };
-    OpenGLDisplayPlugin* _newPlugin { nullptr };
+    std::queue<OpenGLDisplayPlugin*> _newPluginQueue;
     QGLContext* _context { nullptr };
 };
 
@@ -230,6 +235,8 @@ void OpenGLDisplayPlugin::stop() {
 void OpenGLDisplayPlugin::deactivate() {
 #if THREADED_PRESENT
     {
+        auto presentThread = DependencyManager::get<PresentThread>();
+        presentThread->setNewDisplayPlugin(nullptr);
         Lock lock(_mutex);
         _deactivateWait.wait(lock, [&]{ return _uncustomized; });
     }
@@ -436,3 +443,4 @@ void OpenGLDisplayPlugin::enableDeactivate() {
     _deactivateWait.notify_one();
 }
 #endif
+

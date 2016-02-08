@@ -293,18 +293,6 @@ public:
     void call() { _fun(); }
 };
 
-void messageHandler(QtMsgType type, const QMessageLogContext& context, const QString& message) {
-    QString logMessage = LogHandler::getInstance().printMessage((LogMsgType) type, context, message);
-
-    if (!logMessage.isEmpty()) {
-#ifdef Q_OS_WIN
-        OutputDebugStringA(logMessage.toLocal8Bit().constData());
-        OutputDebugStringA("\n");
-#endif
-        qApp->getLogger()->addMessage(qPrintable(logMessage + "\n"));
-    }
-}
-
 bool setupEssentials(int& argc, char** argv) {
     unsigned int listenPort = 0; // bind to an ephemeral port by default
     const char** constArgv = const_cast<const char**>(argv);
@@ -370,7 +358,6 @@ bool setupEssentials(int& argc, char** argv) {
     DependencyManager::set<SceneScriptingInterface>();
     DependencyManager::set<OffscreenUi>();
     DependencyManager::set<AutoUpdater>();
-    DependencyManager::set<PathUtils>();
     DependencyManager::set<InterfaceActionFactory>();
     DependencyManager::set<AssetClient>();
     DependencyManager::set<AudioInjectorManager>();
@@ -401,7 +388,7 @@ OffscreenGLCanvas* _chromiumShareContext { nullptr };
 Q_GUI_EXPORT void qt_gl_set_global_share_context(QOpenGLContext *context);
 
 Application::Application(int& argc, char** argv, QElapsedTimer& startupTimer) :
-    QApplication(argc, argv),
+    Parent(argc, argv),
     _dependencyManagerIsSetup(setupEssentials(argc, argv)),
     _window(new MainWindow(desktop())),
     _undoStackScriptingInterface(&_undoStack),
@@ -420,7 +407,6 @@ Application::Application(int& argc, char** argv, QElapsedTimer& startupTimer) :
     _enableProcessOctreeThread(true),
     _lastNackTime(usecTimestampNow()),
     _lastSendDownstreamAudioStats(usecTimestampNow()),
-    _aboutToQuit(false),
     _notifiedPacketVersionMismatchThisDomain(false),
     _maxOctreePPS(maxOctreePacketsPerSecond.get()),
     _lastFaceTrackerUpdate(0)
@@ -432,8 +418,6 @@ Application::Application(int& argc, char** argv, QElapsedTimer& startupTimer) :
     // More threads == faster concurrent loads, but also more concurrent 
     // load on the GPU until we can serialize GPU transfers (off the main thread)
     QThreadPool::globalInstance()->setMaxThreadCount(2);
-    thread()->setPriority(QThread::HighPriority);
-    thread()->setObjectName("Main Thread");
 
     setInstance(this);
 
@@ -446,10 +430,6 @@ Application::Application(int& argc, char** argv, QElapsedTimer& startupTimer) :
 #ifdef Q_OS_WIN
     installNativeEventFilter(&MyNativeEventFilter::getInstance());
 #endif
-
-    _logger = new FileLogger(this);  // After setting organization name in order to get correct directory
-
-    qInstallMessageHandler(messageHandler);
 
     QFontDatabase::addApplicationFont(PathUtils::resourcesPath() + "styles/Inconsolata.otf");
     _window->setWindowTitle("Interface");
@@ -964,30 +944,11 @@ Application::Application(int& argc, char** argv, QElapsedTimer& startupTimer) :
             _keyboardFocusHighlight->setVisible(false);
         }
     });
-
-    connect(this, &Application::applicationStateChanged, this, &Application::activeChanged);
-    qCDebug(interfaceapp, "Startup time: %4.2f seconds.", (double)startupTimer.elapsed() / 1000.0);
-    _idleTimer = new QTimer(this);
-    connect(_idleTimer, &QTimer::timeout, [=] {
-        idle(usecTimestampNow());
-    });
-    connect(this, &Application::beforeAboutToQuit, [=] {
-        disconnect(_idleTimer);
-    });
-    // Setting the interval to zero forces this to get called whenever there are no messages
-    // in the queue, which can be pretty damn frequent.  Hence the idle function has a bunch 
-    // of logic to abort early if it's being called too often.
-    _idleTimer->start(0);
 }
 
-void Application::aboutToQuit() {
-    emit beforeAboutToQuit();
-
+void Application::onAboutToQuit() {
+    Parent::onAboutToQuit();
     getActiveDisplayPlugin()->deactivate();
-
-    _aboutToQuit = true;
-
-    cleanupBeforeQuit();
 }
 
 void Application::cleanupBeforeQuit() {
@@ -1059,6 +1020,7 @@ void Application::cleanupBeforeQuit() {
 #endif
 
     DependencyManager::destroy<OffscreenUi>();
+    Parent::cleanupBeforeQuit();
 }
 
 void Application::emptyLocalCache() {
@@ -1125,8 +1087,6 @@ Application::~Application() {
 #if 0
     ConnexionClient::getInstance().destroy();
 #endif
-
-    qInstallMessageHandler(NULL); // NOTE: Do this as late as possible so we continue to get our log messages
 }
 
 void Application::initializeGL() {
@@ -1295,7 +1255,7 @@ void Application::initializeUi() {
 void Application::paintGL() {
     // paintGL uses a queued connection, so we can get messages from the queue even after we've quit
     // and the plugins have shutdown
-    if (_aboutToQuit) {
+    if (isAboutToQuit()) {
         return;
     }
     _frameCount++;
@@ -1319,7 +1279,7 @@ void Application::paintGL() {
     }
 
     if (_isGLInitialized) {
-        idle(now);
+        idle(now, 0);
     }
 
     PROFILE_RANGE(__FUNCTION__);
@@ -2190,7 +2150,7 @@ void Application::fakeMouseEvent(QMouseEvent* event) {
 void Application::mouseMoveEvent(QMouseEvent* event) {
     PROFILE_RANGE(__FUNCTION__);
 
-    if (_aboutToQuit) {
+    if (isAboutToQuit()) {
         return;
     }
 
@@ -2255,7 +2215,7 @@ void Application::mousePressEvent(QMouseEvent* event) {
         event->screenPos(), event->button(),
         event->buttons(), event->modifiers());
 
-    if (!_aboutToQuit) {
+    if (!isAboutToQuit()) {
         getEntities()->mousePressEvent(&mappedEvent);
     }
 
@@ -2301,7 +2261,7 @@ void Application::mouseReleaseEvent(QMouseEvent* event) {
         event->screenPos(), event->button(),
         event->buttons(), event->modifiers());
 
-    if (!_aboutToQuit) {
+    if (!isAboutToQuit()) {
         getEntities()->mouseReleaseEvent(&mappedEvent);
     }
 
@@ -2428,8 +2388,8 @@ bool Application::acceptSnapshot(const QString& urlString) {
 
 static uint32_t _renderedFrameIndex { INVALID_FRAME };
 
-void Application::idle(uint64_t now) {
-    if (_aboutToQuit) {
+void Application::idle(uint64_t nowUs, uint64_t elapsedUs) {
+    if (isAboutToQuit()) {
         return; // bail early, nothing to do here.
     }
     
@@ -2438,12 +2398,10 @@ void Application::idle(uint64_t now) {
     // Once rendering is off on another thread we should be able to have Application::idle run at start(0) in
     // perpetuity and not expect events to get backed up.
     bool isThrottled = displayPlugin->isThrottled();
+
     //  Only run simulation code if more than the targetFramePeriod have passed since last time we ran
     // This attempts to lock the simulation at 60 updates per second, regardless of framerate
-    float timeSinceLastUpdateUs = (float)_lastTimeUpdated.nsecsElapsed() / NSECS_PER_USEC;
-    float secondsSinceLastUpdate = timeSinceLastUpdateUs / USECS_PER_SECOND;
-
-    if (isThrottled && (timeSinceLastUpdateUs / USECS_PER_MSEC) < THROTTLED_SIM_FRAME_PERIOD_MS) {
+    if (isThrottled && (elapsedUs / USECS_PER_MSEC) < THROTTLED_SIM_FRAME_PERIOD_MS) {
         // Throttling both rendering and idle
         return; // bail early, we're throttled and not enough time has elapsed
     }
@@ -2475,25 +2433,14 @@ void Application::idle(uint64_t now) {
     // in the main thread to call idle more often than paint.
     // This check is mostly to keep idle from burning up CPU cycles by running at 
     // hundreds of idles per second when the rendering is that fast
-    if ((timeSinceLastUpdateUs / USECS_PER_MSEC) < CAPPED_SIM_FRAME_PERIOD_MS) {
+    if ((elapsedUs / USECS_PER_MSEC) < CAPPED_SIM_FRAME_PERIOD_MS) {
         // No paint this round, but might be time for a new idle, otherwise return
         return;
     }
 
-    // We're going to execute idle processing, so restart the last idle timer
-    _lastTimeUpdated.start();
-
-    {
-        PROFILE_RANGE(__FUNCTION__);
-        static uint64_t lastIdleStart{ now };
-        uint64_t idleStartToStartDuration = now - lastIdleStart;
-        if (idleStartToStartDuration != 0) {
-            _simsPerSecond.updateAverage((float)USECS_PER_SECOND / (float)idleStartToStartDuration);
-        }
-        lastIdleStart = now;
-    }
-
     PerformanceTimer perfTimer("idle");
+    Parent::idle(nowUs, elapsedUs);
+
     // Drop focus from _keyboardFocusedItem if no keyboard messages for 30 seconds
     if (!_keyboardFocusedItem.isInvalidID()) {
         const quint64 LOSE_FOCUS_AFTER_ELAPSED_TIME = 30 * USECS_PER_SECOND; // if idle for 30 seconds, drop focus
@@ -2510,12 +2457,6 @@ void Application::idle(uint64_t now) {
     PerformanceWarning warn(showWarnings, "idle()");
 
     {
-        PerformanceTimer perfTimer("update");
-        PerformanceWarning warn(showWarnings, "Application::idle()... update()");
-        static const float BIGGEST_DELTA_TIME_SECS = 0.25f;
-        update(glm::clamp(secondsSinceLastUpdate, 0.0f, BIGGEST_DELTA_TIME_SECS));
-    }
-    {
         PerformanceTimer perfTimer("pluginIdle");
         PerformanceWarning warn(showWarnings, "Application::idle()... pluginIdle()");
         getActiveDisplayPlugin()->idle();
@@ -2528,6 +2469,8 @@ void Application::idle(uint64_t now) {
             }
         }
     }
+
+    auto secondsSinceLastUpdate = (float)elapsedUs / (float)USECS_PER_SECOND;
     {
         PerformanceTimer perfTimer("rest");
         PerformanceWarning warn(showWarnings, "Application::idle()... rest of it");
@@ -2547,15 +2490,6 @@ void Application::idle(uint64_t now) {
     emit checkBackgroundDownloads();
 }
 
-float Application::getAverageSimsPerSecond() {
-    uint64_t now = usecTimestampNow();
-
-    if (now - _lastSimsPerSecondUpdate > USECS_PER_SECOND) {
-        _simsPerSecondReport = _simsPerSecond.getAverage();
-        _lastSimsPerSecondUpdate = now;
-    }
-    return _simsPerSecondReport;
-}
 void Application::setAvatarSimrateSample(float sample) {
     _avatarSimsPerSecond.updateAverage(sample);
 }
@@ -2794,7 +2728,6 @@ void Application::init() {
     _mirrorCamera.setMode(CAMERA_MODE_MIRROR);
 
     _timerStart.start();
-    _lastTimeUpdated.start();
 
     // when --url in command line, teleport to location
     const QString HIFI_URL_COMMAND_LINE_KEY = "--url";
@@ -3236,7 +3169,7 @@ void Application::update(float deltaTime) {
 
                 _physicsEngine->dumpStatsIfNecessary();
 
-                if (!_aboutToQuit) {
+                if (!isAboutToQuit()) {
                     PerformanceTimer perfTimer("entities");
                     // Collision events (and their scripts) must not be handled when we're locked, above. (That would risk
                     // deadlock.)
@@ -4679,21 +4612,6 @@ void Application::checkSkeleton() {
     }
 }
 
-void Application::activeChanged(Qt::ApplicationState state) {
-    switch (state) {
-        case Qt::ApplicationActive:
-            _isForeground = true;
-            break;
-
-        case Qt::ApplicationSuspended:
-        case Qt::ApplicationHidden:
-        case Qt::ApplicationInactive:
-        default:
-            _isForeground = false;
-            break;
-    }
-}
-
 void Application::postLambdaEvent(std::function<void()> f) {
     if (this->thread() == QThread::currentThread()) {
         f();
@@ -4891,29 +4809,15 @@ void Application::updateDisplayMode() {
         _pluginContainer->currentDisplayActions().clear();
     }
 
-    if (newDisplayPlugin) {
-        _offscreenContext->makeCurrent();
-        newDisplayPlugin->activate();
-        _offscreenContext->makeCurrent();
-        offscreenUi->resize(fromGlm(newDisplayPlugin->getRecommendedUiSize()));
-        _offscreenContext->makeCurrent();
-    }
-
     oldDisplayPlugin = _displayPlugin;
     _displayPlugin = newDisplayPlugin;
 
     // If the displayPlugin is a screen based HMD, then it will want the HMDTools displayed
     // Direct Mode HMDs (like windows Oculus) will be isHmd() but will have a screen of -1
     bool newPluginWantsHMDTools = newDisplayPlugin ?
-                                    (newDisplayPlugin->isHmd() && (newDisplayPlugin->getHmdScreen() >= 0)) : false;
+        (newDisplayPlugin->isHmd() && (newDisplayPlugin->getHmdScreen() >= 0)) : false;
     bool oldPluginWantedHMDTools = oldDisplayPlugin ?
-                                    (oldDisplayPlugin->isHmd() && (oldDisplayPlugin->getHmdScreen() >= 0)) : false;
-
-    // Only show the hmd tools after the correct plugin has
-    // been activated so that it's UI is setup correctly
-    if (newPluginWantsHMDTools) {
-        _pluginContainer->showDisplayPluginsTools();
-    }
+        (oldDisplayPlugin->isHmd() && (oldDisplayPlugin->getHmdScreen() >= 0)) : false;
 
     if (oldDisplayPlugin) {
         oldDisplayPlugin->deactivate();
@@ -4924,6 +4828,21 @@ void Application::updateDisplayMode() {
             DependencyManager::get<DialogsManager>()->hmdTools(false);
         }
     }
+
+    if (newDisplayPlugin) {
+        _offscreenContext->makeCurrent();
+        newDisplayPlugin->activate();
+        _offscreenContext->makeCurrent();
+        offscreenUi->resize(fromGlm(newDisplayPlugin->getRecommendedUiSize()));
+        _offscreenContext->makeCurrent();
+    }
+
+    // Only show the hmd tools after the correct plugin has
+    // been activated so that it's UI is setup correctly
+    if (newPluginWantsHMDTools) {
+        DependencyManager::get<DialogsManager>()->hmdTools(true);
+    }
+
     emit activeDisplayPluginChanged();
     resetSensors();
     Q_ASSERT_X(_displayPlugin, "Application::updateDisplayMode", "could not find an activated display plugin");
@@ -5081,13 +5000,6 @@ void Application::setPalmData(Hand* hand, const controller::Pose& pose, float de
         palm.setTipPosition(newTipPosition);
         palm.setTrigger(triggerValue); // FIXME - we want to get rid of this idea of PalmData having a trigger
     });
-}
-
-void Application::crashApplication() {
-    qCDebug(interfaceapp) << "Intentionally crashed Interface";
-    QObject* object = nullptr;
-    bool value = object->isWindowType();
-    Q_UNUSED(value);
 }
 
 void Application::setActiveDisplayPlugin(const QString& pluginName) {
