@@ -83,6 +83,7 @@ public slots:
 
     /// adds a model with the specific properties
     Q_INVOKABLE QUuid addEntity(const EntityItemProperties& properties);
+    Q_INVOKABLE QUuid addEntity2(const QVariant& properties);
 
     /// gets the current model properties for a specific model
     /// this function will not find return results in script engine contexts which don't have access to models

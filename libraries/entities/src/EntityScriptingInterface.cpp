@@ -121,6 +121,89 @@ EntityItemProperties convertLocationFromScriptSemantics(const EntityItemProperti
     return entitySideProperties;
 }
 
+#define COPY_PROPERTY_FROM_QVARIANT(P, T, S)                     \
+    {                                                                \
+        QVariant V = object[#P];                                 \
+        if (V.isValid()) {                                           \
+            bool isValid = false;                                    \
+            T newValue = T##_convertFromVariant(V, isValid);         \
+            if (isValid && (_defaultSettings || newValue != _##P)) { \
+                S(newValue);                                         \
+            }                                                        \
+        }                                                            \
+    }
+
+
+inline glmVec3 glmVec3_convertFromVariant(const QVariant& v, bool& isValid) {
+    QVariantMap vmap = v.toMap();
+    isValid = false; /// assume it can't be converted
+    QVariant x = vmap["x"];
+    QVariant y = vmap["y"];
+    QVariant z = vmap["z"];
+    if (x.isValid() && y.isValid() && z.isValid()) {
+        glm::vec3 newValue(0);
+        newValue.x = x.toFloat();
+        newValue.y = y.toFloat();
+        newValue.z = z.toFloat();
+        isValid = !glm::isnan(newValue.x) &&
+            !glm::isnan(newValue.y) &&
+            !glm::isnan(newValue.z);
+        if (isValid) {
+            return newValue;
+        }
+    }
+    return glm::vec3(0);
+}
+
+inline xColor xColor_convertFromVariant(const QVariant& v, bool& isValid) {
+    QVariantMap vmap = v.toMap();
+    xColor newValue { 255, 255, 255 };
+    isValid = false; /// assume it can't be converted
+    QVariant r = vmap["red"];
+    QVariant g = vmap["green"];
+    QVariant b = vmap["blue"];
+    if (r.isValid() && g.isValid() && b.isValid()) {
+        newValue.red = r.toInt();
+        newValue.green = g.toInt();
+        newValue.blue = b.toInt();
+        isValid = true;
+    }
+    return newValue;
+}
+
+
+inline float float_convertFromVariant(const QVariant& v, bool& isValid) { return v.toFloat(&isValid); }
+inline int int_convertFromVariant(const QVariant& v, bool& isValid) { return v.toInt(&isValid); }
+inline bool bool_convertFromVariant(const QVariant& v, bool& isValid) { isValid = true; return v.toBool(); }
+inline uint8_t uint8_t_convertFromVariant(const QVariant& v, bool& isValid) { isValid = true; return (uint8_t)(0xff & v.toInt(&isValid)); }
+inline QString QString_convertFromVariant(const QVariant& v, bool& isValid) { isValid = true; return v.toString().trimmed(); }
+inline QUuid QUuid_convertFromVariant(const QVariant& v, bool& isValid) { isValid = true; return v.toUuid(); }
+inline EntityItemID EntityItemID_convertFromVariant(const QVariant& v, bool& isValid) { isValid = true; return v.toUuid(); }
+
+void EntityItemProperties::copyFromVariant(const QVariant& var, bool honorReadOnly) {
+    EntityItemProperties result;
+    QVariantMap object = var.toMap();
+    QVariant typeVar = object["type"];
+    if (typeVar.isValid()) {
+        setType(typeVar.toString());
+    }
+
+    COPY_PROPERTY_FROM_QVARIANT(position, glmVec3, setPosition);
+    COPY_PROPERTY_FROM_QVARIANT(dimensions, glmVec3, setDimensions);
+    COPY_PROPERTY_FROM_QVARIANT(lifetime, float, setLifetime);
+    COPY_PROPERTY_FROM_QVARIANT(visible, bool, setVisible);
+    COPY_PROPERTY_FROM_QVARIANT(color, xColor, setColor);
+    COPY_PROPERTY_FROM_QVARIANT(name, QString, setName);
+    COPY_PROPERTY_FROM_QVARIANT(collisionSoundURL, QString, setCollisionSoundURL);
+    _lastEdited = usecTimestampNow();
+}
+
+
+QUuid EntityScriptingInterface::addEntity2(const QVariant& var) {
+    EntityItemProperties properties;
+    properties.copyFromVariant(var, true);
+    return addEntity(properties);
+}
 
 QUuid EntityScriptingInterface::addEntity(const EntityItemProperties& properties) {
     EntityItemProperties propertiesWithSimID = convertLocationFromScriptSemantics(properties);
