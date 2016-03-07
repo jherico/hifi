@@ -34,6 +34,7 @@
 
 #include <gl/QOpenGLContextWrapper.h>
 #include <gl/GLHelpers.h>
+#include <gl/GLWindow.h>
 
 #include <GLMHelpers.h>
 #include <PathUtils.h>
@@ -67,27 +68,207 @@
 #include "TestInstancedShapes.h"
 #include "TestShapes.h"
 
-using namespace render;
+// assimp include files. These three are usually needed.
+#include <assimp/Importer.hpp>
+#include <assimp/postprocess.h>
+#include <assimp/scene.h>
+
+
+const aiScene* scene { nullptr };
+std::map<std::string, GLuint*> textureIdMap;	// map image filenames to textureIds
+
+
+std::map<std::string, FBXMaterial> materials;
+
+
+//
+//
+//class FBXMaterial {
+//public:
+//    FBXMaterial() {};
+//    FBXMaterial(const glm::vec3& diffuseColor, const glm::vec3& specularColor, const glm::vec3& emissiveColor,
+//        float shininess, float opacity) :
+//        diffuseColor(diffuseColor),
+//        specularColor(specularColor),
+//        emissiveColor(emissiveColor),
+//        shininess(shininess),
+//        opacity(opacity) {
+//    }
+//
+//    glm::vec3 diffuseColor { 1.0f };
+//    float diffuseFactor = 1.0f;
+//    glm::vec3 specularColor { 0.02f };
+//    float specularFactor = 1.0f;
+//
+//    glm::vec3 emissiveColor { 0.0f };
+//    float shininess = 23.0f;
+//    float opacity = 1.0f;
+//
+//    float metallic { 0.0f };
+//    float roughness { 1.0f };
+//    float emissiveIntensity { 1.0f };
+//
+//    QString materialID;
+//    model::MaterialPointer _material;
+//
+//    FBXTexture normalTexture;
+//    FBXTexture albedoTexture;
+//    FBXTexture opacityTexture;
+//    FBXTexture glossTexture;
+//    FBXTexture roughnessTexture;
+//    FBXTexture specularTexture;
+//    FBXTexture metallicTexture;
+//    FBXTexture emissiveTexture;
+//    FBXTexture occlusionTexture;
+//    FBXTexture lightmapTexture;
+//    glm::vec2 lightmapParams { 0.0f, 1.0f };
+//
+//
+//    bool isPBSMaterial { false };
+//    // THe use XXXMap are not really used to drive which map are going or not, debug only
+//    bool useNormalMap { false };
+//    bool useAlbedoMap { false };
+//    bool useOpacityMap { false };
+//    bool useRoughnessMap { false };
+//    bool useSpecularMap { false };
+//    bool useMetallicMap { false };
+//    bool useEmissiveMap { false };
+//    bool useOcclusionMap { false };
+//
+//    bool needTangentSpace() const;
+//};
+
+const char* TEST_FILE = "C:/Users/bdavis/Git/dreaming/assets/models/mjolnir-ucac5/Mjolnir Test 3.obj";
+
+void loadScene() {
+    static Assimp::Importer importer;
+    scene = importer.ReadFile(TEST_FILE, aiProcessPreset_TargetRealtime_MaxQuality);
+
+    // If the import failed, report it
+    if (!scene) {
+        qFatal(importer.GetErrorString());
+    }
+
+    if (scene->HasTextures()) {
+        qFatal("Support for meshes with embedded textures is not implemented");
+    }
+
+
+    //aiTextureType_DIFFUSE = 0x1,
+    //aiTextureType_SPECULAR = 0x2,
+    //aiTextureType_AMBIENT = 0x3,
+    //aiTextureType_EMISSIVE = 0x4,
+    //aiTextureType_HEIGHT = 0x5,
+    //aiTextureType_NORMALS = 0x6,
+    //aiTextureType_SHININESS = 0x7,
+    //aiTextureType_OPACITY = 0x8,
+    //aiTextureType_DISPLACEMENT = 0x9,
+    //aiTextureType_LIGHTMAP = 0xA,
+    //aiTextureType_REFLECTION = 0xB,
+
+    
+    for (unsigned int m = 0; m<scene->mNumMaterials; m++) {
+        FBXMaterial material;
+        std::string materialName;
+        const auto& mat = scene->mMaterials[m];
+        aiString name;
+        if (AI_SUCCESS == aiGetMaterialString(mat, AI_MATKEY_NAME, &name)) {
+            qDebug() << "name: " << name.data;
+            material.materialID = name.data;
+        }
+        if (AI_SUCCESS == aiGetMaterialString(mat, AI_MATKEY_SHADING_MODEL, &name)) {
+            qDebug() << "shading model: " << name.data;
+        }
+        aiColor4D color;
+        if (AI_SUCCESS == aiGetMaterialColor(mat, AI_MATKEY_COLOR_DIFFUSE, &color)) {
+            qDebug() << "diffuse: " << color.r << " " << color.g << " " << color.b << " " << color.a;
+        }
+        if (AI_SUCCESS == aiGetMaterialColor(mat, AI_MATKEY_COLOR_SPECULAR, &color)) {
+            qDebug() << "specular: " << color.r << " " << color.g << " " << color.b << " " << color.a;
+        }
+        if (AI_SUCCESS == aiGetMaterialColor(mat, AI_MATKEY_COLOR_EMISSIVE, &color)) {
+            qDebug() << "emissive: " << color.r << " " << color.g << " " << color.b << " " << color.a;
+        }
+        float f;
+        if (AI_SUCCESS == aiGetMaterialFloat(mat, AI_MATKEY_SHININESS_STRENGTH, &f)) {
+            qDebug() << "shininess: " << f;
+        }
+        if (AI_SUCCESS == aiGetMaterialFloat(mat, AI_MATKEY_OPACITY, &f)) {
+            qDebug() << "opacity: " << f;
+        }
+        int texIndex = 0;
+        aiReturn texFound = AI_SUCCESS;
+        aiString path;	// filename
+        while (texFound == AI_SUCCESS) {
+            texFound = mat->GetTexture(aiTextureType_DIFFUSE, texIndex, &path);
+            textureIdMap[path.data] = NULL; //fill map with textures, pointers still NULL yet
+            texIndex++;
+        }
+    }
+
+}
+
+
+gpu::ShaderPointer makeShader(const std::string & vertexShaderSrc, const std::string & fragmentShaderSrc, const gpu::Shader::BindingSet & bindings) {
+    auto vs = gpu::Shader::createVertex(vertexShaderSrc);
+    auto fs = gpu::Shader::createPixel(fragmentShaderSrc);
+    auto shader = gpu::Shader::createProgram(vs, fs);
+    if (!gpu::Shader::makeProgram(*shader, bindings)) {
+        printf("Could not compile shader/n");
+        exit(-1);
+    }
+    return shader;
+}
 
 
 using TestBuilder = std::function<GpuTestBase*()>;
 using TestBuilders = std::list<TestBuilder>;
 
 
-#define INTERACTIVE
+// Creates an OpenGL window that renders a simple unlit scene using the gpu library and GeometryCache
+// Should eventually get refactored into something that supports multiple gpu backends.
+class QTestWindow : public GLWindow {
+    Q_OBJECT
 
-class MyTestWindow : public TestWindow {
-    using Parent = TestWindow;
-    TestBuilders _testBuilders;
-    GpuTestBase* _currentTest { nullptr };
-    size_t _currentTestId { 0 };
-    size_t _currentMaxTests { 0 };
-    glm::mat4 _camera;
+    gpu::ContextPointer _context;
+    gpu::PipelinePointer _pipeline;
+    glm::mat4 _projectionMatrix;
+    RateCounter fps;
     QTime _time;
+    gpu::BufferPointer _testVertices;
 
-    void initGl() override {
-        Parent::initGl();
-#ifdef INTERACTIVE
+public:
+    QTestWindow() {
+        createContext();
+        show();
+        makeCurrent();
+        setupDebugLogger(this);
+
+        loadScene();
+
+        gpu::Context::init<gpu::GLBackend>();
+        _context = std::make_shared<gpu::Context>();
+        
+        auto shader = makeShader(unlit_vert, unlit_frag, gpu::Shader::BindingSet{});
+        auto state = std::make_shared<gpu::State>();
+        state->setMultisampleEnable(true);
+        state->setDepthTest(gpu::State::DepthTest { true });
+        _pipeline = gpu::Pipeline::create(shader, state);
+
+
+
+        // Clear screen
+        gpu::Batch batch;
+        batch.clearColorFramebuffer(gpu::Framebuffer::BUFFER_COLORS, { 1.0, 0.0, 0.5, 1.0 });
+        _context->render(batch);
+
+        _testVertices = std::make_shared<gpu::Buffer>();
+
+        DependencyManager::set<GeometryCache>();
+        DependencyManager::set<DeferredLightingEffect>();
+
+        resize(QSize(800, 600));
+        
         _time.start();
 #endif
         updateCamera();
@@ -97,11 +278,25 @@ class MyTestWindow : public TestWindow {
         });
     }
 
-    void updateCamera() {
-        float t = 0;
-#ifdef INTERACTIVE
-        t = _time.elapsed() * 1e-3f;
-#endif
+    virtual ~QTestWindow() {
+    }
+
+    void draw() {
+        // Attempting to draw before we're visible and have a valid size will
+        // produce GL errors.
+        const auto _size = size();
+        if (!isVisible() || _size.width() <= 0 || _size.height() <= 0) {
+            return;
+        }
+        makeCurrent();
+        
+        gpu::Batch batch;
+        batch.clearColorFramebuffer(gpu::Framebuffer::BUFFER_COLORS, { 0.0f, 0.0f, 0.0f, 1.0f });
+        batch.clearDepthFramebuffer(1e4);
+        batch.setViewportTransform({ 0, 0, _size.width() * devicePixelRatio(), _size.height() * devicePixelRatio() });
+        batch.setProjectionTransform(_projectionMatrix);
+        
+        float t = _time.elapsed() * 1e-3f;
         glm::vec3 unitscale { 1.0f };
         glm::vec3 up { 0.0f, 1.0f, 0.0f };
 
@@ -156,12 +351,35 @@ class MyTestWindow : public TestWindow {
 
 #ifdef INTERACTIVE
 
-#else 
-        // TODO Capture the current rendered framebuffer and save
-        // Increment the test ID
-        ++_currentTestId;
-#endif
+        if (wire) {
+            geometryCache->renderWireShape(batch, SHAPE[shapeIndex]);
+        } else {
+            geometryCache->renderShape(batch, SHAPE[shapeIndex]);
         }
+        
+        batch.setModelTransform(Transform().setScale(2.05f));
+        batch._glColor4f(1, 1, 1, 1);
+        geometryCache->renderWireCube(batch);
+
+        _context->render(batch);
+        swapBuffers();
+        
+        fps.increment();
+        if (fps.elapsed() >= 0.5f) {
+            qDebug() << "FPS: " << fps.rate();
+            fps.reset();
+        }
+    }
+    
+protected:
+    void resizeEvent(QResizeEvent* ev) override {
+        auto _size = ev->size();
+        float fov_degrees = 60.0f;
+        float aspect_ratio = (float)_size.width() / _size.height();
+        float near_clip = 0.1f;
+        float far_clip = 1000.0f;
+        _projectionMatrix = glm::perspective(glm::radians(fov_degrees), aspect_ratio, near_clip, far_clip);
+    }
 };
 
 extern uvec2 rectifySize(const uvec2& size);
