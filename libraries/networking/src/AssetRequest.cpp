@@ -59,80 +59,90 @@ void AssetRequest::start() {
     
     _state = WaitingForInfo;
     
+    QPointer<AssetRequest> that(this);
     auto assetClient = DependencyManager::get<AssetClient>();
-    assetClient->getAssetInfo(_hash, [this](bool responseReceived, AssetServerError serverError, AssetInfo info) {
-        _info = info;
+    assetClient->getAssetInfo(_hash, [that](bool responseReceived, AssetServerError serverError, AssetInfo info) {
+        if (that.isNull()) {
+            return;
+        }
+        that->_info = info;
 
         if (!responseReceived) {
-            _error = NetworkError;
+            that->_error = NetworkError;
         } else if (serverError != AssetServerError::NoError) {
             switch(serverError) {
                 case AssetServerError::AssetNotFound:
-                    _error = NotFound;
+                    that->_error = NotFound;
                     break;
                 default:
-                    _error = UnknownError;
+                    that->_error = UnknownError;
                     break;
             }
         }
 
-        if (_error != NoError) {
-            qCWarning(asset_client) << "Got error retrieving asset info for" << _hash;
-            _state = Finished;
-            emit finished(this);
+        if (that->_error != NoError) {
+            qCWarning(asset_client) << "Got error retrieving asset info for" << that->_hash;
+            that->_state = Finished;
+            emit that->finished(that);
             
             return;
         }
         
-        _state = WaitingForData;
-        _data.resize(info.size);
+        that->_state = WaitingForData;
+        that->_data.resize(info.size);
         
-        qCDebug(asset_client) << "Got size of " << _hash << " : " << info.size << " bytes";
+        qCDebug(asset_client) << "Got size of " << that->_hash << " : " << info.size << " bytes";
         
-        int start = 0, end = _info.size;
+        int start = 0, end = that->_info.size;
         
         auto assetClient = DependencyManager::get<AssetClient>();
-        assetClient->getAsset(_hash, start, end, [this, start, end](bool responseReceived, AssetServerError serverError,
+        assetClient->getAsset(that->_hash, start, end, [that, start, end](bool responseReceived, AssetServerError serverError,
                                                                                 const QByteArray& data) {
+            if (that.isNull()) {
+                return;
+            }
+
             if (!responseReceived) {
-                _error = NetworkError;
+                that->_error = NetworkError;
             } else if (serverError != AssetServerError::NoError) {
                 switch (serverError) {
                     case AssetServerError::AssetNotFound:
-                        _error = NotFound;
+                        that->_error = NotFound;
                         break;
                     case AssetServerError::InvalidByteRange:
-                        _error = InvalidByteRange;
+                        that->_error = InvalidByteRange;
                         break;
                     default:
-                        _error = UnknownError;
+                        that->_error = UnknownError;
                         break;
                 }
             } else {
                 Q_ASSERT(data.size() == (end - start));
                 
                 // we need to check the hash of the received data to make sure it matches what we expect
-                if (hashData(data).toHex() == _hash) {
-                    memcpy(_data.data() + start, data.constData(), data.size());
-                    _totalReceived += data.size();
-                    emit progress(_totalReceived, _info.size);
+                if (hashData(data).toHex() == that->_hash) {
+                    memcpy(that->_data.data() + start, data.constData(), data.size());
+                    that->_totalReceived += data.size();
+                    emit that->progress(that->_totalReceived, that->_info.size);
                     
-                    saveToCache(getUrl(), data);
+                    saveToCache(that->getUrl(), data);
                 } else {
                     // hash doesn't match - we have an error
-                    _error = HashVerificationFailed;
+                    that->_error = HashVerificationFailed;
                 }
                 
             }
             
-            if (_error != NoError) {
-                qCWarning(asset_client) << "Got error retrieving asset" << _hash << "- error code" << _error;
+            if (that->_error != NoError) {
+                qCWarning(asset_client) << "Got error retrieving asset" << that->_hash << "- error code" << that->_error;
             }
             
-            _state = Finished;
-            emit finished(this);
-        }, [this](qint64 totalReceived, qint64 total) {
-            emit progress(totalReceived, total);
+            that->_state = Finished;
+            emit that->finished(that);
+        }, [that](qint64 totalReceived, qint64 total) {
+            if (!that.isNull()) {
+                emit that->progress(totalReceived, total);
+            }
         });
     });
 }

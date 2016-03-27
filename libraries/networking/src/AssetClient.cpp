@@ -202,6 +202,7 @@ AssetUpload* AssetClient::createUpload(const QByteArray& data) {
 
 bool AssetClient::getAsset(const QString& hash, DataOffset start, DataOffset end,
                            ReceivedAssetCallback callback, ProgressCallback progressCallback) {
+    Q_ASSERT(thread() == QThread::currentThread());
     if (hash.length() != SHA256_HASH_HEX_LENGTH) {
         qCWarning(asset_client) << "Invalid hash size";
         return false;
@@ -240,6 +241,7 @@ bool AssetClient::getAsset(const QString& hash, DataOffset start, DataOffset end
 }
 
 bool AssetClient::getAssetInfo(const QString& hash, GetInfoCallback callback) {
+    Q_ASSERT(thread() == QThread::currentThread());
     auto nodeList = DependencyManager::get<NodeList>();
     SharedNodePointer assetServer = nodeList->soloNodeOfType(NodeType::AssetServer);
 
