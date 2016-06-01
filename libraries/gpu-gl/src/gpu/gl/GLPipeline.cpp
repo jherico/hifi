@@ -10,6 +10,7 @@
 
 #include "GLShader.h"
 #include "GLState.h"
+#include "GLBackend.h"
 
 using namespace gpu;
 using namespace gpu::gl;
@@ -24,6 +25,7 @@ GLPipeline* GLPipeline::sync(const Pipeline& pipeline) {
 
     // No object allocated yet, let's see if it's worth it...
     ShaderPointer shader = pipeline.getProgram();
+<<<<<<< HEAD
 
     // If this pipeline's shader has already failed to compile, don't try again
     if (shader->compilationHasFailed()) {
@@ -31,6 +33,12 @@ GLPipeline* GLPipeline::sync(const Pipeline& pipeline) {
     }
 
     GLShader* programObject = GLShader::sync(*shader);
+=======
+    if (!GLBackend::makeProgram(*shader, Shader::BindingSet())) {
+        return nullptr;
+    }
+    GLShader* programObject = Backend::getGPUObject<GLShader>(*shader);
+>>>>>>> efcb4ac... working on shader storage buffer objects
     if (programObject == nullptr) {
         shader->setCompilationHasFailed(true);
         return nullptr;

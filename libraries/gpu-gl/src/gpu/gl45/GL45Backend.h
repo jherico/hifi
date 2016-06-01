@@ -16,12 +16,17 @@
 
 namespace gpu { namespace gl45 {
 
+static const GLint TRANSFORM_OBJECT_SLOT = 6;
+
 class GL45Backend : public gl::GLBackend {
     using Parent = gl::GLBackend;
     // Context Backend static interface required
     friend class Context;
 
+
+
 public:
+    static bool makeProgram(Shader& shader, const Shader::BindingSet& bindings);
     explicit GL45Backend(bool syncCache) : Parent(syncCache) {}
     GL45Backend() : Parent() {}
 
@@ -55,6 +60,8 @@ protected:
 
     GLuint getQueryID(const QueryPointer& query) override;
     gl::GLQuery* syncGPUObject(const Query& query) override;
+
+    //gl::GLShader* syncGPUObject(const Shader& shader) override;
 
     // Draw Stage
     void do_draw(Batch& batch, size_t paramOffset) override;

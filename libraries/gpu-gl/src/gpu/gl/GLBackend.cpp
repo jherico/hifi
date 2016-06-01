@@ -32,15 +32,15 @@
 using namespace gpu;
 using namespace gpu::gl;
 
-static const QString DEBUG_FLAG("HIFI_ENABLE_OPENGL_45");
-static bool enableOpenGL45 = QProcessEnvironment::systemEnvironment().contains(DEBUG_FLAG);
+static bool useOpenGL45 = false;
+
+Context::MakeProgram GLBackend::makeProgram = gpu::gl41::GL41Backend::makeProgram;
 
 Backend* GLBackend::createBackend() {
     // FIXME provide a mechanism to override the backend for testing
     // Where the gpuContext is initialized and where the TRUE Backend is created and assigned
-    auto version = QOpenGLContextWrapper::currentContextVersion();
     GLBackend* result; 
-    if (enableOpenGL45 && version >= 0x0405) {
+    if (useOpenGL45) {
         qDebug() << "Using OpenGL 4.5 backend";
         result = new gpu::gl45::GL45Backend();
     } else {
@@ -53,10 +53,6 @@ Backend* GLBackend::createBackend() {
     return result;
 }
 
-
-bool GLBackend::makeProgram(Shader& shader, const Shader::BindingSet& slotBindings) {
-    return GLShader::makeProgram(shader, slotBindings);
-}
 
 GLBackend::CommandCall GLBackend::_commandCalls[Batch::NUM_COMMANDS] = 
 {
@@ -125,6 +121,13 @@ extern std::function<uint32(const Texture& texture)> TEXTURE_ID_RESOLVER;
 void GLBackend::init() {
     static std::once_flag once;
     std::call_once(once, [] {
+        static const QString DEBUG_FLAG("HIFI_ENABLE_OPENGL_45");
+        static bool enableOpenGL45 = QProcessEnvironment::systemEnvironment().contains(DEBUG_FLAG);
+        auto version = QOpenGLContextWrapper::currentContextVersion();
+        if (enableOpenGL45 && version >= 0x0405) {
+            useOpenGL45 = true;
+            GLBackend::makeProgram = gpu::gl45::GL45Backend::makeProgram;
+        }
 
         TEXTURE_ID_RESOLVER = [](const Texture& texture)->uint32 {
             auto object = Backend::getGPUObject<GLTexture>(texture);

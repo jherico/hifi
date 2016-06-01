@@ -19,7 +19,11 @@ void GL45Backend::initTransform() {
     _transform._objectBuffer = transformBuffers[0];
     _transform._cameraBuffer = transformBuffers[1];
     _transform._drawCallInfoBuffer = transformBuffers[2];
+<<<<<<< HEAD
     glCreateTextures(GL_TEXTURE_BUFFER, 1, &_transform._objectBufferTexture);
+=======
+    glCreateTextures(GL_TEXTURE_2D, 1, &_transform._objectBufferTexture);
+>>>>>>> efcb4ac... working on shader storage buffer objects
     size_t cameraSize = sizeof(TransformStageState::CameraBufferElement);
     while (_transform._cameraUboSize < cameraSize) {
         _transform._cameraUboSize += _uboAlignment;
@@ -56,13 +60,15 @@ void GL45Backend::transferTransformState(const Batch& batch) const {
         glNamedBufferData(_transform._drawCallInfoBuffer, bufferData.size(), bufferData.data(), GL_STREAM_DRAW);
     }
 
-#ifdef GPU_SSBO_DRAW_CALL_INFO
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, TRANSFORM_OBJECT_SLOT, _transform._objectBuffer);
+<<<<<<< HEAD
 #else
     glTextureBuffer(_transform._objectBufferTexture, GL_RGBA32F, _transform._objectBuffer);
     glActiveTexture(GL_TEXTURE0 + TRANSFORM_OBJECT_SLOT);
     glBindTexture(GL_TEXTURE_BUFFER, _transform._objectBufferTexture);
 #endif
+=======
+>>>>>>> efcb4ac... working on shader storage buffer objects
 
     CHECK_GL_ERROR();
 

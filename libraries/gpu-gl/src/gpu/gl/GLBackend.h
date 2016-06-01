@@ -35,7 +35,7 @@ class GLBackend : public Backend {
     friend class gpu::Context;
     static void init();
     static Backend* createBackend();
-    static bool makeProgram(Shader& shader, const Shader::BindingSet& slotBindings);
+    static Context::MakeProgram makeProgram;
 
 protected:
     explicit GLBackend(bool syncCache);
@@ -172,6 +172,8 @@ protected:
 
     virtual GLuint getQueryID(const QueryPointer& query) = 0;
     virtual GLQuery* syncGPUObject(const Query& query) = 0;
+
+    //virtual GLShader* syncGPUObject(const Shader& shader) = 0;
 
     static const size_t INVALID_OFFSET = (size_t)-1;
     bool _inRenderTransferPass { false };
@@ -326,6 +328,7 @@ protected:
     typedef void (GLBackend::*CommandCall)(Batch&, size_t);
     static CommandCall _commandCalls[Batch::NUM_COMMANDS];
     friend class GLState;
+    friend class GLPipeline;
 };
 
 } }

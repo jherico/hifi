@@ -146,14 +146,13 @@ public:
     typedef Backend* (*CreateBackend)();
     typedef bool (*MakeProgram)(Shader& shader, const Shader::BindingSet& bindings);
 
-
     // This one call must happen before any context is created or used (Shader::MakeProgram) in order to setup the Backend and any singleton data needed
     template <class T>
     static void init() {
         std::call_once(_initialized, [] {
+            T::init();
             _createBackendCallback = T::createBackend;
             _makeProgramCallback = T::makeProgram;
-            T::init();
         });
     }
 

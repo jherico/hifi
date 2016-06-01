@@ -25,21 +25,15 @@ State::BlendOp blendOpFromGL(GLenum blendOp);
 State::BlendArg blendArgFromGL(GLenum blendArg);
 void getCurrentGLState(State::Data& state);
 
+std::string getShaderInfoLog(GLuint glshader);
+std::string getProgramInfoLog(GLuint glprogram);
+
 struct ShaderObject {
     GLuint glshader { 0 };
     GLuint glprogram { 0 };
     GLint transformCameraSlot { -1 };
     GLint transformObjectSlot { -1 };
 };
-
-int makeUniformSlots(GLuint glprogram, const Shader::BindingSet& slotBindings,
-    Shader::SlotSet& uniforms, Shader::SlotSet& textures, Shader::SlotSet& samplers);
-int makeUniformBlockSlots(GLuint glprogram, const Shader::BindingSet& slotBindings, Shader::SlotSet& buffers);
-int makeInputSlots(GLuint glprogram, const Shader::BindingSet& slotBindings, Shader::SlotSet& inputs);
-int makeOutputSlots(GLuint glprogram, const Shader::BindingSet& slotBindings, Shader::SlotSet& outputs);
-bool compileShader(GLenum shaderDomain, const std::string& shaderSource, const std::string& defines, GLuint &shaderObject, GLuint &programObject);
-GLuint compileProgram(const std::vector<GLuint>& glshaders);
-void makeProgramBindings(ShaderObject& shaderObject);
 
 enum GLSyncState {
     // The object is currently undergoing no processing, although it's content
