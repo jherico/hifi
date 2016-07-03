@@ -24,13 +24,23 @@ namespace model {
 
 typedef glm::vec3 Color;
 
+enum class TextureQuality {
+    LOWEST = 256,
+    LOW = 512,
+    MEDIUM = 1024,
+    HIGH = 2048, 
+    HIGHER = 4096,
+    ULTRA = 8192,
+    NATIVE = ~0,
+};
+
 class TextureUsage {
 public:
     gpu::Texture::Type _type{ gpu::Texture::TEX_2D };
     Material::MapFlags _materialUsage{ MaterialKey::ALBEDO_MAP };
 
     int _environmentUsage = 0;
-
+    static TextureQuality _quality;
     static gpu::Texture* create2DTextureFromImage(const QImage& image, const std::string& srcImageName);
     static gpu::Texture* createAlbedoTextureFromImage(const QImage& image, const std::string& srcImageName);
     static gpu::Texture* createEmissiveTextureFromImage(const QImage& image, const std::string& srcImageName);

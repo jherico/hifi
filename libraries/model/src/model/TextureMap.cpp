@@ -52,8 +52,18 @@ void TextureMap::setLightmapOffsetScale(float offset, float scale) {
     _lightmapOffsetScale.y = scale;
 }
 
+TextureQuality TextureUsage::_quality = TextureQuality::LOW;
+
 const QImage TextureUsage::process2DImageColor(const QImage& srcImage, bool& validAlpha, bool& alphaAsMask) {
     QImage image = srcImage;
+    if (_quality != TextureQuality::NATIVE) {
+        auto maxDimension = static_cast<int>(_quality);
+        auto size = image.size();
+        if (size.width() > maxDimension || size.height() > maxDimension) {
+            auto newSize = QSize(std::min(size.width(), maxDimension), std::min(size.height(), maxDimension));
+            image = image.scaled(newSize);
+        }
+    }
     validAlpha = false;
     alphaAsMask = true;
     const uint8 OPAQUE_ALPHA = 255;
@@ -202,6 +212,16 @@ gpu::Texture* TextureUsage::createNormalTextureFromNormalImage(const QImage& src
         image = image.convertToFormat(QImage::Format_RGB888);
     }
 
+    // FIXME we probably need special scaling functionality for normal maps.
+    if (_quality != TextureQuality::NATIVE) {
+        auto maxDimension = static_cast<int>(_quality);
+        auto size = image.size();
+        if (size.width() > maxDimension || size.height() > maxDimension) {
+            auto newSize = QSize(std::min(size.width(), maxDimension), std::min(size.height(), maxDimension));
+            image = image.scaled(newSize);
+        }
+    }
+
     gpu::Texture* theTexture = nullptr;
     if ((image.width() > 0) && (image.height() > 0)) {
         
@@ -233,6 +253,16 @@ gpu::Texture* TextureUsage::createNormalTextureFromBumpImage(const QImage& srcIm
     
     if (image.format() != QImage::Format_RGB888) {
         image = image.convertToFormat(QImage::Format_RGB888);
+    }
+
+    // FIXME we probably need special scaling functionality for normal maps.
+    if (_quality != TextureQuality::NATIVE) {
+        auto maxDimension = static_cast<int>(_quality);
+        auto size = image.size();
+        if (size.width() > maxDimension || size.height() > maxDimension) {
+            auto newSize = QSize(std::min(size.width(), maxDimension), std::min(size.height(), maxDimension));
+            image = image.scaled(newSize);
+        }
     }
 
     // PR 5540 by AlessandroSigna integrated here as a specialized TextureLoader for bumpmaps
@@ -311,6 +341,16 @@ gpu::Texture* TextureUsage::createRoughnessTextureFromImage(const QImage& srcIma
         }
     }
 
+    // FIXME we probably need special scaling functionality for normal maps.
+    if (_quality != TextureQuality::NATIVE) {
+        auto maxDimension = static_cast<int>(_quality);
+        auto size = image.size();
+        if (size.width() > maxDimension || size.height() > maxDimension) {
+            auto newSize = QSize(std::min(size.width(), maxDimension), std::min(size.height(), maxDimension));
+            image = image.scaled(newSize);
+        }
+    }
+
     image = image.convertToFormat(QImage::Format_Grayscale8);
 
     gpu::Texture* theTexture = nullptr;
@@ -341,6 +381,16 @@ gpu::Texture* TextureUsage::createRoughnessTextureFromGlossImage(const QImage& s
     } else {
         if (image.format() != QImage::Format_ARGB32) {
             image = image.convertToFormat(QImage::Format_ARGB32);
+        }
+    }
+
+    // FIXME we probably need special scaling functionality for normal maps.
+    if (_quality != TextureQuality::NATIVE) {
+        auto maxDimension = static_cast<int>(_quality);
+        auto size = image.size();
+        if (size.width() > maxDimension || size.height() > maxDimension) {
+            auto newSize = QSize(std::min(size.width(), maxDimension), std::min(size.height(), maxDimension));
+            image = image.scaled(newSize);
         }
     }
 
@@ -378,6 +428,16 @@ gpu::Texture* TextureUsage::createMetallicTextureFromImage(const QImage& srcImag
     } else {
         if (image.format() != QImage::Format_ARGB32) {
             image = image.convertToFormat(QImage::Format_ARGB32);
+        }
+    }
+
+    // FIXME we probably need special scaling functionality for normal maps.
+    if (_quality != TextureQuality::NATIVE) {
+        auto maxDimension = static_cast<int>(_quality);
+        auto size = image.size();
+        if (size.width() > maxDimension || size.height() > maxDimension) {
+            auto newSize = QSize(std::min(size.width(), maxDimension), std::min(size.height(), maxDimension));
+            image = image.scaled(newSize);
         }
     }
 
