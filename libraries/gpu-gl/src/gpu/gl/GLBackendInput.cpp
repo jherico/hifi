@@ -10,6 +10,7 @@
 //
 #include "GLBackend.h"
 #include "GLShared.h"
+#include "GLBuffer.h"
 
 using namespace gpu;
 using namespace gpu::gl;
@@ -29,33 +30,28 @@ void GLBackend::do_setInputBuffer(Batch& batch, size_t paramOffset) {
     BufferPointer buffer = batch._buffers.get(batch._params[paramOffset + 2]._uint);
     uint32 channel = batch._params[paramOffset + 3]._uint;
 
-    if (channel < getNumInputBuffers()) {
-        bool isModified = false;
-        if (_input._buffers[channel] != buffer) {
-            _input._buffers[channel] = buffer;
-         
-            GLuint vbo = 0;
-            if (buffer) {
-                vbo = getBufferID((*buffer));
-            }
-            _input._bufferVBOs[channel] = vbo;
+    if (channel >= getNumInputBuffers()) {
+        return;
+    }
+    bool isModified = false;
+    if (_input._buffers[channel] != buffer) {
+        _input._buffers[channel] = buffer;
+        isModified = true;
+    }
 
-            isModified = true;
-        }
+    if (_input._bufferOffsets[channel] != offset) {
+        _input._bufferOffsets[channel] = offset;
+        // Offsets do not require any rebinding
+        isModified = true;
+    }
 
-        if (_input._bufferOffsets[channel] != offset) {
-            _input._bufferOffsets[channel] = offset;
-            isModified = true;
-        }
+    if (_input._bufferStrides[channel] != stride) {
+        _input._bufferStrides[channel] = stride;
+        isModified = true;
+    }
 
-        if (_input._bufferStrides[channel] != stride) {
-            _input._bufferStrides[channel] = stride;
-            isModified = true;
-        }
-
-        if (isModified) {
-            _input._invalidBuffers.set(channel);
-        }
+    if (isModified) {
+        _input._invalidBuffers.set(channel);
     }
 }
 
@@ -87,19 +83,7 @@ void GLBackend::syncInputStateCache() {
 
 void GLBackend::resetInputStage() {
     // Reset index buffer
-    _input._indexBufferType = UINT32;
-    _input._indexBufferOffset = 0;
-    _input._indexBuffer.reset();
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     (void) CHECK_GL_ERROR();
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-
-    for (uint32_t i = 0; i < _input._attributeActivation.size(); i++) {
-        glDisableVertexAttribArray(i);
-        glVertexAttribPointer(i, 4, GL_FLOAT, GL_FALSE, 0, 0);
-    }
 
     // Reset vertex buffer and format
     _input._format.reset();
@@ -110,7 +94,6 @@ void GLBackend::resetInputStage() {
         _input._buffers[i].reset();
         _input._bufferOffsets[i] = 0;
         _input._bufferStrides[i] = 0;
-        _input._bufferVBOs[i] = 0;
     }
     _input._invalidBuffers.reset();
 
@@ -121,13 +104,15 @@ void GLBackend::do_setIndexBuffer(Batch& batch, size_t paramOffset) {
     _input._indexBufferOffset = batch._params[paramOffset + 0]._uint;
 
     BufferPointer indexBuffer = batch._buffers.get(batch._params[paramOffset + 1]._uint);
+    GLBuffer* glbuffer = nullptr;
+    if (indexBuffer) {
+        glbuffer = syncGPUObject(*indexBuffer);
+    }
+
     if (indexBuffer != _input._indexBuffer) {
         _input._indexBuffer = indexBuffer;
-        if (indexBuffer) {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, getBufferID(*indexBuffer));
-        } else {
-            // FIXME do we really need this?  Is there ever a draw call where we care that the element buffer is null?
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        if (glbuffer) {
+            glbuffer->bind(GL_ELEMENT_ARRAY_BUFFER);
         }
     }
     (void) CHECK_GL_ERROR();
@@ -137,14 +122,16 @@ void GLBackend::do_setIndirectBuffer(Batch& batch, size_t paramOffset) {
     _input._indirectBufferOffset = batch._params[paramOffset + 1]._uint;
     _input._indirectBufferStride = batch._params[paramOffset + 2]._uint;
 
-    BufferPointer buffer = batch._buffers.get(batch._params[paramOffset]._uint);
-    if (buffer != _input._indirectBuffer) {
-        _input._indirectBuffer = buffer;
-        if (buffer) {
-            glBindBuffer(GL_DRAW_INDIRECT_BUFFER, getBufferID(*buffer));
-        } else {
-            // FIXME do we really need this?  Is there ever a draw call where we care that the element buffer is null?
-            glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+    BufferPointer indirectBuffer = batch._buffers.get(batch._params[paramOffset]._uint);
+    GLBuffer* glbuffer = nullptr;
+    if (indirectBuffer) {
+        glbuffer = syncGPUObject(*indirectBuffer);
+    }
+
+    if (indirectBuffer != _input._indirectBuffer) {
+        _input._indirectBuffer = indirectBuffer;
+        if (glbuffer) {
+            glbuffer->bind(GL_DRAW_INDIRECT_BUFFER);
         }
     }
 
@@ -282,12 +269,12 @@ void GLBackend::updateInput() {
                     int bufferNum = (channelIt).first;
 
                     if (_input._invalidBuffers.test(bufferNum) || _input._invalidFormat) {
-                        //  GLuint vbo = gpu::GL41Backend::getBufferID((*buffers[bufferNum]));
-                        GLuint vbo = _input._bufferVBOs[bufferNum];
-                        if (boundVBO != vbo) {
-                            glBindBuffer(GL_ARRAY_BUFFER, vbo);
-                            (void)CHECK_GL_ERROR();
-                            boundVBO = vbo;
+                        GLBuffer* glbuffer = nullptr;
+                        if (_input._buffers[bufferNum]) {
+                            glbuffer = syncGPUObject(*_input._buffers[bufferNum]);
+                        }
+                        if (glbuffer) {
+                            glbuffer->bind(GL_ARRAY_BUFFER);
                         }
                         _input._invalidBuffers[bufferNum] = false;
 
@@ -300,7 +287,7 @@ void GLBackend::updateInput() {
                             // GLenum perLocationStride = strides[bufferNum];
                             GLenum perLocationStride = attrib._element.getLocationSize();
                             GLuint stride = (GLuint)strides[bufferNum];
-                            GLuint pointer = (GLuint)(attrib._offset + offsets[bufferNum]);
+                            GLuint pointer = (GLuint)(attrib._offset + glbuffer->offset() + offsets[bufferNum]);
                             GLboolean isNormalized = attrib._element.isNormalized();
 
                             for (size_t locNum = 0; locNum < locationCount; ++locNum) {

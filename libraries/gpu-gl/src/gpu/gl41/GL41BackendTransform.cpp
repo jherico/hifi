@@ -32,9 +32,9 @@ void GL41Backend::transferTransformState(const Batch& batch) const {
         for (size_t i = 0; i < _transform._cameras.size(); ++i) {
             memcpy(bufferData.data() + (_transform._cameraUboSize * i), &_transform._cameras[i], sizeof(TransformStageState::CameraBufferElement));
         }
-        glBindBuffer(GL_UNIFORM_BUFFER, _transform._cameraBuffer);
+        _bufferState.bind(GL_UNIFORM_BUFFER, _transform._cameraBuffer);
         glBufferData(GL_UNIFORM_BUFFER, bufferData.size(), bufferData.data(), GL_DYNAMIC_DRAW);
-        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+        _bufferState.bind(GL_UNIFORM_BUFFER, 0);
     }
 
     if (!batch._objects.empty()) {
@@ -43,13 +43,13 @@ void GL41Backend::transferTransformState(const Batch& batch) const {
         memcpy(bufferData.data(), batch._objects.data(), byteSize);
 
 #ifdef GPU_SSBO_DRAW_CALL_INFO
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _transform._objectBuffer);
+        _bufferState.bind(GL_SHADER_STORAGE_BUFFER, _transform._objectBuffer);
         glBufferData(GL_SHADER_STORAGE_BUFFER, bufferData.size(), bufferData.data(), GL_DYNAMIC_DRAW);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+        _bufferState.bind(GL_SHADER_STORAGE_BUFFER, 0);
 #else
-        glBindBuffer(GL_TEXTURE_BUFFER, _transform._objectBuffer);
+        _bufferState.bind(GL_TEXTURE_BUFFER, _transform._objectBuffer);
         glBufferData(GL_TEXTURE_BUFFER, bufferData.size(), bufferData.data(), GL_DYNAMIC_DRAW);
-        glBindBuffer(GL_TEXTURE_BUFFER, 0);
+        _bufferState.bind(GL_TEXTURE_BUFFER, 0);
 #endif
     }
 
@@ -63,13 +63,13 @@ void GL41Backend::transferTransformState(const Batch& batch) const {
             _transform._drawCallInfoOffsets[data.first] = (GLvoid*)currentSize;
         }
 
-        glBindBuffer(GL_ARRAY_BUFFER, _transform._drawCallInfoBuffer);
+        _bufferState.bind(GL_ARRAY_BUFFER, _transform._drawCallInfoBuffer);
         glBufferData(GL_ARRAY_BUFFER, bufferData.size(), bufferData.data(), GL_DYNAMIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        _bufferState.bind(GL_ARRAY_BUFFER, 0);
     }
 
 #ifdef GPU_SSBO_DRAW_CALL_INFO
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, TRANSFORM_OBJECT_SLOT, _transform._objectBuffer);
+    _bufferState.bindBase(GL_SHADER_STORAGE_BUFFER, TRANSFORM_OBJECT_SLOT, _transform._objectBuffer);
 #else
     glActiveTexture(GL_TEXTURE0 + TRANSFORM_OBJECT_SLOT);
     glBindTexture(GL_TEXTURE_BUFFER, _transform._objectBufferTexture);

@@ -25,12 +25,14 @@
 
 #include <gpu/Forward.h>
 #include <gpu/Context.h>
+#include <shared/SmartMemoryPool.h>
 
 #include "GLShared.h"
 
 namespace gpu { namespace gl {
 
 class GLBackend : public Backend {
+    using Handle = hifi::memory::Handle;
     // Context Backend static interface required
     friend class gpu::Context;
     static void init();
@@ -159,13 +161,15 @@ public:
     virtual void do_setStateBlendFactor(Batch& batch, size_t paramOffset) final;
     virtual void do_setStateScissorRect(Batch& batch, size_t paramOffset) final;
 
+    static GLBufferState _bufferState;
 protected:
 
     virtual GLuint getFramebufferID(const FramebufferPointer& framebuffer) = 0;
     virtual GLFramebuffer* syncGPUObject(const Framebuffer& framebuffer) = 0;
 
-    virtual GLuint getBufferID(const Buffer& buffer) = 0;
-    virtual GLBuffer* syncGPUObject(const Buffer& buffer) = 0;
+    virtual void syncBufferPool() = 0;
+    Offset getBufferOffset(const BufferPointer& buffer);
+    virtual GLBuffer* syncGPUObject(const Buffer& buffer, bool allocateOnly = false) = 0;
 
     virtual GLuint getTextureID(const TexturePointer& texture, bool needTransfer = true) = 0;
     virtual GLTexture* syncGPUObject(const TexturePointer& texture, bool sync = true) = 0;
@@ -201,7 +205,6 @@ protected:
         Buffers _buffers;
         Offsets _bufferOffsets;
         Offsets _bufferStrides;
-        std::vector<GLuint> _bufferVBOs;
 
         glm::vec4 _colorAttribute{ 0.0f };
 
@@ -211,15 +214,15 @@ protected:
         
         BufferPointer _indirectBuffer;
         Offset _indirectBufferOffset{ 0 };
-        Offset _indirectBufferStride{ 0 };
+        Offset _indirectBufferStride { 0 };
 
         GLuint _defaultVAO { 0 };
 
         InputStageState() :
             _buffers(_invalidBuffers.size()),
             _bufferOffsets(_invalidBuffers.size(), 0),
-            _bufferStrides(_invalidBuffers.size(), 0),
-            _bufferVBOs(_invalidBuffers.size(), 0) {}
+            _bufferStrides(_invalidBuffers.size(), 0)
+        {}
     } _input;
 
     virtual void initTransform() = 0;

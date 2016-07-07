@@ -29,6 +29,8 @@
 
 #include "GLTexture.h"
 #include "GLShader.h"
+#include "GLBuffer.h"
+
 using namespace gpu;
 using namespace gpu::gl;
 
@@ -198,6 +200,12 @@ void GLBackend::renderPassTransfer(Batch& batch) {
     { // Sync all the buffers
         PROFILE_RANGE("syncGPUBuffer");
 
+        for (auto& cached : batch._buffers._items) {
+            if (cached._data) {
+                syncGPUObject(*cached._data, true);
+            }
+        }
+        syncBufferPool();
         for (auto& cached : batch._buffers._items) {
             if (cached._data) {
                 syncGPUObject(*cached._data);
@@ -559,3 +567,16 @@ void GLBackend::do_glColor4f(Batch& batch, size_t paramOffset) {
     }
     (void)CHECK_GL_ERROR();
 }
+
+Offset GLBackend::getBufferOffset(const BufferPointer& buffer) {
+    if (!buffer) {
+        return 0;
+    }
+    GLBuffer* glbuffer = syncGPUObject(*buffer);
+    if (!glbuffer) {
+        return 0;
+    }
+    return glbuffer->offset();
+}
+
+GLBufferState GLBackend::_bufferState;

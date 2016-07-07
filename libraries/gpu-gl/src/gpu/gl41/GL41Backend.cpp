@@ -13,10 +13,16 @@
 #include <functional>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "../gl/GLBuffer.h"
+
 Q_LOGGING_CATEGORY(gpugl41logging, "hifi.gpu.gl41")
 
 using namespace gpu;
 using namespace gpu::gl41;
+
+GL41Backend::~GL41Backend() {
+    gpu::gl::GLBuffer::destroyAll();
+}
 
 void GL41Backend::do_draw(Batch& batch, size_t paramOffset) {
     Primitive primitiveType = (Primitive)batch._params[paramOffset + 2]._uint;
@@ -52,7 +58,8 @@ void GL41Backend::do_drawIndexed(Batch& batch, size_t paramOffset) {
     GLenum glType = gl::ELEMENT_TYPE_TO_GL[_input._indexBufferType];
     
     auto typeByteSize = TYPE_SIZE[_input._indexBufferType];
-    GLvoid* indexBufferByteOffset = reinterpret_cast<GLvoid*>(startIndex * typeByteSize + _input._indexBufferOffset);
+    Offset offset = _input._indexBufferOffset + getBufferOffset(_input._indexBuffer);
+    GLvoid* indexBufferByteOffset = reinterpret_cast<GLvoid*>(startIndex * typeByteSize + offset);
 
     if (isStereo()) {
         setupStereoSide(0);
@@ -119,7 +126,8 @@ void GL41Backend::do_drawIndexedInstanced(Batch& batch, size_t paramOffset) {
     GLenum glType = gl::ELEMENT_TYPE_TO_GL[_input._indexBufferType];
 
     auto typeByteSize = TYPE_SIZE[_input._indexBufferType];
-    GLvoid* indexBufferByteOffset = reinterpret_cast<GLvoid*>(startIndex * typeByteSize + _input._indexBufferOffset);
+    Offset offset = startIndex * typeByteSize + _input._indexBufferOffset + getBufferOffset(_input._indexBuffer);
+    GLvoid* indexBufferByteOffset = reinterpret_cast<GLvoid*>(offset);
  
     if (isStereo()) {
         GLint trueNumInstances = 2 * numInstances;
@@ -147,8 +155,8 @@ void GL41Backend::do_multiDrawIndirect(Batch& batch, size_t paramOffset) {
 #if (GPU_INPUT_PROFILE == GPU_CORE_43)
     uint commandCount = batch._params[paramOffset + 0]._uint;
     GLenum mode = gl::PRIMITIVE_TO_GL[(Primitive)batch._params[paramOffset + 1]._uint];
-
-    glMultiDrawArraysIndirect(mode, reinterpret_cast<GLvoid*>(_input._indirectBufferOffset), commandCount, (GLsizei)_input._indirectBufferStride);
+    Offset offset = _input._indirectBufferOffset + getBufferOffset(_input._indirectBuffer);
+    glMultiDrawArraysIndirect(mode, reinterpret_cast<GLvoid*>(offset), commandCount, (GLsizei)_input._indirectBufferStride);
     _stats._DSNumDrawcalls += commandCount;
     _stats._DSNumAPIDrawcalls++;
 
@@ -165,7 +173,8 @@ void GL41Backend::do_multiDrawIndexedIndirect(Batch& batch, size_t paramOffset) 
     GLenum mode = gl::PRIMITIVE_TO_GL[(Primitive)batch._params[paramOffset + 1]._uint];
     GLenum indexType = gl::ELEMENT_TYPE_TO_GL[_input._indexBufferType];
   
-    glMultiDrawElementsIndirect(mode, indexType, reinterpret_cast<GLvoid*>(_input._indirectBufferOffset), commandCount, (GLsizei)_input._indirectBufferStride);
+    Offset offset = _input._indirectBufferOffset + getBufferOffset(_input._indirectBuffer);
+    glMultiDrawElementsIndirect(mode, indexType, reinterpret_cast<GLvoid*>(offset), commandCount, (GLsizei)_input._indirectBufferStride);
     _stats._DSNumDrawcalls += commandCount;
     _stats._DSNumAPIDrawcalls++;
 #else

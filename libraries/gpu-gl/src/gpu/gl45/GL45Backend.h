@@ -16,6 +16,70 @@
 
 namespace gpu { namespace gl45 {
 
+class GL45BufferProvider : public hifi::memory::Provider {
+public:
+    GLuint _buffer { 0 };
+    // Allocate in 16 MB increments
+    static const size_t GPU_MEMORY_INCREMENT = 16 * 1024 * 1024;
+    // Start with 64 MB
+    static const size_t GPU_MEMORY_INITIAL_SIZE = 64 * 1024 * 1024;
+
+    // glNamedBufferStorage(_buffer, _size, nullptr, GL_DYNAMIC_STORAGE_BIT);
+    // glNamedBufferSubData(_buffer, (GLintptr)offset, (GLsizeiptr)size, data + offset);
+
+    ~GL45BufferProvider() {
+        if (_buffer) {
+            glDeleteBuffers(1, &_buffer);
+        }
+    }
+
+    size_t reallocate(size_t newSize) override {
+        if (newSize < GPU_MEMORY_INITIAL_SIZE) {
+            newSize = GPU_MEMORY_INITIAL_SIZE;
+        } else if (newSize % GPU_MEMORY_INCREMENT) {
+            newSize -= newSize % GPU_MEMORY_INCREMENT;
+            newSize += GPU_MEMORY_INCREMENT;
+        }
+
+        GLuint newBuffer { 0 };
+        GLsizei count = 1;
+        glCreateBuffers(count, &newBuffer);
+        (void)CHECK_GL_ERROR();
+        glNamedBufferStorage(newBuffer, newSize, nullptr, GL_DYNAMIC_STORAGE_BIT);
+        (void)CHECK_GL_ERROR();
+
+        if (_buffer && _size) {
+            glCopyNamedBufferSubData(newBuffer, newBuffer, 0, 0, std::min(newSize, _size));
+            (void)CHECK_GL_ERROR();
+        }
+        std::swap(newBuffer, _buffer);
+        std::swap(newSize, _size);
+        if (newBuffer) {
+            glDeleteBuffers(1, &newBuffer);
+            (void)CHECK_GL_ERROR();
+        }
+        return _size;
+    }
+
+    void copy(size_t dstOffset, size_t srcOffset, size_t size) const override {
+        assert(validRange(dstOffset, size));
+        assert(validRange(srcOffset, size));
+        assert(!overlap(size, dstOffset, srcOffset));
+        glCopyNamedBufferSubData(_buffer, _buffer, srcOffset, dstOffset, size);
+        (void)CHECK_GL_ERROR();
+    }
+
+    void update(size_t dstOffset, size_t size, const uint8_t* data) const override {
+        assert(validRange(dstOffset, size));
+        glNamedBufferSubData(_buffer, dstOffset, size, data);
+        (void)CHECK_GL_ERROR();
+    }
+};
+
+using GL45BufferPool = hifi::memory::SmartMemoryPool<GL45BufferProvider>;
+
+class GL45Buffer;
+
 class GL45Backend : public gl::GLBackend {
     using Parent = gl::GLBackend;
     // Context Backend static interface required
@@ -24,6 +88,7 @@ class GL45Backend : public gl::GLBackend {
 public:
     explicit GL45Backend(bool syncCache) : Parent(syncCache) {}
     GL45Backend() : Parent() {}
+    ~GL45Backend();
 
     class GL45Texture : public gpu::gl::GLTexture {
         using Parent = gpu::gl::GLTexture;
@@ -44,11 +109,15 @@ public:
 
 
 protected:
+    friend class GL45Buffer;
+
+    GL45BufferPool _bufferPool;
+    
     GLuint getFramebufferID(const FramebufferPointer& framebuffer) override;
     gl::GLFramebuffer* syncGPUObject(const Framebuffer& framebuffer) override;
 
-    GLuint getBufferID(const Buffer& buffer) override;
-    gl::GLBuffer* syncGPUObject(const Buffer& buffer) override;
+    void syncBufferPool() override;
+    gl::GLBuffer* syncGPUObject(const Buffer& buffer, bool allocateOnly = false) override;
 
     GLuint getTextureID(const TexturePointer& texture, bool needTransfer = true) override;
     gl::GLTexture* syncGPUObject(const TexturePointer& texture, bool sync = true) override;
@@ -75,6 +144,7 @@ protected:
 
     // Output stage
     void do_blit(Batch& batch, size_t paramOffset) override;
+
 };
 
 } }

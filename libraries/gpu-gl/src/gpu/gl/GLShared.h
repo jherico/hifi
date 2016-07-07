@@ -13,10 +13,69 @@
 #include <gpu/Format.h>
 #include <gpu/Context.h>
 #include <QLoggingCategory>
+#include <shared/SmartMemoryPool.h>
 
 Q_DECLARE_LOGGING_CATEGORY(gpugllogging)
 
 namespace gpu { namespace gl { 
+
+struct GLBufferState {
+    void bind(GLenum target, GLuint buffer);
+    void bindBase(GLenum target, GLuint index, GLuint buffer);
+    void bindRange(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size);
+
+    size_t bindCalls { 0 };
+    size_t indexedBindCalls { 0 };
+    size_t zeroOutBindCalls { 0 };
+    size_t zeroOutIndexedBindCalls { 0 };
+    size_t redundantBindCalls { 0 };
+    size_t redundantIndexedBindCalls { 0 };
+
+    void resetCallTracking() {
+        bindCalls = 0;
+        indexedBindCalls = 0;
+        zeroOutBindCalls = 0;
+        zeroOutIndexedBindCalls = 0;
+        redundantBindCalls = 0;
+        redundantIndexedBindCalls = 0;
+    }
+private:
+
+    GLuint arrayBuffer { 0 };
+    GLuint copyReadBuffer { 0 };
+    GLuint copyWriteBuffer { 0 };
+    GLuint dispatchIndirectBuffer { 0 };
+    GLuint drawIndirectBuffer { 0 };
+    GLuint elementArrayBuffer { 0 };
+    GLuint pixelPackBuffer { 0 };
+    GLuint pixelUnpackBuffer { 0 };
+    GLuint queryBuffer { 0 };
+    GLuint textureBuffer { 0 };
+
+
+    GLuint atomicCounterBuffer { 0 };
+    GLuint shaderStorageBuffer { 0 };
+    GLuint transformFeedbackBuffer { 0 };
+    GLuint uniformBuffer { 0 };
+
+    struct RangeBinding {
+        GLuint buffer { 0 };
+        GLuint offset { 0 };
+        GLuint size { 0 };
+    };
+
+    using RangeVector = std::vector<RangeBinding>;
+
+    RangeVector atomicCounterBuffers;
+    RangeVector shaderStorageBuffers;
+    RangeVector transformFeedbackBuffers;
+    RangeVector uniformBuffers;
+
+    GLuint& getBufferReference(GLenum target);
+    RangeBinding& getBufferRangeReference(GLenum target, GLuint index);
+    RangeVector& getBufferRangeReference(GLenum target);
+};
+
 
 gpu::Size getDedicatedMemory();
 ComparisonFunction comparisonFuncFromGL(GLenum func);
@@ -122,15 +181,23 @@ bool checkGLError(const char* name = nullptr);
 bool checkGLErrorDebug(const char* name = nullptr);
 
 template <typename GPUType>
-struct GLObject : public GPUObject {
+struct GLObjectRef : public GPUObject {
 public:
-    GLObject(const GPUType& gpuObject, GLuint id) : _gpuObject(gpuObject), _id(id) {}
+    GLObjectRef(const GPUType& gpuObject) : _gpuObject(gpuObject) {}
+    const GPUType& _gpuObject;
+};
+
+template <typename GPUType>
+struct GLObject : public GLObjectRef<GPUType> {
+public:
+    GLObject(const GPUType& gpuObject, GLuint id) : GLObjectRef(gpuObject), _id(id) {}
 
     virtual ~GLObject() { }
 
-    const GPUType& _gpuObject;
     const GLuint _id;
 };
+
+
 
 class GlBuffer;
 class GLFramebuffer;

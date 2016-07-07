@@ -142,6 +142,10 @@ GLTexture::GLTexture(const gpu::Texture& texture, GLuint id, GLTexture* original
     _downsampleSource(originalTexture)
 {
     if (_transferrable) {
+        // Only track main textures
+        if (!originalTexture) {
+            qDebug() << "GLTracker texture: " << texture.getDimensions().x << "," << texture.getDimensions().y << " " << texture.getType();
+        }
         uint16 mipCount = usedMipLevels();
         _currentMaxMipCount = std::max(_currentMaxMipCount, mipCount);
         if (!_textureCountByMips.count(mipCount)) {
@@ -175,6 +179,7 @@ GLTexture::GLTexture(const gpu::Texture& texture, GLuint id, GLTexture* original
 
 GLTexture::~GLTexture() {
     if (_transferrable) {
+        qDebug() << "GLTracker texture: " << _gpuObject.getDimensions().x << "," << _gpuObject.getDimensions().y << " " << _gpuObject.getType();
         uint16 mipCount = usedMipLevels();
         Q_ASSERT(_textureCountByMips.count(mipCount));
         auto& numTexturesForMipCount = _textureCountByMips[mipCount];

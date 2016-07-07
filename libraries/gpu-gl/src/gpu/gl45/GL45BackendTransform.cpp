@@ -57,7 +57,7 @@ void GL45Backend::transferTransformState(const Batch& batch) const {
     }
 
 #ifdef GPU_SSBO_DRAW_CALL_INFO
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, TRANSFORM_OBJECT_SLOT, _transform._objectBuffer);
+    _bufferState.bindBase(GL_SHADER_STORAGE_BUFFER, TRANSFORM_OBJECT_SLOT, _transform._objectBuffer);
 #else
     glTextureBuffer(_transform._objectBufferTexture, GL_RGBA32F, _transform._objectBuffer);
     glActiveTexture(GL_TEXTURE0 + TRANSFORM_OBJECT_SLOT);

@@ -916,5 +916,111 @@ void makeProgramBindings(ShaderObject& shaderObject) {
 } }
 
 using namespace gpu;
+using namespace gpu::gl;
 
+void GLBufferState::bind(GLenum target, GLuint buffer) {
+    GLuint& currentBuffer = getBufferReference(target);
+    if (currentBuffer != buffer) {
+        ++bindCalls;
+        glBindBuffer(target, buffer);
+    } else {
+        ++redundantBindCalls;
+    }
+    if (buffer == 0) {
+        ++zeroOutBindCalls;
+    }
+    currentBuffer = buffer;
+}
 
+void GLBufferState::bindBase(GLenum target, GLuint index, GLuint buffer) {
+    auto& range = getBufferRangeReference(target, index);
+    if (range.buffer != buffer || range.offset != 0 || range.size != 0) {
+        range.buffer = buffer;
+        range.offset = 0;
+        range.size = 0;
+        ++indexedBindCalls;
+        glBindBufferBase(target, index, buffer);
+    } else {
+        ++redundantIndexedBindCalls;
+    }
+    if (buffer == 0) {
+        ++zeroOutIndexedBindCalls;
+    }
+}
+
+void GLBufferState::bindRange(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size) {
+    auto& range = getBufferRangeReference(target, index);
+    if (range.buffer != buffer || range.offset != offset || range.size != size) {
+        range.buffer = buffer;
+        range.offset = offset;
+        range.size = size;
+        ++indexedBindCalls;
+        glBindBufferRange(target, index, buffer, offset, size);
+    } else {
+        ++redundantIndexedBindCalls;
+    }
+    if (0 == buffer) {
+        ++zeroOutIndexedBindCalls;
+    }
+}
+
+GLuint& GLBufferState::getBufferReference(GLenum target) {
+    switch (target) {
+    case GL_ARRAY_BUFFER:
+        return arrayBuffer;
+    case GL_ATOMIC_COUNTER_BUFFER:
+        return atomicCounterBuffer;
+    case GL_COPY_READ_BUFFER:
+        return copyReadBuffer;
+    case GL_COPY_WRITE_BUFFER:
+        return copyWriteBuffer;
+    case GL_DISPATCH_INDIRECT_BUFFER:
+        return dispatchIndirectBuffer;
+    case GL_DRAW_INDIRECT_BUFFER:
+        return drawIndirectBuffer;
+    case GL_ELEMENT_ARRAY_BUFFER:
+        return elementArrayBuffer;
+    case GL_PIXEL_PACK_BUFFER:
+        return pixelPackBuffer;
+    case GL_PIXEL_UNPACK_BUFFER:
+        return pixelUnpackBuffer;
+    case GL_QUERY_BUFFER:
+        return queryBuffer;
+    case GL_SHADER_STORAGE_BUFFER:
+        return shaderStorageBuffer;
+    case GL_TEXTURE_BUFFER:
+        return textureBuffer;
+    case GL_TRANSFORM_FEEDBACK_BUFFER:
+        return transformFeedbackBuffer;
+    case GL_UNIFORM_BUFFER:
+        return uniformBuffer;
+    default:
+        break;
+    }
+    throw std::runtime_error("Invalid target specified for bind " + std::to_string(target));
+}
+
+GLBufferState::RangeBinding& GLBufferState::getBufferRangeReference(GLenum target, GLuint index) {
+    auto& ranges = getBufferRangeReference(target);
+    if (ranges.size() <= index) {
+        ranges.resize(index + 1);
+    }
+    return ranges[index];
+}
+
+GLBufferState::RangeVector& GLBufferState::getBufferRangeReference(GLenum target) {
+    switch (target) {
+    case GL_ATOMIC_COUNTER_BUFFER:
+        return atomicCounterBuffers;
+    case GL_TRANSFORM_FEEDBACK_BUFFER:
+        return transformFeedbackBuffers;
+    case GL_UNIFORM_BUFFER:
+        return uniformBuffers;
+    case GL_SHADER_STORAGE_BUFFER:
+        return shaderStorageBuffers;
+    default:
+        break;
+    }
+    qWarning() << "Invalid target specified for range binding " << target;
+    throw std::runtime_error("Invalid target specified for bind " + std::to_string(target));
+}

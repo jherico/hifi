@@ -11,18 +11,12 @@
 using namespace gpu;
 using namespace gpu::gl;
 
-GLBuffer::~GLBuffer() {
-    glDeleteBuffers(1, &_id);
-    Backend::decrementBufferGPUCount();
-    Backend::updateBufferGPUMemoryUsage(_size, 0);
-}
+std::unordered_set<GLBuffer*> GLBuffer::_activeBuffers;
 
-GLBuffer::GLBuffer(const Buffer& buffer, GLuint id) :
-    GLObject(buffer, id),
-    _size((GLuint)buffer._sysmem.getSize()),
-    _stamp(buffer._sysmem.getStamp())
-{
-    Backend::incrementBufferGPUCount();
-    Backend::updateBufferGPUMemoryUsage(0, _size);
+void GLBuffer::destroyAll() {
+    std::unordered_set<GLBuffer*> destroyBuffers;
+    destroyBuffers.swap(_activeBuffers);
+    for (const auto& buffer : destroyBuffers) {
+        Backend::setGPUObject<GLBuffer>(buffer->_gpuObject, nullptr);
+    }
 }
-

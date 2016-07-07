@@ -122,7 +122,7 @@ void GLBackend::releaseUniformBuffer(uint32_t slot) {
     if (buf) {
         auto* object = Backend::getGPUObject<GLBuffer>(*buf);
         if (object) {
-            glBindBufferBase(GL_UNIFORM_BUFFER, slot, 0); // RELEASE
+            //_bufferState.bindBase(GL_UNIFORM_BUFFER, slot, 0); // RELEASE
             (void) CHECK_GL_ERROR();
         }
         buf.reset();
@@ -154,8 +154,7 @@ void GLBackend::do_setUniformBuffer(Batch& batch, size_t paramOffset) {
     // Sync BufferObject
     auto* object = syncGPUObject(*uniformBuffer);
     if (object) {
-        glBindBufferRange(GL_UNIFORM_BUFFER, slot, object->_buffer, rangeStart, rangeSize);
-
+        object->bindRange(GL_UNIFORM_BUFFER, slot, rangeStart, rangeSize);
         _uniform._buffers[slot] = uniformBuffer;
         (void) CHECK_GL_ERROR();
     } else {

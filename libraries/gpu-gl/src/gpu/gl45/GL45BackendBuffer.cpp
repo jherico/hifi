@@ -7,44 +7,27 @@
 //
 #include "GL45Backend.h"
 #include "../gl/GLBuffer.h"
+#include <shared/SmartMemoryPool.h>
 
 using namespace gpu;
 using namespace gpu::gl45;
 
-class GL45Buffer : public gl::GLBuffer {
-    using Parent = gpu::gl::GLBuffer;
-    static GLuint allocate() {
-        GLuint result;
-        glCreateBuffers(1, &result);
-        return result;
-    }
+namespace gpu { namespace gl45 { 
 
+class GL45Buffer : public gl::GLPooledBuffer<GL45BufferProvider> {
+    using Parent = gpu::gl::GLPooledBuffer<GL45BufferProvider>;
 public:
-    GL45Buffer(const Buffer& buffer, GLBuffer* original) : Parent(buffer, allocate()) {
-        glNamedBufferStorage(_buffer, _size, nullptr, GL_DYNAMIC_STORAGE_BIT);
-        if (original && original->_size) {
-            glCopyNamedBufferSubData(original->_buffer, _buffer, 0, 0, std::min(original->_size, _size));
-        }
-        Backend::setGPUObject(buffer, this);
-    }
-
-    void transfer() override {
-        Size offset;
-        Size size;
-        Size currentPage { 0 };
-        auto data = _gpuObject.getSysmem().readData();
-        while (_gpuObject.getNextTransferBlock(offset, size, currentPage)) {
-            glNamedBufferSubData(_buffer, (GLintptr)offset, (GLsizeiptr)size, data + offset);
-        }
-        (void)CHECK_GL_ERROR();
-        _gpuObject._flags &= ~Buffer::DIRTY;
-    }
+    GL45Buffer(GL45Backend& backend, const Buffer& buffer, GLPooledBuffer* original = nullptr)
+        : Parent(backend._bufferPool, buffer, original) { }
 };
 
-GLuint GL45Backend::getBufferID(const Buffer& buffer) {
-    return GL45Buffer::getId<GL45Buffer>(buffer);
+gl::GLBuffer* GL45Backend::syncGPUObject(const Buffer& buffer, bool allocateOnly) {
+    return GL45Buffer::sync<GL45Backend, GL45Buffer>(*this, buffer, allocateOnly);
 }
 
-gl::GLBuffer* GL45Backend::syncGPUObject(const Buffer& buffer) {
-    return GL45Buffer::sync<GL45Buffer>(buffer);
+void GL45Backend::syncBufferPool() {
+    _bufferPool.sync();
 }
+
+
+} }

@@ -120,7 +120,7 @@ void GLBackend::TransformStageState::update(size_t commandIndex, const StereoSta
 
 void GLBackend::TransformStageState::bindCurrentCamera(int eye) const {
     if (_currentCameraOffset != INVALID_OFFSET) {
-        glBindBufferRange(GL_UNIFORM_BUFFER, TRANSFORM_CAMERA_SLOT, _cameraBuffer, _currentCameraOffset + eye * _cameraUboSize, sizeof(CameraBufferElement));
+        _bufferState.bindRange(GL_UNIFORM_BUFFER, TRANSFORM_CAMERA_SLOT, _cameraBuffer, _currentCameraOffset + eye * _cameraUboSize, sizeof(CameraBufferElement));
     }
 }
 
@@ -134,7 +134,7 @@ void GLBackend::updateTransform(const Batch& batch) {
         glVertexAttribI2i(gpu::Stream::DRAW_CALL_INFO, drawCallInfo.index, drawCallInfo.unused);
     } else {
         glEnableVertexAttribArray(gpu::Stream::DRAW_CALL_INFO); // Make sure attrib array is enabled
-        glBindBuffer(GL_ARRAY_BUFFER, _transform._drawCallInfoBuffer);
+        _bufferState.bind(GL_ARRAY_BUFFER, _transform._drawCallInfoBuffer);
         glVertexAttribIPointer(gpu::Stream::DRAW_CALL_INFO, 2, GL_UNSIGNED_SHORT, 0,
                                _transform._drawCallInfoOffsets[batch._currentNamedCall]);
         glVertexAttribDivisor(gpu::Stream::DRAW_CALL_INFO, 1);
