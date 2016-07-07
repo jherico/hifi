@@ -22,7 +22,7 @@ Mesh::Mesh() :
 }
 
 Mesh::Mesh(const Mesh& mesh) :
-    _vertexFormat(mesh._vertexFormat),
+    _vertexArray(mesh._vertexArray),
     _vertexBuffer(mesh._vertexBuffer),
     _attributeBuffers(mesh._attributeBuffers),
     _indexBuffer(mesh._indexBuffer),
@@ -52,36 +52,38 @@ const BufferView Mesh::getAttributeBuffer(int attrib) const {
 }
 
 void Mesh::evalVertexFormat() {
-    auto vf = new VertexFormat();
+    VertexFormat vf;
     int channelNum = 0;
     if (hasVertexData()) {
-        vf->setAttribute(gpu::Stream::POSITION, channelNum, _vertexBuffer._element, 0);
+        vf.setAttribute(gpu::Stream::POSITION, channelNum, _vertexBuffer._element, 0);
         channelNum++;
     }
     for (auto attrib : _attributeBuffers) {
-        vf->setAttribute(attrib.first, channelNum, attrib.second._element, 0);
+        vf.setAttribute(attrib.first, channelNum, attrib.second._element, 0);
         channelNum++;
     }
 
-    _vertexFormat.reset(vf);
+    _vertexArray->setFormat(vf);
 
     evalVertexStream();
 }
 
 
 void Mesh::evalVertexStream() {
-    _vertexStream.clear();
+    gpu::BufferStream vertexStream;
+    vertexStream.clear();
 
     int channelNum = 0;
     if (hasVertexData()) {
-        _vertexStream.addBuffer(_vertexBuffer._buffer, _vertexBuffer._offset, _vertexFormat->getChannelStride(channelNum));
+        vertexStream.addBuffer(_vertexBuffer._buffer, _vertexBuffer._offset, getVertexFormat()->getChannelStride(channelNum));
         channelNum++;
     }
     for (auto attrib : _attributeBuffers) {
         BufferView& view = attrib.second;
-        _vertexStream.addBuffer(view._buffer, view._offset, _vertexFormat->getChannelStride(channelNum));
+        vertexStream.addBuffer(view._buffer, view._offset, getVertexFormat()->getChannelStride(channelNum));
         channelNum++;
     }
+    _vertexArray->setStream(vertexStream);
 }
 
 void Mesh::setIndexBuffer(const BufferView& buffer) {

@@ -55,10 +55,12 @@ public:
     const BufferView getAttributeBuffer(int attrib) const;
 
     // Stream format
-    const gpu::Stream::FormatPointer getVertexFormat() const { return _vertexFormat; }
+    const gpu::Stream::FormatPointer getVertexFormat() const { return _vertexArray->getFormat(); }
 
     // BufferStream on the mesh vertices and attributes matching the vertex format
-    const gpu::BufferStream& getVertexStream() const { return _vertexStream; }
+    const gpu::BufferStream& getVertexStream() const { return _vertexArray->getStream(); }
+
+    const gpu::VertexArrayPointer& getVertexArray() const { return _vertexArray; }
 
     // Index Buffer
     void setIndexBuffer(const BufferView& buffer);
@@ -116,8 +118,9 @@ public:
 
 protected:
 
-    gpu::Stream::FormatPointer _vertexFormat;
-    gpu::BufferStream _vertexStream;
+//    gpu::Stream::FormatPointer _vertexFormat;
+//    gpu::BufferStream _vertexStream;
+    gpu::VertexArrayPointer _vertexArray { std::make_shared<gpu::VertexArray>() };
 
     BufferView _vertexBuffer;
     BufferViewMap _attributeBuffers;

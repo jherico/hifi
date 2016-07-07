@@ -140,7 +140,39 @@ protected:
     Offsets _offsets;
     Strides _strides;
 };
+
 typedef std::shared_ptr<BufferStream> BufferStreamPointer;
+
+class VertexArray {
+public:
+    const Stream::FormatPointer& getFormat() const { return _format; }
+    const BufferStream& getStream() const { return _stream; }
+
+    void setStream(const BufferStream& stream) { 
+        ++_stamp;
+        _stream = stream; 
+    }
+    void setFormat(const Stream::FormatPointer& format) {
+        ++_stamp;
+        _format = format;
+    }
+
+    void setFormat(const Stream::Format& format) {
+        ++_stamp;
+        *_format = format;
+    }
+
+    const GPUObjectPointer gpuObject {};
+
+    Stamp getStamp() const { return _stamp; }
+
+protected:
+    Stamp _stamp { 0 };
+    Stream::FormatPointer _format { std::make_shared<Stream::Format>() };
+    BufferStream _stream;
+};
+
+using VertexArrayPointer = std::shared_ptr<VertexArray>;
 
 };
 

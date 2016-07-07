@@ -455,11 +455,10 @@ ShapeKey ModelMeshPartPayload::getShapeKey() const {
 
 void ModelMeshPartPayload::bindMesh(gpu::Batch& batch) const {
     if (!_isBlendShaped) {
+        batch.setInputArray(_drawMesh->getVertexArray());
         batch.setIndexBuffer(gpu::UINT32, (_drawMesh->getIndexBuffer()._buffer), 0);
-
-        batch.setInputFormat((_drawMesh->getVertexFormat()));
-
-        batch.setInputStream(0, _drawMesh->getVertexStream());
+        //batch.setInputFormat((_drawMesh->getVertexFormat()));
+        //batch.setInputStream(0, _drawMesh->getVertexStream());
     } else {
         batch.setIndexBuffer(gpu::UINT32, (_drawMesh->getIndexBuffer()._buffer), 0);
 
@@ -536,6 +535,8 @@ void ModelMeshPartPayload::render(RenderArgs* args) const {
         PerformanceTimer perfTimer("batch.drawIndexed()");
         drawCall(batch);
     }
+
+    batch.setInputArray(nullptr);
 
     if (args) {
         const int INDICES_PER_TRIANGLE = 3;

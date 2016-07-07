@@ -177,6 +177,13 @@ void Batch::setInputStream(Slot startChannel, const BufferStream& stream) {
     }
 }
 
+void Batch::setInputArray(const VertexArrayPointer& array) {
+    ADD_COMMAND(setInputArray);
+
+    _params.emplace_back(_arrays.cache(array));
+}
+
+
 void Batch::setIndexBuffer(Type type, const BufferPointer& buffer, Offset offset) {
     ADD_COMMAND(setIndexBuffer);
 

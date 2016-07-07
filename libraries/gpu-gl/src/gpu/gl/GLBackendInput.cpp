@@ -10,9 +10,21 @@
 //
 #include "GLBackend.h"
 #include "GLShared.h"
+#include "GLVertexArray.h"
 
 using namespace gpu;
 using namespace gpu::gl;
+
+void GLBackend::do_setInputArray(Batch& batch, size_t paramOffset) {
+    VertexArrayPointer vertexArray = batch._arrays.get(batch._params[paramOffset]._uint);
+    if (!vertexArray) {
+        glBindVertexArray(_input._defaultVAO);
+    } else {
+        GLuint vao = GLVertexArray::getId(*this, *vertexArray);
+        glBindVertexArray(vao);
+    }
+    _input._vertexArray = vertexArray;
+}
 
 void GLBackend::do_setInputFormat(Batch& batch, size_t paramOffset) {
     Stream::FormatPointer format = batch._streamFormats.get(batch._params[paramOffset]._uint);
@@ -64,28 +76,28 @@ void GLBackend::initInput() {
         glGenVertexArrays(1, &_input._defaultVAO);
     }
     glBindVertexArray(_input._defaultVAO);
-    (void) CHECK_GL_ERROR();
+    (void)CHECK_GL_ERROR();
 }
 
 void GLBackend::killInput() {
     glBindVertexArray(0);
-    if(_input._defaultVAO) {
+    if (_input._defaultVAO) {
         glDeleteVertexArrays(1, &_input._defaultVAO);
     }
     (void) CHECK_GL_ERROR();
 }
 
 void GLBackend::syncInputStateCache() {
+    glBindVertexArray(_input._defaultVAO);
     for (uint32_t i = 0; i < _input._attributeActivation.size(); i++) {
         GLint active = 0;
         glGetVertexAttribiv(i, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &active);
         _input._attributeActivation[i] = active;
     }
-    //_input._defaultVAO
-    glBindVertexArray(_input._defaultVAO);
 }
 
 void GLBackend::resetInputStage() {
+    _input._vertexArray.reset();
     // Reset index buffer
     _input._indexBufferType = UINT32;
     _input._indexBufferOffset = 0;
@@ -93,8 +105,8 @@ void GLBackend::resetInputStage() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     (void) CHECK_GL_ERROR();
 
+    glBindVertexArray(_input._defaultVAO);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-
 
     for (uint32_t i = 0; i < _input._attributeActivation.size(); i++) {
         glDisableVertexAttribArray(i);
@@ -121,13 +133,12 @@ void GLBackend::do_setIndexBuffer(Batch& batch, size_t paramOffset) {
     _input._indexBufferOffset = batch._params[paramOffset + 0]._uint;
 
     BufferPointer indexBuffer = batch._buffers.get(batch._params[paramOffset + 1]._uint);
-    if (indexBuffer != _input._indexBuffer) {
+    if (_input._vertexArray) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, getBufferID(*indexBuffer));
+    } else if (indexBuffer != _input._indexBuffer) {
         _input._indexBuffer = indexBuffer;
         if (indexBuffer) {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, getBufferID(*indexBuffer));
-        } else {
-            // FIXME do we really need this?  Is there ever a draw call where we care that the element buffer is null?
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         }
     }
     (void) CHECK_GL_ERROR();
@@ -142,9 +153,6 @@ void GLBackend::do_setIndirectBuffer(Batch& batch, size_t paramOffset) {
         _input._indirectBuffer = buffer;
         if (buffer) {
             glBindBuffer(GL_DRAW_INDIRECT_BUFFER, getBufferID(*buffer));
-        } else {
-            // FIXME do we really need this?  Is there ever a draw call where we care that the element buffer is null?
-            glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
         }
     }
 
@@ -163,6 +171,9 @@ void GLBackend::do_setIndirectBuffer(Batch& batch, size_t paramOffset) {
 #endif
 
 void GLBackend::updateInput() {
+    if (_input._vertexArray) {
+        return;
+    }
 #if defined(SUPPORT_VERTEX_ATTRIB_FORMAT)
     if (_input._invalidFormat) {
 

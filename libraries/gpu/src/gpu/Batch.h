@@ -138,6 +138,7 @@ public:
     void setInputBuffer(Slot channel, const BufferPointer& buffer, Offset offset, Offset stride);
     void setInputBuffer(Slot channel, const BufferView& buffer); // not a command, just a shortcut from a BufferView
     void setInputStream(Slot startChannel, const BufferStream& stream); // not a command, just unroll into a loop of setInputBuffer
+    void setInputArray(const VertexArrayPointer& array);
 
     void setIndexBuffer(Type type, const BufferPointer& buffer, Offset offset);
     void setIndexBuffer(const BufferView& buffer); // not a command, just a shortcut from a BufferView
@@ -278,6 +279,7 @@ public:
         COMMAND_multiDrawIndirect,
         COMMAND_multiDrawIndexedIndirect,
 
+        COMMAND_setInputArray,
         COMMAND_setInputFormat,
         COMMAND_setInputBuffer,
         COMMAND_setIndexBuffer,
@@ -407,6 +409,7 @@ public:
         };
     };
 
+    typedef Cache<VertexArrayPointer>::Vector VertexArrayCaches;
     typedef Cache<BufferPointer>::Vector BufferCaches;
     typedef Cache<TexturePointer>::Vector TextureCaches;
     typedef Cache<Stream::FormatPointer>::Vector StreamFormatCaches;
@@ -454,6 +457,7 @@ public:
     TransformObjects _objects;
     static size_t _objectsMax;
 
+    VertexArrayCaches _arrays;
     BufferCaches _buffers;
     TextureCaches _textures;
     StreamFormatCaches _streamFormats;

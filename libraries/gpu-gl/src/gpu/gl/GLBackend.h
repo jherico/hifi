@@ -80,6 +80,7 @@ public:
     virtual void do_multiDrawIndexedIndirect(Batch& batch, size_t paramOffset) = 0;
 
     // Input Stage
+    virtual void do_setInputArray(Batch& batch, size_t paramOffset) final;
     virtual void do_setInputFormat(Batch& batch, size_t paramOffset) final;
     virtual void do_setInputBuffer(Batch& batch, size_t paramOffset) final;
     virtual void do_setIndexBuffer(Batch& batch, size_t paramOffset) final;
@@ -197,6 +198,7 @@ protected:
 
         typedef std::bitset<MAX_NUM_INPUT_BUFFERS> BuffersState;
         BuffersState _invalidBuffers { 0 };
+        VertexArrayPointer _vertexArray;
 
         Buffers _buffers;
         Offsets _bufferOffsets;
@@ -326,6 +328,7 @@ protected:
     typedef void (GLBackend::*CommandCall)(Batch&, size_t);
     static CommandCall _commandCalls[Batch::NUM_COMMANDS];
     friend class GLState;
+    friend class GLVertexArray;
 };
 
 } }
