@@ -99,6 +99,7 @@ public:
 
     bool _isSkinned{ false };
     bool _isBlendShaped{ false };
+    mutable gpu::BatchPointer _batch;
 };
 
 namespace render {

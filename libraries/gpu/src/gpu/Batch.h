@@ -118,6 +118,8 @@ public:
     void enableSkybox(bool enable = true);
     bool isSkyboxEnabled() const;
 
+    void execute(Batch& subBatch);
+
     // Drawcalls
     void draw(Primitive primitiveType, uint32 numVertices, uint32 startVertex = 0);
     void drawIndexed(Primitive primitiveType, uint32 numIndices, uint32 startIndex = 0);
@@ -305,6 +307,8 @@ public:
         COMMAND_endQuery,
         COMMAND_getQuery,
 
+        COMMAND_execute,
+
         COMMAND_resetStages,
 
         COMMAND_runLambda,
@@ -374,6 +378,11 @@ public:
         Cache<T>(const Data& data) : _data(data) {}
         static size_t _max;
 
+        static const Data& nullItem() {
+            static Data DATA;
+            return DATA;
+        }
+
         class Vector {
         public:
             std::vector< Cache<T> > _items;
@@ -388,26 +397,35 @@ public:
 
 
             size_t size() const { return _items.size(); }
+
+            size_t cacheNull() {
+                size_t offset = _items.size();
+                _items.push_back(Cache<T>::nullItem());
+                return offset;
+            }
+                
             size_t cache(const Data& data) {
                 size_t offset = _items.size();
                 _items.emplace_back(data);
                 return offset;
             }
 
-            Data get(uint32 offset) {
+            const Data& get(uint32 offset) const {
                 if (offset >= _items.size()) {
-                    return Data();
+                    return Cache<T>::nullItem();
                 }
                 return (_items.data() + offset)->_data;
             }
 
             void clear() {
+                _max = std::max(_items.size(), _max);
                 _items.clear();
             }
         };
     };
 
-    typedef Cache<BufferPointer>::Vector BufferCaches;
+    typedef Cache<Buffer&>::Vector BufferCaches;
+    typedef Cache<Batch&>::Vector BatchCaches;
     typedef Cache<TexturePointer>::Vector TextureCaches;
     typedef Cache<Stream::FormatPointer>::Vector StreamFormatCaches;
     typedef Cache<Transform>::Vector TransformCaches;
@@ -464,6 +482,7 @@ public:
     LambdaCache _lambdas;
     StringCaches _profileRanges;
     StringCaches _names;
+    BatchCaches _batches;
 
     NamedBatchDataMap _namedData;
 
@@ -482,6 +501,18 @@ protected:
 
 template <typename T>
 size_t Batch::Cache<T>::_max = BATCH_PREALLOCATE_MIN;
+
+template <>
+Buffer& Batch::Cache<Buffer&>::nullItem() {
+    static Buffer empty;
+    return empty;
+}
+
+template <>
+Batch& Batch::Cache<Batch&>::nullItem() {
+    static Batch empty;
+    return empty;
+}
 
 }
 

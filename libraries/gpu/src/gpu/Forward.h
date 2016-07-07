@@ -17,6 +17,7 @@
 
 namespace gpu {
     class Batch;
+    using BatchPointer = std::shared_ptr<Batch>;
     class Backend;
     class Context;
     using ContextPointer = std::shared_ptr<Context>;

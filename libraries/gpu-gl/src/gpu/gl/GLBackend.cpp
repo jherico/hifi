@@ -94,6 +94,8 @@ GLBackend::CommandCall GLBackend::_commandCalls[Batch::NUM_COMMANDS] =
     (&::gpu::gl::GLBackend::do_endQuery),
     (&::gpu::gl::GLBackend::do_getQuery),
 
+    (&::gpu::gl::GLBackend::do_execute),
+
     (&::gpu::gl::GLBackend::do_resetStages),
 
     (&::gpu::gl::GLBackend::do_runLambda),
@@ -188,21 +190,50 @@ GLBackend::~GLBackend() {
     killInput();
     killTransform();
 }
+using BatchCommandType = Batch::Commands::value_type;
+using BatchOffsetType = Batch::CommandOffsets::value_type;
+
+using BatchCommandHandler = std::function<void(Batch& batch, const size_t commandIndex, const BatchCommandType command, const BatchOffsetType offset)>;
+
+// Recursively handle batches with child batches
+size_t forEachCommand(Batch& batch, size_t baseCommandIndex, BatchCommandHandler handler) {
+    const BatchCommandType* commandsPtr = batch.getCommands().data();
+    const BatchOffsetType* offsetsPtr = batch.getCommandOffsets().data();
+    const size_t numCommands = batch.getCommands().size();
+    for (size_t i = 0; i < numCommands; ++i) {
+        const BatchCommandType& command = commandsPtr[i];
+        const BatchOffsetType& offset = offsetsPtr[i];
+        if (command == Batch::COMMAND_execute) {
+            Batch& childBatch = batch._batches.get(batch._params[offset]._uint);
+            baseCommandIndex = forEachCommand(childBatch, baseCommandIndex + i, handler);
+        } else {
+            handler(batch, baseCommandIndex + i, command, offset);
+        }
+    }
+    return baseCommandIndex + numCommands;
+}
+
+size_t forEachCommand(Batch& batch, BatchCommandHandler handler) {
+    return forEachCommand(batch, 0, handler);
+}
+
+void forEachBatch(Batch& batch, const std::function<void(Batch&)>& batchHandler) {
+    batchHandler(batch);
+    for (const auto& cacheItem : batch._batches._items) {
+        forEachBatch(cacheItem._data, batchHandler);
+    }
+}
 
 void GLBackend::renderPassTransfer(Batch& batch) {
-    const size_t numCommands = batch.getCommands().size();
-    const Batch::Commands::value_type* command = batch.getCommands().data();
-    const Batch::CommandOffsets::value_type* offset = batch.getCommandOffsets().data();
 
     _inRenderTransferPass = true;
     { // Sync all the buffers
         PROFILE_RANGE("syncGPUBuffer");
-
+        forEachBatch(batch, [this](Batch& batch) {
         for (auto& cached : batch._buffers._items) {
-            if (cached._data) {
-                syncGPUObject(*cached._data);
+                syncGPUObject(cached._data);
             }
-        }
+        });
     }
 
     { // Sync all the buffers
@@ -210,8 +241,9 @@ void GLBackend::renderPassTransfer(Batch& batch) {
         _transform._cameras.clear();
         _transform._cameraOffsets.clear();
 
-        for (_commandIndex = 0; _commandIndex < numCommands; ++_commandIndex) {
-            switch (*command) {
+        BatchCommandHandler handler = [this](Batch& batch, const size_t commandIndex, const BatchCommandType command, const BatchOffsetType offset) {
+            _commandIndex = commandIndex;
+            switch (command) {
                 case Batch::COMMAND_draw:
                 case Batch::COMMAND_drawIndexed:
                 case Batch::COMMAND_drawInstanced:
@@ -224,19 +256,18 @@ void GLBackend::renderPassTransfer(Batch& batch) {
                 case Batch::COMMAND_setViewportTransform:
                 case Batch::COMMAND_setViewTransform:
                 case Batch::COMMAND_setProjectionTransform: {
-                    CommandCall call = _commandCalls[(*command)];
-                    (this->*(call))(batch, *offset);
+                    CommandCall call = _commandCalls[command];
+                    (this->*(call))(batch, offset);
                     break;
                 }
 
                 default:
                     break;
             }
-            command++;
-            offset++;
-        }
+        };
+        forEachCommand(batch, handler);
     }
-
+    
     { // Sync the transform buffers
         PROFILE_RANGE("syncGPUTransform");
         transferTransformState(batch);
@@ -248,11 +279,10 @@ void GLBackend::renderPassTransfer(Batch& batch) {
 void GLBackend::renderPassDraw(Batch& batch) {
     _currentDraw = -1;
     _transform._camerasItr = _transform._cameraOffsets.begin();
-    const size_t numCommands = batch.getCommands().size();
-    const Batch::Commands::value_type* command = batch.getCommands().data();
-    const Batch::CommandOffsets::value_type* offset = batch.getCommandOffsets().data();
-    for (_commandIndex = 0; _commandIndex < numCommands; ++_commandIndex) {
-        switch (*command) {
+    Batch& topBatch = batch;
+    BatchCommandHandler handler = [this, &topBatch](Batch& batch, const size_t commandIndex, const BatchCommandType command, const BatchOffsetType offset) {
+        _commandIndex = commandIndex;
+        switch (command) {
             // Ignore these commands on this pass, taken care of in the transfer pass
             // Note we allow COMMAND_setViewportTransform to occur in both passes
             // as it both updates the transform object (and thus the uniforms in the 
@@ -271,23 +301,21 @@ void GLBackend::renderPassDraw(Batch& batch) {
                 // updates for draw calls
                 ++_currentDraw;
                 updateInput();
-                updateTransform(batch);
+                updateTransform(topBatch);
                 updatePipeline();
                 
-                CommandCall call = _commandCalls[(*command)];
-                (this->*(call))(batch, *offset);
+                CommandCall call = _commandCalls[command];
+                (this->*(call))(batch, offset);
                 break;
             }
             default: {
-                CommandCall call = _commandCalls[(*command)];
-                (this->*(call))(batch, *offset);
+                CommandCall call = _commandCalls[command];
+                (this->*(call))(batch, offset);
                 break;
             }
         }
-
-        command++;
-        offset++;
-    }
+    };
+    forEachCommand(batch, handler);
 }
 
 void GLBackend::render(Batch& batch) {

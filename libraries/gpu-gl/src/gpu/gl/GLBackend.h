@@ -71,6 +71,8 @@ public:
     static const int MAX_NUM_RESOURCE_TEXTURES = 16;
     size_t getMaxNumResourceTextures() const { return MAX_NUM_RESOURCE_TEXTURES; }
 
+    virtual void do_execute(Batch& batch, size_t paramOffset) final {};
+
     // Draw Stage
     virtual void do_draw(Batch& batch, size_t paramOffset) = 0;
     virtual void do_drawIndexed(Batch& batch, size_t paramOffset) = 0;
@@ -198,28 +200,26 @@ protected:
         typedef std::bitset<MAX_NUM_INPUT_BUFFERS> BuffersState;
         BuffersState _invalidBuffers { 0 };
 
-        Buffers _buffers;
+        std::vector<GLuint> _buffers;
         Offsets _bufferOffsets;
         Offsets _bufferStrides;
-        std::vector<GLuint> _bufferVBOs;
 
         glm::vec4 _colorAttribute{ 0.0f };
 
-        BufferPointer _indexBuffer;
+        GLuint _indexBuffer { 0 };
         Offset _indexBufferOffset { 0 };
         Type _indexBufferType { UINT32 };
         
-        BufferPointer _indirectBuffer;
+        GLuint _indirectBuffer { 0 };
         Offset _indirectBufferOffset{ 0 };
         Offset _indirectBufferStride{ 0 };
 
         GLuint _defaultVAO { 0 };
 
         InputStageState() :
-            _buffers(_invalidBuffers.size()),
+            _buffers(_invalidBuffers.size(), 0),
             _bufferOffsets(_invalidBuffers.size(), 0),
-            _bufferStrides(_invalidBuffers.size(), 0),
-            _bufferVBOs(_invalidBuffers.size(), 0) {}
+            _bufferStrides(_invalidBuffers.size(), 0) {}
     } _input;
 
     virtual void initTransform() = 0;
@@ -265,7 +265,7 @@ protected:
     virtual void transferTransformState(const Batch& batch) const = 0;
 
     struct UniformStageState {
-        std::array<BufferPointer, MAX_NUM_UNIFORM_BUFFERS> _buffers;
+        std::array<GLuint, MAX_NUM_UNIFORM_BUFFERS> _buffers;
         //Buffers _buffers {  };
     } _uniform;
 

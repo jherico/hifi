@@ -503,11 +503,13 @@ void ModelMeshPartPayload::bindTransform(gpu::Batch& batch, const ShapePipeline:
 void ModelMeshPartPayload::render(RenderArgs* args) const {
     PerformanceTimer perfTimer("ModelMeshPartPayload::render");
 
+    if (!args) {
+        return;
+    }
+
     if (!_model->_readyWhenAdded || !_model->_isVisible) {
         return; // bail asap
     }
-
-    gpu::Batch& batch = *(args->_batch);
 
     if (!getShapeKey().isValid()) {
         return;
@@ -516,9 +518,33 @@ void ModelMeshPartPayload::render(RenderArgs* args) const {
     auto locations =  args->_pipeline->locations;
     assert(locations);
 
+#if 1
+    gpu::Batch& batch = *(args->_batch);
+    if (!_batch) {
+        _batch = std::make_shared<gpu::Batch>();
+        bool canCauterize = args->_renderMode != RenderArgs::SHADOW_RENDER_MODE;
+        _model->updateClusterMatrices(_transform.getTranslation(), _transform.getRotation());
+
     // Bind the model transform and the skinCLusterMatrices if needed
+        bindTransform(*_batch, locations, canCauterize);
+
+        //Bind the index buffer and vertex buffer and Blend shapes if needed
+        bindMesh(*_batch);
+
+        // apply material properties
+        bindMaterial(*_batch, locations);
+
+        PerformanceTimer perfTimer("batch.drawIndexed()");
+        drawCall(*_batch);
+    }
+    batch.execute(*_batch);
+   
+#else 
+    gpu::Batch& batch = *(args->_batch);
     bool canCauterize = args->_renderMode != RenderArgs::SHADOW_RENDER_MODE;
     _model->updateClusterMatrices(_transform.getTranslation(), _transform.getRotation());
+
+    // Bind the model transform and the skinCLusterMatrices if needed
     bindTransform(batch, locations, canCauterize);
 
     //Bind the index buffer and vertex buffer and Blend shapes if needed
@@ -527,19 +553,16 @@ void ModelMeshPartPayload::render(RenderArgs* args) const {
     // apply material properties
     bindMaterial(batch, locations);
 
-    if (args) {
-        args->_details._materialSwitches++;
-    }
-
-    // Draw!
     {
         PerformanceTimer perfTimer("batch.drawIndexed()");
         drawCall(batch);
     }
+#endif
 
-    if (args) {
+    args->_details._materialSwitches++;
+
+    // Draw!
         const int INDICES_PER_TRIANGLE = 3;
         args->_details._trianglesRendered += _drawPart._numIndices / INDICES_PER_TRIANGLE;
     }
-}
 

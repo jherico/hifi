@@ -26,20 +26,15 @@ void GLBackend::do_setInputFormat(Batch& batch, size_t paramOffset) {
 void GLBackend::do_setInputBuffer(Batch& batch, size_t paramOffset) {
     Offset stride = batch._params[paramOffset + 0]._uint;
     Offset offset = batch._params[paramOffset + 1]._uint;
-    BufferPointer buffer = batch._buffers.get(batch._params[paramOffset + 2]._uint);
+    Buffer& buffer = batch._buffers.get(batch._params[paramOffset + 2]._uint);
     uint32 channel = batch._params[paramOffset + 3]._uint;
 
+    GLuint vbo = getBufferID(buffer);
     if (channel < getNumInputBuffers()) {
         bool isModified = false;
-        if (_input._buffers[channel] != buffer) {
-            _input._buffers[channel] = buffer;
-         
-            GLuint vbo = 0;
-            if (buffer) {
-                vbo = getBufferID((*buffer));
-            }
-            _input._bufferVBOs[channel] = vbo;
-
+        auto& channelBuffer = _input._buffers[channel];
+        if (channelBuffer != vbo) {
+            channelBuffer = vbo;
             isModified = true;
         }
 
@@ -89,7 +84,6 @@ void GLBackend::resetInputStage() {
     // Reset index buffer
     _input._indexBufferType = UINT32;
     _input._indexBufferOffset = 0;
-    _input._indexBuffer.reset();
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     (void) CHECK_GL_ERROR();
 
@@ -107,10 +101,9 @@ void GLBackend::resetInputStage() {
     _input._attributeActivation.reset();
 
     for (uint32_t i = 0; i < _input._buffers.size(); i++) {
-        _input._buffers[i].reset();
+        _input._buffers[i] = 0;
         _input._bufferOffsets[i] = 0;
         _input._bufferStrides[i] = 0;
-        _input._bufferVBOs[i] = 0;
     }
     _input._invalidBuffers.reset();
 
@@ -120,15 +113,11 @@ void GLBackend::do_setIndexBuffer(Batch& batch, size_t paramOffset) {
     _input._indexBufferType = (Type)batch._params[paramOffset + 2]._uint;
     _input._indexBufferOffset = batch._params[paramOffset + 0]._uint;
 
-    BufferPointer indexBuffer = batch._buffers.get(batch._params[paramOffset + 1]._uint);
-    if (indexBuffer != _input._indexBuffer) {
-        _input._indexBuffer = indexBuffer;
-        if (indexBuffer) {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, getBufferID(*indexBuffer));
-        } else {
-            // FIXME do we really need this?  Is there ever a draw call where we care that the element buffer is null?
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-        }
+    Buffer& indexBuffer = batch._buffers.get(batch._params[paramOffset + 1]._uint);
+    GLuint ibo = getBufferID(indexBuffer);
+    if (ibo != _input._indexBuffer) {
+        _input._indexBuffer = ibo;
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
     }
     (void) CHECK_GL_ERROR();
 }
@@ -137,16 +126,12 @@ void GLBackend::do_setIndirectBuffer(Batch& batch, size_t paramOffset) {
     _input._indirectBufferOffset = batch._params[paramOffset + 1]._uint;
     _input._indirectBufferStride = batch._params[paramOffset + 2]._uint;
 
-    BufferPointer buffer = batch._buffers.get(batch._params[paramOffset]._uint);
-    if (buffer != _input._indirectBuffer) {
-        _input._indirectBuffer = buffer;
-        if (buffer) {
-            glBindBuffer(GL_DRAW_INDIRECT_BUFFER, getBufferID(*buffer));
-        } else {
-            // FIXME do we really need this?  Is there ever a draw call where we care that the element buffer is null?
-            glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+    Buffer& buffer = batch._buffers.get(batch._params[paramOffset]._uint);
+    GLuint ibo = getBufferID(buffer);
+    if (ibo != _input._indirectBuffer) {
+        _input._indirectBuffer = ibo;
+        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, ibo);
         }
-    }
 
     (void)CHECK_GL_ERROR();
 }
@@ -213,7 +198,7 @@ void GLBackend::updateInput() {
     if (_input._invalidBuffers.any()) {
         int numBuffers = _input._buffers.size();
         auto buffer = _input._buffers.data();
-        auto vbo = _input._bufferVBOs.data();
+        auto vbo = _input._buffers.data();
         auto offset = _input._bufferOffsets.data();
         auto stride = _input._bufferStrides.data();
 
@@ -267,7 +252,7 @@ void GLBackend::updateInput() {
 
         // now we need to bind the buffers and assign the attrib pointers
         if (_input._format) {
-            const Buffers& buffers = _input._buffers;
+            const auto& buffers = _input._buffers;
             const Offsets& offsets = _input._bufferOffsets;
             const Offsets& strides = _input._bufferStrides;
 
@@ -282,8 +267,7 @@ void GLBackend::updateInput() {
                     int bufferNum = (channelIt).first;
 
                     if (_input._invalidBuffers.test(bufferNum) || _input._invalidFormat) {
-                        //  GLuint vbo = gpu::GL41Backend::getBufferID((*buffers[bufferNum]));
-                        GLuint vbo = _input._bufferVBOs[bufferNum];
+                        GLuint vbo = _input._buffers[bufferNum];
                         if (boundVBO != vbo) {
                             glBindBuffer(GL_ARRAY_BUFFER, vbo);
                             (void)CHECK_GL_ERROR();

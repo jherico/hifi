@@ -120,12 +120,9 @@ void GLBackend::resetPipelineStage() {
 void GLBackend::releaseUniformBuffer(uint32_t slot) {
     auto& buf = _uniform._buffers[slot];
     if (buf) {
-        auto* object = Backend::getGPUObject<GLBuffer>(*buf);
-        if (object) {
-            glBindBufferBase(GL_UNIFORM_BUFFER, slot, 0); // RELEASE
-            (void) CHECK_GL_ERROR();
-        }
-        buf.reset();
+        glBindBufferBase(GL_UNIFORM_BUFFER, slot, 0); // RELEASE
+        (void) CHECK_GL_ERROR();
+        buf = 0;
     }
 }
 
@@ -137,31 +134,20 @@ void GLBackend::resetUniformStage() {
 
 void GLBackend::do_setUniformBuffer(Batch& batch, size_t paramOffset) {
     GLuint slot = batch._params[paramOffset + 3]._uint;
-    BufferPointer uniformBuffer = batch._buffers.get(batch._params[paramOffset + 2]._uint);
+    Buffer& uniformBuffer = batch._buffers.get(batch._params[paramOffset + 2]._uint);
     GLintptr rangeStart = batch._params[paramOffset + 1]._uint;
     GLsizeiptr rangeSize = batch._params[paramOffset + 0]._uint;
-
-    if (!uniformBuffer) {
-        releaseUniformBuffer(slot);
-        return;
-    }
-    
+    GLuint ubo = getBufferID(uniformBuffer);
     // check cache before thinking
-    if (_uniform._buffers[slot] == uniformBuffer) {
+    if (_uniform._buffers[slot] == ubo) {
         return;
     }
 
     // Sync BufferObject
-    auto* object = syncGPUObject(*uniformBuffer);
-    if (object) {
-        glBindBufferRange(GL_UNIFORM_BUFFER, slot, object->_buffer, rangeStart, rangeSize);
+    glBindBufferRange(GL_UNIFORM_BUFFER, slot, ubo, rangeStart, rangeSize);
 
-        _uniform._buffers[slot] = uniformBuffer;
-        (void) CHECK_GL_ERROR();
-    } else {
-        releaseResourceTexture(slot);
-        return;
-    }
+    _uniform._buffers[slot] = ubo;
+    (void) CHECK_GL_ERROR();
 }
 
 void GLBackend::releaseResourceTexture(uint32_t slot) {

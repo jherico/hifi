@@ -158,7 +158,11 @@ void Batch::setInputBuffer(Slot channel, const BufferPointer& buffer, Offset off
 
     _params.emplace_back(stride);
     _params.emplace_back(offset);
-    _params.emplace_back(_buffers.cache(buffer));
+    if (buffer) {
+        _params.emplace_back(_buffers.cache(*buffer));
+    } else {
+        _params.emplace_back(_buffers.cacheNull());
+    }
     _params.emplace_back(channel);
 }
 
@@ -181,7 +185,11 @@ void Batch::setIndexBuffer(Type type, const BufferPointer& buffer, Offset offset
     ADD_COMMAND(setIndexBuffer);
 
     _params.emplace_back(offset);
-    _params.emplace_back(_buffers.cache(buffer));
+    if (buffer) {
+        _params.emplace_back(_buffers.cache(*buffer));
+    } else {
+        _params.emplace_back(_buffers.cacheNull());
+    }
     _params.emplace_back(type);
 }
 
@@ -192,7 +200,11 @@ void Batch::setIndexBuffer(const BufferView& buffer) {
 void Batch::setIndirectBuffer(const BufferPointer& buffer, Offset offset, Offset stride) {
     ADD_COMMAND(setIndirectBuffer);
 
-    _params.emplace_back(_buffers.cache(buffer));
+    if (buffer) {
+        _params.emplace_back(_buffers.cache(*buffer));
+    } else {
+        _params.emplace_back(_buffers.cacheNull());
+    }
     _params.emplace_back(offset);
     _params.emplace_back(stride);
 }
@@ -256,7 +268,11 @@ void Batch::setUniformBuffer(uint32 slot, const BufferPointer& buffer, Offset of
 
     _params.emplace_back(size);
     _params.emplace_back(offset);
-    _params.emplace_back(_buffers.cache(buffer));
+    if (buffer) {
+        _params.emplace_back(_buffers.cache(*buffer));
+    } else {
+        _params.emplace_back(_buffers.cacheNull());
+    }
     _params.emplace_back(slot);
 }
 
@@ -600,4 +616,16 @@ void Batch::_glColor4f(float red, float green, float blue, float alpha) {
     _params.emplace_back(blue);
     _params.emplace_back(green);
     _params.emplace_back(red);
+}
+
+void Batch::execute(Batch& subBatch) {
+    ADD_COMMAND(execute);
+    uint16_t baseOffset = static_cast<uint16_t>(_objects.size());
+    _objects.insert(_objects.end(), subBatch._objects.begin(), subBatch._objects.end());
+    _params.emplace_back(_batches.cache(subBatch));
+    _drawCallInfos.reserve(_drawCallInfos.size() + subBatch._drawCallInfos.size());
+    for (const auto& drawCallInfo : subBatch._drawCallInfos) {
+        _drawCallInfos.emplace_back(drawCallInfo.index + baseOffset);
+    }
+    // FIXME handle named draw call info
 }

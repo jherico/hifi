@@ -18,6 +18,10 @@ public:
     static GLBufferType* sync(const Buffer& buffer) {
         GLBufferType* object = Backend::getGPUObject<GLBufferType>(buffer);
 
+        if (!buffer._sysmem.getSize()) {
+            return nullptr;
+        }
+
         // Has the storage size changed?
         if (!object || object->_stamp != buffer.getSysmem().getStamp()) {
             object = new GLBufferType(buffer, object);
