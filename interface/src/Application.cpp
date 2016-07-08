@@ -4093,6 +4093,10 @@ glm::vec3 Application::getAvatarPosition() const {
     return getMyAvatar()->getPosition();
 }
 
+glm::quat Application::getAvatarOrientation() const {
+    return getMyAvatar()->getOrientation();
+}
+
 void Application::copyViewFrustum(ViewFrustum& viewOut) const {
     QMutexLocker viewLocker(&_viewMutex);
     viewOut = _viewFrustum;

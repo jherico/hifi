@@ -16,8 +16,10 @@
 #include <DependencyManager.h>
 #include <EntityScriptingInterface.h>
 
-#include "avatar/AvatarManager.h"
-#include "avatar/MyAvatar.h"
+#include <AbstractViewStateInterface.h>
+
+//#include "avatar/AvatarManager.h"
+//#include "avatar/MyAvatar.h"
 #include "Base3DOverlay.h"
 
 PropertyBinding::PropertyBinding(QString avatar, QUuid entity) :
@@ -147,8 +149,7 @@ void OverlayPanel::applyTransformTo(Transform& transform, bool force) {
         PanelAttachable::applyTransformTo(transform, true);
         if (!getParentPanel()) {
             if (_anchorPositionBindMyAvatar) {
-                transform.setTranslation(DependencyManager::get<AvatarManager>()->getMyAvatar()
-                                         ->getPosition());
+                transform.setTranslation(AbstractViewStateInterface::instance()->getAvatarPosition());
             } else if (!_anchorPositionBindEntity.isNull()) {
                 EntityTreePointer entityTree = DependencyManager::get<EntityScriptingInterface>()->getEntityTree();
                 entityTree->withReadLock([&] {
@@ -162,8 +163,7 @@ void OverlayPanel::applyTransformTo(Transform& transform, bool force) {
             }
 
             if (_anchorRotationBindMyAvatar) {
-                transform.setRotation(DependencyManager::get<AvatarManager>()->getMyAvatar()
-                                      ->getOrientation());
+                transform.setRotation(AbstractViewStateInterface::instance()->getAvatarOrientation());
             } else if (!_anchorRotationBindEntity.isNull()) {
                 EntityTreePointer entityTree = DependencyManager::get<EntityScriptingInterface>()->getEntityTree();
                 entityTree->withReadLock([&] {

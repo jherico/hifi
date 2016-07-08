@@ -20,9 +20,7 @@
 #include <SharedUtil.h>
 #include <TextureCache.h>
 #include <ViewFrustum.h>
-
-#include "Application.h"
-#include "text/FontFamilies.h"
+#include <text/FontFamilies.h>
 
 QString const TextOverlay::TYPE = "text";
 QUrl const TextOverlay::URL(QString("hifi/overlays/TextOverlay.qml"));
