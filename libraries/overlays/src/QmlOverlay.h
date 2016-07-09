@@ -9,10 +9,12 @@
 #ifndef hifi_QmlOverlay_h
 #define hifi_QmlOverlay_h
 
-#include <QString>
 #include <memory>
 
+#include <QtCore/QString>
+
 #include <SharedUtil.h>
+
 #include "Overlay2D.h"
 
 class QQuickItem;

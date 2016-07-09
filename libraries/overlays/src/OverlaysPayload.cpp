@@ -11,24 +11,25 @@
 #include <limits>
 #include <typeinfo>
 
-#include <avatar/AvatarManager.h>
-#include <avatar/MyAvatar.h>
-#include <LODManager.h>
+//#include <avatar/AvatarManager.h>
+//#include <avatar/MyAvatar.h>
+//#include <LODManager.h>
 #include <render/Scene.h>
+#include <AbstractViewStateInterface.h>
 
-#include "Image3DOverlay.h"
 #include "Circle3DOverlay.h"
 #include "Cube3DOverlay.h"
 #include "ImageOverlay.h"
 #include "Line3DOverlay.h"
-#include "LocalModelsOverlay.h"
 #include "ModelOverlay.h"
 #include "Overlays.h"
 #include "Rectangle3DOverlay.h"
 #include "Sphere3DOverlay.h"
 #include "Grid3DOverlay.h"
 #include "TextOverlay.h"
-#include "Text3DOverlay.h"
+//#include "Image3DOverlay.h"
+//#include "LocalModelsOverlay.h"
+//#include "Text3DOverlay.h"
 
 
 namespace render {
@@ -64,16 +65,16 @@ namespace render {
         if (args) {
             if (overlay->getAnchor() == Overlay::MY_AVATAR) {
                 auto batch = args->_batch;
-                MyAvatar* avatar = DependencyManager::get<AvatarManager>()->getMyAvatar();
-                glm::quat myAvatarRotation = avatar->getOrientation();
-                glm::vec3 myAvatarPosition = avatar->getPosition();
+                auto viewState = AbstractViewStateInterface::instance();
+                glm::quat myAvatarRotation = viewState->getAvatarOrientation();
+                glm::vec3 myAvatarPosition = viewState->getAvatarPosition();
                 float angle = glm::degrees(glm::angle(myAvatarRotation));
                 glm::vec3 axis = glm::axis(myAvatarRotation);
-                float myAvatarScale = avatar->getUniformScale();
+                //float myAvatarScale = avatar->getUniformScale();
                 Transform transform = Transform();
                 transform.setTranslation(myAvatarPosition);
                 transform.setRotation(glm::angleAxis(angle, axis));
-                transform.setScale(myAvatarScale);
+                //transform.setScale(myAvatarScale);
                 batch->setModelTransform(transform);
                 overlay->render(args);
             } else {

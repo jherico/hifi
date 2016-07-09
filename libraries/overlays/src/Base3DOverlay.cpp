@@ -13,7 +13,6 @@
 
 #include <RegisteredMetaTypes.h>
 #include <SharedUtil.h>
-#include "Application.h"
 
 
 const float DEFAULT_LINE_WIDTH = 1.0f;
@@ -111,7 +110,7 @@ void Base3DOverlay::setProperties(const QVariantMap& properties) {
     if (needRenderItemUpdate) {
         auto itemID = getRenderItemID();
         if (render::Item::isValidID(itemID)) {
-            render::ScenePointer scene = qApp->getMain3DScene();
+            render::ScenePointer scene = AbstractViewStateInterface::instance()->getMain3DScene();
             render::PendingChanges pendingChanges;
             pendingChanges.updateItem(itemID);
             scene->enqueuePendingChanges(pendingChanges);

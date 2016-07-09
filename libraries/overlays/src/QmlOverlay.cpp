@@ -19,7 +19,6 @@
 #include <TextureCache.h>
 #include <ViewFrustum.h>
 
-#include "Application.h"
 #include "text/FontFamilies.h"
 
 QmlOverlay::QmlOverlay(const QUrl& url) {

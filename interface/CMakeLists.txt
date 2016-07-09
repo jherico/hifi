@@ -135,7 +135,7 @@ if (WIN32)
 endif()
 
 # link required hifi libraries
-link_hifi_libraries(shared octree gpu gl gpu-gl procedural model render
+link_hifi_libraries(shared octree gpu gl gpu-gl procedural model render overlays
                     recording fbx networking model-networking entities avatars
                     audio audio-client animation script-engine physics
                     render-utils entities-renderer ui auto-updater

@@ -10,12 +10,6 @@
 
 #include "ImageOverlay.h"
 
-#include <DependencyManager.h>
-#include <GeometryCache.h>
-#include <gpu/Context.h>
-#include <RegisteredMetaTypes.h>
-
-
 QString const ImageOverlay::TYPE = "image";
 QUrl const ImageOverlay::URL(QString("hifi/overlays/ImageOverlay.qml"));
 

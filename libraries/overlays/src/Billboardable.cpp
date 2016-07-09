@@ -11,8 +11,8 @@
 
 #include "Billboardable.h"
 
-#include <Application.h>
 #include <Transform.h>
+#include <AbstractViewStateInterface.h>
 
 void Billboardable::setProperties(const QVariantMap& properties) {
     auto isFacingAvatar = properties["isFacingAvatar"];
@@ -31,7 +31,10 @@ QVariant Billboardable::getProperty(const QString &property) {
 void Billboardable::pointTransformAtCamera(Transform& transform, glm::quat offsetRotation) {
     if (isFacingAvatar()) {
         glm::vec3 billboardPos = transform.getTranslation();
-        glm::vec3 cameraPos = qApp->getCamera()->getPosition();
+        auto viewState = AbstractViewStateInterface::instance();
+        ViewFrustum viewFrustum;  
+        viewState->copyCurrentViewFrustum(viewFrustum);
+        glm::vec3 cameraPos = viewFrustum.getPosition();
         glm::vec3 look = cameraPos - billboardPos;
         float elevation = -asinf(look.y / glm::length(look));
         float azimuth = atan2f(look.x, look.z);

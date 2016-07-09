@@ -23,9 +23,6 @@
 
 #include "Overlay.h"
 
-#include "OverlayPanel.h"
-#include "PanelAttachable.h"
-
 class PickRay;
 
 class OverlayPropertyResult {
@@ -70,7 +67,7 @@ public:
     void enable();
 
     Overlay::Pointer getOverlay(unsigned int id) const;
-    OverlayPanel::Pointer getPanel(unsigned int id) const { return _panels[id]; }
+//    OverlayPanel::Pointer getPanel(unsigned int id) const { return _panels[id]; }
 
     void cleanupAllOverlays();
 
@@ -118,38 +115,32 @@ public slots:
     float width() const;
     float height() const;
 
-
-    /// adds a panel that has already been created
-    unsigned int addPanel(OverlayPanel::Pointer panel);
-
-    /// creates and adds a panel based on a set of properties
-    unsigned int addPanel(const QVariant& properties);
-
-    /// edit the properties of a panel
-    void editPanel(unsigned int panelId, const QVariant& properties);
-
-    /// get a property of a panel
-    OverlayPropertyResult getPanelProperty(unsigned int panelId, const QString& property);
-
-    /// deletes a panel and all child overlays
-    void deletePanel(unsigned int panelId);
+    ///// adds a panel that has already been created
+    //unsigned int addPanel(OverlayPanel::Pointer panel);
+    ///// creates and adds a panel based on a set of properties
+    //unsigned int addPanel(const QVariant& properties);
+    ///// edit the properties of a panel
+    //void editPanel(unsigned int panelId, const QVariant& properties);
+    ///// get a property of a panel
+    //OverlayPropertyResult getPanelProperty(unsigned int panelId, const QString& property);
+    ///// deletes a panel and all child overlays
+    //void deletePanel(unsigned int panelId);
+    ///// return true if there is a panel with that id else false
+    //bool isAddedPanel(unsigned int id) { return _panels.contains(id); }
 
     /// return true if there is an overlay with that id else false
     bool isAddedOverlay(unsigned int id);
 
-    /// return true if there is a panel with that id else false
-    bool isAddedPanel(unsigned int id) { return _panels.contains(id); }
-
 signals:
     void overlayDeleted(unsigned int id);
-    void panelDeleted(unsigned int id);
+    //void panelDeleted(unsigned int id);
 
 private:
     void cleanupOverlaysToDelete();
 
     QMap<unsigned int, Overlay::Pointer> _overlaysHUD;
     QMap<unsigned int, Overlay::Pointer> _overlaysWorld;
-    QMap<unsigned int, OverlayPanel::Pointer> _panels;
+    //QMap<unsigned int, OverlayPanel::Pointer> _panels;
     QList<Overlay::Pointer> _overlaysToDelete;
     unsigned int _nextOverlayID;
 
