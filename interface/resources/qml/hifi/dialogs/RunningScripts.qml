@@ -15,14 +15,14 @@ import Qt.labs.settings 1.0
 
 import "../../styles-uit"
 import "../../controls-uit" as HifiControls
-import "../../windows-uit"
+import "../../windows"
 
-Window {
+ScrollingWindow {
     id: root
     objectName: "RunningScripts"
     title: "Running Scripts"
     resizable: true
-    destroyOnInvisible: true
+    destroyOnHidden: true
     implicitWidth: 424
     implicitHeight: isHMD ? 695 : 728
     minSize: Qt.vector2d(424, 300)
@@ -33,6 +33,9 @@ Window {
     property var scriptsModel: scripts.scriptsModelFilter
     property var runningScriptsModel: ListModel { }
     property bool isHMD: false
+
+    onVisibleChanged: console.log("Running scripts visible changed to " + visible)
+    onShownChanged: console.log("Running scripts visible changed to " + visible)
 
     Settings {
         category: "Overlay.RunningScripts"
@@ -48,11 +51,6 @@ Window {
     Component.onCompleted: {
         isHMD = HMD.active;
         updateRunningScripts();
-    }
-
-    function setDefaultFocus() {
-        // Work around FocusScope of scrollable window.
-        filterEdit.forceActiveFocus();
     }
 
     function updateRunningScripts() {
@@ -273,7 +271,6 @@ Window {
                 isSearchField: true
                 anchors.left: parent.left
                 anchors.right: parent.right
-                focus: true
                 colorScheme: hifi.colorSchemes.dark
                 placeholderText: "Filter"
                 onTextChanged: scriptsModel.filterRegExp =  new RegExp("^.*" + text + ".*$", "i")

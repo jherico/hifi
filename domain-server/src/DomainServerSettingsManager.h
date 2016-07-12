@@ -41,6 +41,8 @@ public:
     QVariantMap& getUserSettingsMap() { return _configMap.getUserConfig(); }
     QVariantMap& getSettingsMap() { return _configMap.getMergedConfig(); }
 
+    QVariantMap& getDescriptorsMap();
+
     bool haveStandardPermissionsForName(const QString& name) const { return _standardAgentPermissions.contains(name); }
     bool havePermissionsForName(const QString& name) const { return _agentPermissions.contains(name); }
     NodePermissions getStandardPermissionsForName(const QString& name) const;
@@ -72,11 +74,13 @@ private:
 
     friend class DomainServer;
 
-    void packPermissionsForMap(QString mapName, QHash<QString, NodePermissionsPointer> agentPermissions, QString keyPath);
+    void validateDescriptorsMap();
+
+    void packPermissionsForMap(QString mapName, NodePermissionsMap& agentPermissions, QString keyPath);
     void packPermissions();
     void unpackPermissions();
-    QHash<QString, NodePermissionsPointer> _standardAgentPermissions; // anonymous, logged-in, localhost
-    QHash<QString, NodePermissionsPointer> _agentPermissions; // specific account-names
+    NodePermissionsMap _standardAgentPermissions; // anonymous, logged-in, localhost
+    NodePermissionsMap _agentPermissions; // specific account-names
 };
 
 #endif // hifi_DomainServerSettingsManager_h

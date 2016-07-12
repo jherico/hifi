@@ -29,11 +29,13 @@
 #include <EntityEditPacketSender.h>
 #include <EntityTreeRenderer.h>
 #include <input-plugins/KeyboardMouseDevice.h>
+#include <input-plugins/TouchscreenDevice.h>
 #include <OctreeQuery.h>
 #include <PhysicalEntitySimulation.h>
 #include <PhysicsEngine.h>
 #include <plugins/Forward.h>
 #include <plugins/DisplayPlugin.h>
+#include <ui-plugins/PluginContainer.h>
 #include <ScriptEngine.h>
 #include <ShapeManager.h>
 #include <SimpleMovingAverage.h>
@@ -86,14 +88,32 @@ class Application;
 #endif
 #define qApp (static_cast<Application*>(QCoreApplication::instance()))
 
-class Application : public QApplication, public AbstractViewStateInterface, public AbstractScriptingServicesInterface, public AbstractUriHandler {
+class Application : public QApplication, 
+                    public AbstractViewStateInterface, 
+                    public AbstractScriptingServicesInterface, 
+                    public AbstractUriHandler,
+                    public PluginContainer {
     Q_OBJECT
 
     // TODO? Get rid of those
     friend class OctreePacketProcessor;
-    friend class PluginContainerProxy;
 
 public:
+
+    // virtual functions required for PluginContainer
+    virtual ui::Menu* getPrimaryMenu() override;
+    virtual void requestReset() override { resetSensors(true); }
+    virtual void showDisplayPluginsTools(bool show) override;
+    virtual GLWidget* getPrimaryWidget() override;
+    virtual MainWindow* getPrimaryWindow() override;
+    virtual QOpenGLContext* getPrimaryContext() override;
+    virtual bool makeRenderingContextCurrent() override;
+    virtual void releaseSceneTexture(const gpu::TexturePointer& texture) override;
+    virtual void releaseOverlayTexture(const gpu::TexturePointer& texture) override;
+    virtual bool isForeground() const override;
+
+    virtual DisplayPluginPointer getActiveDisplayPlugin() const override;
+
     enum Event {
         Present = DisplayPlugin::Present,
         Paint = Present + 1,
@@ -163,7 +183,6 @@ public:
 
     Overlays& getOverlays() { return _overlays; }
 
-    bool isForeground() const { return _isForeground; }
 
     size_t getFrameCount() const { return _frameCount; }
     float getFps() const { return _frameCounter.rate(); }
@@ -185,8 +204,6 @@ public:
 
     void setActiveDisplayPlugin(const QString& pluginName);
 
-    DisplayPluginPointer getActiveDisplayPlugin() const;
-
     FileLogger* getLogger() const { return _logger; }
 
     glm::vec2 getViewportDimensions() const;
@@ -194,6 +211,8 @@ public:
     NodeToJurisdictionMap& getEntityServerJurisdictions() { return _entityServerJurisdictions; }
 
     float getRenderResolutionScale() const;
+
+    qint64 getCurrentSessionRuntime() const { return _sessionRunTimer.elapsed(); }
 
     bool isAboutToQuit() const { return _aboutToQuit; }
 
@@ -362,6 +381,7 @@ private:
 
     void displaySide(RenderArgs* renderArgs, Camera& whichCamera, bool selfAvatarOnly = false);
 
+    bool importJSONFromURL(const QString& urlString);
     bool importSVOFromURL(const QString& urlString);
 
     bool nearbyEntitiesAreReadyForPhysics();
@@ -384,12 +404,14 @@ private:
     void touchBeginEvent(QTouchEvent* event);
     void touchEndEvent(QTouchEvent* event);
     void touchUpdateEvent(QTouchEvent* event);
+    void touchGestureEvent(QGestureEvent* event);
 
     void wheelEvent(QWheelEvent* event) const;
     void dropEvent(QDropEvent* event);
     static void dragEnterEvent(QDragEnterEvent* event);
 
     void maybeToggleMenuVisible(QMouseEvent* event) const;
+    void toggleMenuUnderReticle() const;
 
     MainWindow* _window;
     QElapsedTimer& _sessionRunTimer;
@@ -435,6 +457,7 @@ private:
 
     std::shared_ptr<controller::StateController> _applicationStateDevice; // Default ApplicationDevice reflecting the state of different properties of the session
     std::shared_ptr<KeyboardMouseDevice> _keyboardMouseDevice;   // Default input device, the good old keyboard mouse and maybe touchpad
+    std::shared_ptr<TouchscreenDevice> _touchscreenDevice;   // the good old touchscreen
     SimpleMovingAverage _avatarSimsPerSecond {10};
     int _avatarSimsPerSecondReport {0};
     quint64 _lastAvatarSimsPerSecondUpdate {0};

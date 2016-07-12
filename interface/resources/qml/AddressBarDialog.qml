@@ -20,15 +20,17 @@ Window {
 
     objectName: "AddressBarDialog"
     frame: HiddenFrame {}
+    hideBackground: true
 
-    visible: false
-    destroyOnInvisible: false
+    shown: false
+    destroyOnHidden: false
     resizable: false
     scale: 1.25  // Make this dialog a little larger than normal
 
     width: addressBarDialog.implicitWidth
     height: addressBarDialog.implicitHeight
 
+    onShownChanged: addressBarDialog.observeShownChanged(shown);
     Component.onCompleted: {
         root.parentChanged.connect(center);
         center();
@@ -145,14 +147,14 @@ Window {
         if (addressLine.text !== "") {
             addressBarDialog.loadAddress(addressLine.text)
         }
-        root.visible = false;
+        root.shown = false;
     }
 
     Keys.onPressed: {
         switch (event.key) {
             case Qt.Key_Escape:
             case Qt.Key_Back:
-                root.visible = false
+                root.shown = false
                 event.accepted = true
                 break
             case Qt.Key_Enter:

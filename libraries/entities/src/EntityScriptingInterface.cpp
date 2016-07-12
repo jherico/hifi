@@ -179,6 +179,7 @@ QUuid EntityScriptingInterface::addEntity(const EntityItemProperties& properties
                 }
 
                 entity->setLastBroadcast(usecTimestampNow());
+                propertiesWithSimID.setLastEdited(entity->getLastEdited());
             } else {
                 qCDebug(entities) << "script failed to add new Entity to local Octree";
                 success = false;
@@ -190,9 +191,11 @@ QUuid EntityScriptingInterface::addEntity(const EntityItemProperties& properties
     if (success) {
         emit debitEnergySource(cost);
         queueEntityMessage(PacketType::EntityAdd, id, propertiesWithSimID);
-    }
 
-    return id;
+        return id;
+    } else {
+        return QUuid();
+    }
 }
 
 QUuid EntityScriptingInterface::addModelEntity(const QString& name, const QString& modelUrl, const glm::vec3& position) {
@@ -376,11 +379,12 @@ QUuid EntityScriptingInterface::editEntity(QUuid id, const EntityItemProperties&
                 properties.setQueryAACube(entity->getQueryAACube());
             }
             entity->setLastBroadcast(usecTimestampNow());
+            properties.setLastEdited(entity->getLastEdited());
 
             // if we've moved an entity with children, check/update the queryAACube of all descendents and tell the server
             // if they've changed.
             entity->forEachDescendant([&](SpatiallyNestablePointer descendant) {
-                if (descendant->getNestableType() == NestableType::Entity) {
+                if (descendant->getNestableFlags().isSet(SpatiallyNestableFlagBits::Entity)) {
                     if (descendant->computePuffedQueryAACube()) {
                         EntityItemPointer entityDescendant = std::static_pointer_cast<EntityItem>(descendant);
                         EntityItemProperties newQueryCubeProperties;

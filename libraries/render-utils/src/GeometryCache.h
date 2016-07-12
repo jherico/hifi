@@ -157,7 +157,8 @@ public:
     gpu::PipelinePointer getSimplePipeline(bool textured = false, bool culled = true,
                                           bool unlit = false, bool depthBias = false);
     render::ShapePipelinePointer getShapePipeline() { return GeometryCache::_simplePipeline; }
-    
+    render::ShapePipelinePointer getWireShapePipeline() { return GeometryCache::_simpleWirePipeline; }
+
     // Static (instanced) geometry
     void renderShapeInstances(gpu::Batch& batch, Shape shape, size_t count, gpu::BufferPointer& colorBuffer);
     void renderWireShapeInstances(gpu::Batch& batch, Shape shape, size_t count, gpu::BufferPointer& colorBuffer);
@@ -179,7 +180,7 @@ public:
     void renderWireSphereInstance(gpu::Batch& batch, const glm::vec4& color,
                                     const render::ShapePipelinePointer& pipeline = _simplePipeline);
     void renderWireSphereInstance(gpu::Batch& batch, const glm::vec3& color,
-                                    const render::ShapePipelinePointer& pipeline = _simplePipeline) {
+                                    const render::ShapePipelinePointer& pipeline = _simpleWirePipeline) {
         renderWireSphereInstance(batch, glm::vec4(color, 1.0f), pipeline);
     }
     
@@ -193,7 +194,7 @@ public:
     void renderWireCubeInstance(gpu::Batch& batch, const glm::vec4& color,
                                     const render::ShapePipelinePointer& pipeline = _simplePipeline);
     void renderWireCubeInstance(gpu::Batch& batch, const glm::vec3& color,
-                                    const render::ShapePipelinePointer& pipeline = _simplePipeline) {
+                                    const render::ShapePipelinePointer& pipeline = _simpleWirePipeline) {
         renderWireCubeInstance(batch, glm::vec4(color, 1.0f), pipeline);
     }
     
@@ -257,6 +258,9 @@ public:
 
     void renderLine(gpu::Batch& batch, const glm::vec3& p1, const glm::vec3& p2, 
                     const glm::vec4& color1, const glm::vec4& color2, int id = UNKNOWN_ID);
+
+    void renderGlowLine(gpu::Batch& batch, const glm::vec3& p1, const glm::vec3& p2,
+                    const glm::vec4& color, float glowIntensity = 1.0f, float glowWidth = 0.05f, int id = UNKNOWN_ID);
 
     void renderDashedLine(gpu::Batch& batch, const glm::vec3& start, const glm::vec3& end, const glm::vec4& color,
                           int id = UNKNOWN_ID)
@@ -401,6 +405,8 @@ private:
     gpu::ShaderPointer _simpleShader;
     gpu::ShaderPointer _unlitShader;
     static render::ShapePipelinePointer _simplePipeline;
+    static render::ShapePipelinePointer _simpleWirePipeline;
+    gpu::PipelinePointer _glowLinePipeline;
     QHash<SimpleProgramKey, gpu::PipelinePointer> _simplePrograms;
 };
 

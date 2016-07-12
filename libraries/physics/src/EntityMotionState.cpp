@@ -135,7 +135,14 @@ void EntityMotionState::handleEasyChanges(uint32_t& flags) {
         _nextOwnershipBid = 0;
     }
     if ((flags & Simulation::DIRTY_PHYSICS_ACTIVATION) && !_body->isActive()) {
-        _body->activate();
+        if (_body->isKinematicObject()) {
+            // only force activate kinematic bodies (dynamic shouldn't need force and
+            // active static bodies are special (see PhysicsEngine::_activeStaticBodies))
+            _body->activate(true);
+            _lastKinematicStep = ObjectMotionState::getWorldSimulationStep();
+        } else {
+            _body->activate();
+        }
     }
 }
 
@@ -152,6 +159,11 @@ PhysicsMotionType EntityMotionState::computePhysicsMotionType() const {
     }
     assert(entityTreeIsLocked());
 
+    if (_entity->getShapeType() == SHAPE_TYPE_STATIC_MESH
+        || (_body && _body->getCollisionShape()->getShapeType() == TRIANGLE_MESH_SHAPE_PROXYTYPE)) {
+        return MOTION_TYPE_STATIC;
+    }
+
     if (_entity->getDynamic()) {
         if (!_entity->getParentID().isNull()) {
             // if something would have been dynamic but is a child of something else, force it to be kinematic, instead.
@@ -161,7 +173,7 @@ PhysicsMotionType EntityMotionState::computePhysicsMotionType() const {
     }
     if (_entity->isMovingRelativeToParent() ||
         _entity->hasActions() ||
-        _entity->hasAncestorOfType(NestableType::Avatar)) {
+        _entity->hasAncestorOfType(SpatiallyNestableFlagBits::Avatar)) {
         return MOTION_TYPE_KINEMATIC;
     }
     return MOTION_TYPE_STATIC;
@@ -331,7 +343,7 @@ bool EntityMotionState::remoteSimulationOutOfSync(uint32_t simulationStep) {
         // related code in EntitySimulation::moveSimpleKinematics.
         bool ancestryIsKnown;
         _entity->getMaximumAACube(ancestryIsKnown);
-        bool hasAvatarAncestor = _entity->hasAncestorOfType(NestableType::Avatar);
+        bool hasAvatarAncestor = _entity->hasAncestorOfType(SpatiallyNestableFlagBits::Avatar);
 
         if (ancestryIsKnown && !hasAvatarAncestor) {
             _serverVelocity += _serverAcceleration * dt;
@@ -585,7 +597,7 @@ void EntityMotionState::sendUpdate(OctreeEditPacketSender* packetSender, uint32_
     // if we've moved an entity with children, check/update the queryAACube of all descendents and tell the server
     // if they've changed.
     _entity->forEachDescendant([&](SpatiallyNestablePointer descendant) {
-        if (descendant->getNestableType() == NestableType::Entity) {
+        if (descendant->getNestableFlags().isSet(SpatiallyNestableFlagBits::Entity)) {
             EntityItemPointer entityDescendant = std::static_pointer_cast<EntityItem>(descendant);
             if (descendant->computePuffedQueryAACube()) {
                 EntityItemProperties newQueryCubeProperties;

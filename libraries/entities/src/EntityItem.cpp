@@ -37,7 +37,7 @@ int EntityItem::_maxActionsDataSize = 800;
 quint64 EntityItem::_rememberDeletedActionTime = 20 * USECS_PER_SECOND;
 
 EntityItem::EntityItem(const EntityItemID& entityItemID) :
-    SpatiallyNestable(NestableType::Entity, entityItemID),
+    SpatiallyNestable(SpatiallyNestableFlagBits::Entity, entityItemID),
     _type(EntityTypes::Unknown),
     _lastSimulated(0),
     _lastUpdated(0),
@@ -389,7 +389,9 @@ int EntityItem::readEntityDataFromBuffer(const unsigned char* data, int bytesLef
 #endif
 
     // id
-    parser.readUuid(_id);
+    QUuid id;
+    parser.readUuid(id);
+    setID(id);
 #ifdef VALIDATE_ENTITY_ITEM_PARSER
     {
         QByteArray encodedID = originalDataBuffer.mid(bytesRead, NUM_BYTES_RFC4122_UUID); // maximum possible size
@@ -517,7 +519,7 @@ int EntityItem::readEntityDataFromBuffer(const unsigned char* data, int bytesLef
     // might happen in the case of out-of-order and/or recorvered packets, if we've deleted the entity
     // we can confidently ignore this packet
     EntityTreePointer tree = getTree();
-    if (tree && tree->isDeletedEntity(_id)) {
+    if (tree && tree->isDeletedEntity(id)) {
         #ifdef WANT_DEBUG
             qCDebug(entities) << "Received packet for previously deleted entity [" << _id << "] ignoring. "
                 "(inside " << __FUNCTION__ << ")";
@@ -1532,7 +1534,7 @@ void EntityItem::updatePosition(const glm::vec3& value) {
         setLocalPosition(value);
         _dirtyFlags |= Simulation::DIRTY_POSITION;
         forEachDescendant([&](SpatiallyNestablePointer object) {
-            if (object->getNestableType() == NestableType::Entity) {
+            if (object->getNestableFlags().isSet(SpatiallyNestableFlagBits::Avatar)) {
                 EntityItemPointer entity = std::static_pointer_cast<EntityItem>(object);
                 entity->_dirtyFlags |= Simulation::DIRTY_POSITION;
             }
@@ -1559,7 +1561,7 @@ void EntityItem::updateRotation(const glm::quat& rotation) {
         setLocalOrientation(rotation);
         _dirtyFlags |= Simulation::DIRTY_ROTATION;
         forEachDescendant([&](SpatiallyNestablePointer object) {
-            if (object->getNestableType() == NestableType::Entity) {
+            if (object->getNestableFlags().isSet(SpatiallyNestableFlagBits::Entity)) {
                 EntityItemPointer entity = std::static_pointer_cast<EntityItem>(object);
                 entity->_dirtyFlags |= Simulation::DIRTY_ROTATION;
                 entity->_dirtyFlags |= Simulation::DIRTY_POSITION;
@@ -1602,14 +1604,20 @@ void EntityItem::updateMass(float mass) {
 void EntityItem::updateVelocity(const glm::vec3& value) {
     glm::vec3 velocity = getLocalVelocity();
     if (velocity != value) {
-        const float MIN_LINEAR_SPEED = 0.001f;
-        if (glm::length(value) < MIN_LINEAR_SPEED) {
-            velocity = ENTITY_ITEM_ZERO_VEC3;
+        if (getShapeType() == SHAPE_TYPE_STATIC_MESH) {
+            if (velocity != Vectors::ZERO) {
+                setLocalVelocity(Vectors::ZERO);
+            }
         } else {
-            velocity = value;
+            const float MIN_LINEAR_SPEED = 0.001f;
+            if (glm::length(value) < MIN_LINEAR_SPEED) {
+                velocity = ENTITY_ITEM_ZERO_VEC3;
+            } else {
+                velocity = value;
+            }
+            setLocalVelocity(velocity);
+            _dirtyFlags |= Simulation::DIRTY_LINEAR_VELOCITY;
         }
-        setLocalVelocity(velocity);
-        _dirtyFlags |= Simulation::DIRTY_LINEAR_VELOCITY;
     }
 }
 
@@ -1630,22 +1638,30 @@ void EntityItem::updateDamping(float value) {
 
 void EntityItem::updateGravity(const glm::vec3& value) {
     if (_gravity != value) {
-        _gravity = value;
-        _dirtyFlags |= Simulation::DIRTY_LINEAR_VELOCITY;
+        if (getShapeType() == SHAPE_TYPE_STATIC_MESH) {
+            _gravity = Vectors::ZERO;
+        } else {
+            _gravity = value;
+            _dirtyFlags |= Simulation::DIRTY_LINEAR_VELOCITY;
+        }
     }
 }
 
 void EntityItem::updateAngularVelocity(const glm::vec3& value) {
     glm::vec3 angularVelocity = getLocalAngularVelocity();
     if (angularVelocity != value) {
-        const float MIN_ANGULAR_SPEED = 0.0002f;
-        if (glm::length(value) < MIN_ANGULAR_SPEED) {
-            angularVelocity = ENTITY_ITEM_ZERO_VEC3;
+        if (getShapeType() == SHAPE_TYPE_STATIC_MESH) {
+            setLocalAngularVelocity(Vectors::ZERO);
         } else {
-            angularVelocity = value;
+            const float MIN_ANGULAR_SPEED = 0.0002f;
+            if (glm::length(value) < MIN_ANGULAR_SPEED) {
+                angularVelocity = ENTITY_ITEM_ZERO_VEC3;
+            } else {
+                angularVelocity = value;
+            }
+            setLocalAngularVelocity(angularVelocity);
+            _dirtyFlags |= Simulation::DIRTY_ANGULAR_VELOCITY;
         }
-        setLocalAngularVelocity(angularVelocity);
-        _dirtyFlags |= Simulation::DIRTY_ANGULAR_VELOCITY;
     }
 }
 
@@ -1679,9 +1695,17 @@ void EntityItem::updateCollisionMask(uint8_t value) {
 }
 
 void EntityItem::updateDynamic(bool value) {
-    if (_dynamic != value) {
-        _dynamic = value;
-        _dirtyFlags |= Simulation::DIRTY_MOTION_TYPE;
+    if (getDynamic() != value) {
+        // dynamic and STATIC_MESH are incompatible so we check for that case
+        if (value && getShapeType() == SHAPE_TYPE_STATIC_MESH) {
+            if (_dynamic) {
+                _dynamic = false;
+                _dirtyFlags |= Simulation::DIRTY_MOTION_TYPE;
+            }
+        } else {
+            _dynamic = value;
+            _dirtyFlags |= Simulation::DIRTY_MOTION_TYPE;
+        }
     }
 }
 
@@ -1731,7 +1755,7 @@ void EntityItem::computeCollisionGroupAndFinalMask(int16_t& group, int16_t& mask
         group = BULLET_COLLISION_GROUP_COLLISIONLESS;
         mask = 0;
     } else {
-        if (_dynamic) {
+        if (getDynamic()) {
             group = BULLET_COLLISION_GROUP_DYNAMIC;
         } else if (isMovingRelativeToParent() || hasActions()) {
             group = BULLET_COLLISION_GROUP_KINEMATIC;

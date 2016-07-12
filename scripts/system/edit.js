@@ -150,6 +150,8 @@ function showMarketplace(marketplaceID) {
     marketplaceWindow.setURL(url);
     marketplaceWindow.setVisible(true);
     marketplaceWindow.raise();
+
+    UserActivityLogger.logAction("opened_marketplace");
 }
 
 function hideMarketplace() {
@@ -181,7 +183,7 @@ var toolBar = (function() {
     function initialize() {
         toolBar = new ToolBar(0, 0, ToolBar.HORIZONTAL, "highfidelity.edit.toolbar", function(windowDimensions, toolbar) {
             return {
-                x: windowDimensions.x / 2,
+                x: (windowDimensions.x / 2) + (Tool.IMAGE_WIDTH * 2),
                 y: windowDimensions.y
             };
         }, {
@@ -190,7 +192,7 @@ var toolBar = (function() {
         });
 
         activeButton = toolBar.addTool({
-            imageURL: toolIconUrl + "edit-01.svg",
+            imageURL: toolIconUrl + "edit.svg",
             subImage: {
                 x: 0,
                 y: Tool.IMAGE_WIDTH,
@@ -330,15 +332,18 @@ var toolBar = (function() {
         entityListTool.clearEntityList();
     };
 
+    var EDIT_SETTING = "io.highfidelity.isEditting"; // for communication with other scripts
+    Settings.setValue(EDIT_SETTING, false);
     that.setActive = function(active) {
         if (active != isActive) {
-            if (active && !Entities.canAdjustLocks()) {
+            if (active && !Entities.canRez() && !Entities.canRezTmp()) {
                 Window.alert(INSUFFICIENT_PERMISSIONS_ERROR_MSG);
             } else {
                 Messages.sendLocalMessage("edit-events", JSON.stringify({
                     enabled: active
                 }));
                 isActive = active;
+                Settings.setValue(EDIT_SETTING, active);
                 if (!isActive) {
                     entityListTool.setVisible(false);
                     gridTool.setVisible(false);
@@ -346,13 +351,16 @@ var toolBar = (function() {
                     propertiesTool.setVisible(false);
                     selectionManager.clearSelections();
                     cameraManager.disable();
+                    selectionDisplay.triggerMapping.disable();
                 } else {
+                    UserActivityLogger.enabledEdit();
                     hasShownPropertiesTool = false;
                     entityListTool.setVisible(true);
                     gridTool.setVisible(true);
                     grid.setEnabled(true);
                     propertiesTool.setVisible(true);
                     // Not sure what the following was meant to accomplish, but it currently causes
+                    selectionDisplay.triggerMapping.enable();
                     // everybody else to think that Interface has lost focus overall. fogbugzid:558
                     // Window.setFocus();
                 }
@@ -1435,6 +1443,9 @@ function pushCommandForSelections(createdEntityData, deletedEntityData) {
         var entityID = SelectionManager.selections[i];
         var initialProperties = SelectionManager.savedProperties[entityID];
         var currentProperties = Entities.getEntityProperties(entityID);
+        if (!initialProperties) {
+            continue;
+        }
         undoData.setProperties.push({
             entityID: entityID,
             properties: {
