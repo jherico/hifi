@@ -300,6 +300,7 @@ public slots:
     QVector<EntityItemID> pasteEntities(float x, float y, float z);
     bool exportEntities(const QString& filename, const QVector<EntityItemID>& entityIDs, const glm::vec3* givenOffset = nullptr);
     bool exportEntities(const QString& filename, float x, float y, float z, float scale);
+    bool exportAtpAssets(const QString& directory);
     bool importEntities(const QString& url);
     void updateThreadPoolCount() const;
 

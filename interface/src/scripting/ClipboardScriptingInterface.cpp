@@ -60,3 +60,12 @@ QVector<EntityItemID> ClipboardScriptingInterface::pasteEntities(glm::vec3 posit
                               Q_ARG(float, position.z));
     return retVal;
 }
+
+
+bool ClipboardScriptingInterface::exportAtpAssets(const QString& directory) {
+    bool retVal;
+    QMetaObject::invokeMethod(qApp, "exportAtpAssets", Qt::BlockingQueuedConnection,
+        Q_RETURN_ARG(bool, retVal),
+        Q_ARG(const QString&, directory));
+    return retVal;
+}

@@ -112,7 +112,7 @@
 #include <QmlWebWindowClass.h>
 #include <Preferences.h>
 #include <display-plugins/CompositorHelper.h>
-
+#include <RecurseOctreeToMapOperator.h>
 
 #include "AudioClient.h"
 #include "audio/AudioScope.h"
@@ -3299,6 +3299,91 @@ void Application::calibrateEyeTracker5Points() {
     DependencyManager::get<EyeTracker>()->calibrate(5);
 }
 #endif
+
+class AtpExtractor : public RecurseOctreeOperator {
+public:
+    bool preRecursion(OctreeElementPointer element) override { return true; }
+    bool postRecursion(OctreeElementPointer element) override { 
+        EntityTreeElementPointer entityTreeElement = std::static_pointer_cast<EntityTreeElement>(element);
+        entityTreeElement->forEachEntity([&](EntityItemPointer entityItem) {
+            if (!entityItem->isParentIDValid()) {
+                return;  // we weren't able to resolve a parent from _parentID, so don't save this entity.
+            }
+
+            EntityItemProperties properties = entityItem->getProperties();
+            if (properties.getModelURL().startsWith("atp:")) {
+                _atpResources.insert(properties.getModelURL());
+            }
+            if (properties.getCompoundShapeURL().startsWith("atp:")) {
+                _atpResources.insert(properties.getCompoundShapeURL());
+            }
+        });
+        return true;
+    }
+
+    QSet<QString> _atpResources;
+};
+
+bool Application::exportAtpAssets(const QString& directory) {
+    qDebug() << "QQQ scanning ATP ";
+    AtpExtractor atpExtractor;
+    auto entityTree = getEntities()->getTree();
+    auto exportTree = std::make_shared<EntityTree>();
+    exportTree->createRootElement();
+    entityTree->withReadLock([&] {
+        entityTree->recurseTreeWithOperator(&atpExtractor);
+    });
+
+    std::list<ResourceRequest*> requests;
+    for (const auto& atpUrl : atpExtractor._atpResources) {
+        auto request = ResourceManager::createResourceRequest(nullptr, atpUrl);
+        request->send();
+        requests.push_back(request);
+    }
+
+    // FIXME time-limit the requests
+    QElapsedTimer elapsed;
+    elapsed.start();
+    std::list<ResourceRequest*> doneRequests;
+    while (!requests.empty()) {
+        if (elapsed.elapsed() > 2000) {
+            break;
+        }
+        QCoreApplication::processEvents();
+        for (auto itr = requests.begin(); itr != requests.end();) {
+            if (ResourceRequest::Finished == (*itr)->getState()) {
+                doneRequests.push_back(*itr);
+                requests.erase(itr++);
+            } else {
+                ++itr;
+            }
+        }
+    }
+
+    for (auto* request : requests) {
+        qDebug() << "Incomplete request " << request->getUrl();
+    }
+
+    for (auto* request : doneRequests) {
+        if (ResourceRequest::Success == request->getResult()) {
+            QString path = request->getUrl().toString().remove(0, 4);
+            QFileInfo pathInfo(directory + "/" + path);
+            if (!pathInfo.absoluteDir().exists()) {
+                QDir().mkpath(pathInfo.absolutePath());
+            }
+            QFile output(pathInfo.absoluteFilePath());
+            output.open(QFile::WriteOnly | QFile::Truncate | QFile::Unbuffered);
+            auto data = request->getData();
+            size_t offset = 0;
+            size_t size = data.size();
+            while (offset < size) {
+                offset += output.write(data.data() + offset, size - offset);
+            }
+            output.close();
+        }
+    }
+    return true;
+}
 
 bool Application::exportEntities(const QString& filename, const QVector<EntityItemID>& entityIDs, const glm::vec3* givenOffset) {
     QHash<EntityItemID, EntityItemPointer> entities;

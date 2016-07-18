@@ -65,6 +65,8 @@ public:
      *     created as a result of the paste operation.
      */
     Q_INVOKABLE QVector<EntityItemID> pasteEntities(glm::vec3 position);
+
+    Q_INVOKABLE bool exportAtpAssets(const QString& directory);
 };
 
 #endif // hifi_ClipboardScriptingInterface_h

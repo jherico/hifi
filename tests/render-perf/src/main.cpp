@@ -477,8 +477,8 @@ public:
         _octree = DependencyManager::set<EntityTreeRenderer>(false, this, nullptr);
         _octree->init();
         // Prevent web entities from rendering
-        REGISTER_ENTITY_TYPE_WITH_FACTORY(Web, WebEntityItem::factory);
-        REGISTER_ENTITY_TYPE_WITH_FACTORY(Light, LightEntityItem::factory);
+        REGISTER_ENTITY_TYPE_WITH_FACTORY(Web, WebEntityItem::factory)
+        //REGISTER_ENTITY_TYPE_WITH_FACTORY(Light, LightEntityItem::factory);
 
         DependencyManager::set<ParentFinder>(_octree->getTree());
         getEntities()->setViewFrustum(_viewFrustum);
@@ -683,6 +683,17 @@ private:
         renderArgs._viewport = ivec4(0, 0, windowSize.width(), windowSize.height());
         renderArgs.setViewFrustum(_viewFrustum);
 
+        renderArgs._context->enableStereo(_stereoEnabled);
+        if (_stereoEnabled) {
+            mat4 eyeOffsets[2];
+            mat4 eyeProjections[2];
+            for (size_t i = 0; i < 2; ++i) {
+                eyeProjections[i] = _viewFrustum.getProjection();
+            }
+            renderArgs._context->setStereoProjections(eyeProjections);
+            renderArgs._context->setStereoViews(eyeOffsets);
+        }
+
         // Final framebuffer that will be handled to the display-plugin
         render(&renderArgs);
 
@@ -711,6 +722,9 @@ private:
         const qint64& now;
     };
 
+
+
+
     void updateText() {
         QString title = QString("FPS %1 Culling %2 TextureMemory GPU %3 CPU %4 Max GPU %5")
             .arg(_fps).arg(_cullingEnabled)
@@ -726,6 +740,11 @@ private:
             infoTextBlock.push_back({ vec2(100, 10), std::to_string((uint32_t)_fps), TextOverlay::alignLeft });
             infoTextBlock.push_back({ vec2(98, 30), "Culling: ", TextOverlay::alignRight });
             infoTextBlock.push_back({ vec2(100, 30), _cullingEnabled ? "Enabled" : "Disabled", TextOverlay::alignLeft });
+
+            setTitle(QString("FPS %1 Culling %2 TextureMemory GPU %3 CPU %4")
+                .arg(_fps).arg(_cullingEnabled)
+                .arg(toHumanSize(gpu::Context::getTextureGPUMemoryUsage(), 2))
+                .arg(toHumanSize(gpu::Texture::getTextureCPUMemoryUsage(), 2)));
         }
 #endif
 
