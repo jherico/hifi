@@ -101,7 +101,7 @@ void ApplicationOverlay::renderQmlUi(RenderArgs* renderArgs) {
         geometryCache->useSimpleDrawPipeline(batch);
         batch.setProjectionTransform(mat4());
         batch.setModelTransform(Transform());
-        batch.setViewTransform(Transform());
+        batch.clearViewTransform();
         batch._glActiveBindTexture(GL_TEXTURE0, GL_TEXTURE_2D, _uiTexture);
 
         geometryCache->renderUnitQuad(batch, glm::vec4(1));
@@ -121,7 +121,7 @@ void ApplicationOverlay::renderAudioScope(RenderArgs* renderArgs) {
     mat4 legacyProjection = glm::ortho<float>(0, width, height, 0, ORTHO_NEAR_CLIP, ORTHO_FAR_CLIP);
     batch.setProjectionTransform(legacyProjection);
     batch.setModelTransform(Transform());
-    batch.setViewTransform(Transform());
+    batch.clearViewTransform();
 
     // Render the audio scope
     DependencyManager::get<AudioScope>()->render(renderArgs, width, height);
@@ -140,7 +140,7 @@ void ApplicationOverlay::renderOverlays(RenderArgs* renderArgs) {
     mat4 legacyProjection = glm::ortho<float>(0, width, height, 0, ORTHO_NEAR_CLIP, ORTHO_FAR_CLIP);
     batch.setProjectionTransform(legacyProjection);
     batch.setModelTransform(Transform());
-    batch.setViewTransform(Transform());
+    batch.clearViewTransform();
 
     // Render all of the Script based "HUD" aka 2D overlays.
     // note: we call them HUD, as opposed to 2D, only because there are some cases of 3D HUD overlays, like the
@@ -166,7 +166,7 @@ void ApplicationOverlay::renderRearView(RenderArgs* renderArgs) {
         mat4 legacyProjection = glm::ortho<float>(0, width, height, 0, ORTHO_NEAR_CLIP, ORTHO_FAR_CLIP);
         batch.setProjectionTransform(legacyProjection);
         batch.setModelTransform(Transform());
-        batch.setViewTransform(Transform());
+        batch.clearViewTransform();
         
         float screenRatio = ((float)qApp->getDevicePixelRatio());
         float renderRatio = ((float)qApp->getRenderResolutionScale());
@@ -230,7 +230,7 @@ void ApplicationOverlay::renderDomainConnectionStatusBorder(RenderArgs* renderAr
         geometryCache->useSimpleDrawPipeline(batch);
         batch.setProjectionTransform(mat4());
         batch.setModelTransform(Transform());
-        batch.setViewTransform(Transform());
+        batch.clearViewTransform();
         batch.setResourceTexture(0, DependencyManager::get<TextureCache>()->getWhiteTexture());
         // FIXME: THe line width of CONNECTION_STATUS_BORDER_LINE_WIDTH is not supported anymore, we ll need a workaround
 
