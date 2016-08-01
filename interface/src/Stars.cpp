@@ -27,8 +27,6 @@
 #include <render-utils/standardTransformPNTC_vert.h>
 #include <render-utils/starsGrid_frag.h>
 
-//static const float TILT = 0.23f;
-static const float TILT = 0.0f;
 static const unsigned int STARFIELD_NUM_STARS = 50000;
 static const unsigned int STARFIELD_SEED = 1;
 static const float STAR_COLORIZATION = 0.1f;
@@ -193,10 +191,10 @@ void Stars::render(RenderArgs* renderArgs, float alpha) {
 
 
     gpu::Batch& batch = *renderArgs->_batch;
-    batch.setViewTransform(Transform());
+    batch.enableSkybox(true);
+    batch.setViewTransform(Transform().setRotation(renderArgs->getViewFrustum().getOrientation()));
     batch.setProjectionTransform(renderArgs->getViewFrustum().getProjection());
-    batch.setModelTransform(Transform().setRotation(glm::inverse(renderArgs->getViewFrustum().getOrientation()) *
-        quat(vec3(TILT, 0, 0))));
+    batch.setModelTransform(mat4());
     batch.setResourceTexture(0, textureCache->getWhiteTexture());
 
     // Render the world lines
