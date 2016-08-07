@@ -256,7 +256,10 @@ public:
     void run() override {
         while (!_quit) {
             QThread::sleep(HEARTBEAT_UPDATE_INTERVAL_SECS);
-
+            // Don't do heartbeat detection under nsight
+            if (nsightActive()) {
+                continue;
+            }
             uint64_t lastHeartbeat = _heartbeat; // sample atomic _heartbeat, because we could context switch away and have it updated on us
             uint64_t now = usecTimestampNow();
             auto lastHeartbeatAge = (now > lastHeartbeat) ? now - lastHeartbeat : 0;
@@ -304,8 +307,6 @@ public:
                 // Don't actually crash in debug builds, in case this apparent deadlock is simply from
                 // the developer actively debugging code
                 #ifdef NDEBUG
-
-
                     deadlockDetectionCrash();
                 #endif
             }
