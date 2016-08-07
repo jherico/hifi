@@ -402,9 +402,7 @@ public:
         AbstractViewStateInterface::setInstance(this);
         _octree = DependencyManager::set<EntityTreeRenderer>(false, this, nullptr);
         _octree->init();
-        // Prevent web entities from rendering
-        REGISTER_ENTITY_TYPE_WITH_FACTORY(Web, WebEntityItem::factory);
-
+        
         DependencyManager::set<ParentFinder>(_octree->getTree());
         getEntities()->setViewFrustum(_viewFrustum);
         auto nodeList = DependencyManager::get<LimitedNodeList>();
