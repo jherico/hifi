@@ -49,6 +49,8 @@ namespace render {
 
         Q_PROPERTY(quint32 frameSetPipelineCount MEMBER frameSetPipelineCount NOTIFY dirty)
 
+        Q_PROPERTY(bool textureTransferEnabled MEMBER textureTransferEnabled NOTIFY dirty)
+
 
     public:
         EngineStatsConfig() : Job::Config(true) {}
@@ -78,6 +80,8 @@ namespace render {
 
         quint32 frameSetPipelineCount{ 0 };
 
+        bool textureTransferEnabled{ true };
+
 
 
         void emitDirty() { emit dirty(); }
@@ -95,7 +99,7 @@ namespace render {
 
         EngineStats() { _frameTimer.start(); }
 
-        void configure(const Config& configuration) {}
+        void configure(const Config& configuration);
         void run(const SceneContextPointer& sceneContext, const RenderContextPointer& renderContext);
     };
 }

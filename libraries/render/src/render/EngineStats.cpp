@@ -14,9 +14,13 @@
 
 using namespace render;
 
-void EngineStats::run(const SceneContextPointer& sceneContext, const RenderContextPointer& renderContext) {
-    // Tick time
+void EngineStats::configure(const Config& configuration) {
 
+}
+
+void EngineStats::run(const SceneContextPointer& sceneContext, const RenderContextPointer& renderContext) {
+
+    // Tick time
     quint64 msecsElapsed = _frameTimer.restart();
     double frequency = 1000.0 / msecsElapsed;
 
@@ -52,4 +56,7 @@ void EngineStats::run(const SceneContextPointer& sceneContext, const RenderConte
     config->frameSetPipelineCount = _gpuStats._PSNumSetPipelines - gpuStats._PSNumSetPipelines;
 
     config->emitDirty();
+
+
+    renderContext->args->_context->setTextureTransfer(config->textureTransferEnabled);
 }

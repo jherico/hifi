@@ -46,11 +46,11 @@ void GLTextureTransferHelper::transferTexture(const gpu::TexturePointer& texture
     GLTexture* object = Backend::getGPUObject<GLTexture>(*texturePointer);
     Backend::incrementTextureGPUTransferCount();
 #ifdef THREADED_TEXTURE_TRANSFER
-    GLsync fence { 0 };
+    GLsync fence{ 0 };
     //fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
     //glFlush();
 
-    TextureTransferPackage package { texturePointer, fence };
+    TextureTransferPackage package{ texturePointer, fence };
     object->setSyncState(GLSyncState::Pending);
     queueItem(package);
 #else

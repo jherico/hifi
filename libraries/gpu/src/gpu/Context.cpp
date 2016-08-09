@@ -102,6 +102,15 @@ void Context::getStats(ContextStats& stats) const {
     _backend->getStats(stats);
 }
 
+
+void Context::setTextureTransfer(bool enabled) {
+    _backend->setTextureTransfer(enabled);
+}
+
+bool Context::isTextureTransferEnabled() const {
+    return _backend->isTextureTransferEnabled();
+}
+
 const Backend::TransformCamera& Backend::TransformCamera::recomputeDerived(const Transform& xformView) const {
     _projectionInverse = glm::inverse(_projection);
 

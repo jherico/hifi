@@ -99,6 +99,9 @@ public:
     static void incrementTextureGPUTransferCount();
     static void decrementTextureGPUTransferCount();
 
+    bool isTextureTransferEnabled() const {
+        return _isTextureTransferEnabled;
+    }
 protected:
     virtual bool isStereo() {
         return _stereo._enable;
@@ -116,9 +119,16 @@ protected:
         }
     }
 
+
+    void setTextureTransfer(bool enabled) {
+        _isTextureTransferEnabled = enabled;
+    }
+
     friend class Context;
     ContextStats _stats;
     StereoState _stereo;
+
+    bool _isTextureTransferEnabled{ true };
 };
 
 class Context {
@@ -169,6 +179,10 @@ public:
     static Size getTextureGPUMemoryUsage();
     static Size getTextureGPUVirtualMemoryUsage();
     static uint32_t getTextureGPUTransferCount();
+
+
+    void setTextureTransfer(bool enabled);
+    bool isTextureTransferEnabled() const;
 
 protected:
     Context(const Context& context);

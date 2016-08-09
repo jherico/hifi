@@ -242,6 +242,12 @@ Item {
                }
            ]
         }
+
+        CheckBox {
+            text: "Enable Texture Transfer"
+            checked: stats.config["textureTransferEnabled"]
+            onCheckedChanged: { stats.config["textureTransferEnabled"] = checked }
+        }
     }
 
 }

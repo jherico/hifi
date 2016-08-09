@@ -176,6 +176,7 @@ public:
     virtual void releaseQuery(GLuint id) const;
     virtual void cleanupTrash() const;
 
+    bool _isTextureTransferEnabled() const { return isTextureTransferEnabled(); }
 protected:
 
     virtual GLFramebuffer* syncGPUObject(const Framebuffer& framebuffer) = 0;
