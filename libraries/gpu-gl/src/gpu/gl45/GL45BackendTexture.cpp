@@ -101,8 +101,6 @@ void GL45Backend::GL45Texture::transfer() const {
         return;
     }
 
-    if (!_backend.lock()->_isTextureTransferEnabled()) return;
-
     if (_downsampleSource._texture) {
         GLuint fbo { 0 };
         glCreateFramebuffers(1, &fbo);

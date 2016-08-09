@@ -49,6 +49,7 @@ namespace render {
 
         Q_PROPERTY(quint32 frameSetPipelineCount MEMBER frameSetPipelineCount NOTIFY dirty)
 
+        Q_PROPERTY(bool textureStorageEnabled MEMBER textureStorageEnabled NOTIFY dirty)
         Q_PROPERTY(bool textureTransferEnabled MEMBER textureTransferEnabled NOTIFY dirty)
 
 
@@ -80,6 +81,7 @@ namespace render {
 
         quint32 frameSetPipelineCount{ 0 };
 
+        bool textureStorageEnabled{ true };
         bool textureTransferEnabled{ true };
 
 

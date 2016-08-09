@@ -99,6 +99,10 @@ public:
     static void incrementTextureGPUTransferCount();
     static void decrementTextureGPUTransferCount();
 
+    bool isTextureStorageEnabled() const {
+        return _isTextureStorageEnabled;
+    }
+
     bool isTextureTransferEnabled() const {
         return _isTextureTransferEnabled;
     }
@@ -119,7 +123,9 @@ protected:
         }
     }
 
-
+    void setTextureStorage(bool enabled) {
+        _isTextureStorageEnabled = enabled;
+    }
     void setTextureTransfer(bool enabled) {
         _isTextureTransferEnabled = enabled;
     }
@@ -128,6 +134,7 @@ protected:
     ContextStats _stats;
     StereoState _stereo;
 
+    bool _isTextureStorageEnabled{ true };
     bool _isTextureTransferEnabled{ true };
 };
 
@@ -181,6 +188,8 @@ public:
     static uint32_t getTextureGPUTransferCount();
 
 
+    void setTextureStorage(bool enabled);
+    bool isTextureStorageEnabled() const;
     void setTextureTransfer(bool enabled);
     bool isTextureTransferEnabled() const;
 

@@ -203,7 +203,9 @@ GLTexture::~GLTexture() {
 
 void GLTexture::createTexture() {
     withPreservedTexture([&] {
-        allocateStorage();
+        if (_backend.lock()->isTextureStorageEnabled()) {
+            allocateStorage();
+        }
         (void)CHECK_GL_ERROR();
         syncSampler();
         (void)CHECK_GL_ERROR();

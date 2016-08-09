@@ -102,6 +102,13 @@ void Context::getStats(ContextStats& stats) const {
     _backend->getStats(stats);
 }
 
+void Context::setTextureStorage(bool enabled) {
+    _backend->setTextureStorage(enabled);
+}
+
+bool Context::isTextureStorageEnabled() const {
+    return _backend->isTextureStorageEnabled();
+}
 
 void Context::setTextureTransfer(bool enabled) {
     _backend->setTextureTransfer(enabled);

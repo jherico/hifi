@@ -58,5 +58,6 @@ void EngineStats::run(const SceneContextPointer& sceneContext, const RenderConte
     config->emitDirty();
 
 
+    renderContext->args->_context->setTextureStorage(config->textureStorageEnabled);
     renderContext->args->_context->setTextureTransfer(config->textureTransferEnabled);
 }

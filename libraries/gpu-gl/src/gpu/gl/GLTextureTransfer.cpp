@@ -78,7 +78,9 @@ void GLTextureTransferHelper::shutdown() {
 
 void GLTextureTransferHelper::do_transfer(GLTexture& texture) {
     texture.createTexture();
-    texture.transfer();
+    if (texture._backend.lock()->isTextureTransferEnabled()) {
+        texture.transfer();
+    }
     texture.updateSize();
     Backend::decrementTextureGPUTransferCount();
 }
