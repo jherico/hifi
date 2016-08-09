@@ -63,23 +63,24 @@ public:
     float droppedFrameRate() const override;
 
     bool beginFrameRender(uint32_t frameIndex) override;
+
+    virtual bool wantVsync() const { return true; }
+    void setVsyncEnabled(bool vsyncEnabled) { _vsyncEnabled = vsyncEnabled; }
+    bool isVsyncEnabled() const { return _vsyncEnabled; }
+
 protected:
     friend class PresentThread;
 
     glm::uvec2 getSurfaceSize() const;
     glm::uvec2 getSurfacePixels() const;
 
-    void compositeLayers();
+    virtual void compositeLayers();
     virtual void compositeScene();
     virtual void compositeOverlay();
     virtual void compositePointer();
     virtual void compositeExtra() {};
 
     virtual bool hasFocus() const override;
-
-    // FIXME make thread safe?
-    virtual bool isVsyncEnabled();
-    virtual void enableVsync(bool enable = true);
 
     // These functions must only be called on the presentation thread
     virtual void customizeContext();
@@ -97,11 +98,12 @@ protected:
     void withMainThreadContext(std::function<void()> f) const;
 
     void present();
-    void swapBuffers();
+    virtual void swapBuffers();
     ivec4 eyeViewport(Eye eye) const;
 
     void render(std::function<void(gpu::Batch& batch)> f);
 
+    bool _vsyncEnabled { true };
     QThread* _presentThread{ nullptr };
     std::queue<gpu::FramePointer> _newFrameQueue;
     RateCounter<> _droppedFrameRate;
@@ -110,15 +112,11 @@ protected:
 
     gpu::FramePointer _currentFrame;
     gpu::FramebufferPointer _compositeFramebuffer;
-    gpu::TexturePointer _compositeTexture;
     gpu::PipelinePointer _overlayPipeline;
     gpu::PipelinePointer _simplePipeline;
     gpu::PipelinePointer _presentPipeline;
     gpu::PipelinePointer _cursorPipeline;
     float _compositeOverlayAlpha { 1.0f };
-
-
-    bool _vsyncSupported { false };
 
     struct CursorData {
         QImage image;
@@ -148,7 +146,7 @@ protected:
     }
 
     gpu::gl::GLBackend* getGLBackend();
-private:
+
     // Any resource shared by the main thread and the presentation thread must
     // be serialized through this mutex
     mutable Mutex _presentMutex;
