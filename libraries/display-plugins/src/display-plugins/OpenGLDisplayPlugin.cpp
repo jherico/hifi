@@ -133,8 +133,6 @@ public:
                     // Main thread does it's thing while we wait on the lock to release
                     Lock lock(_mutex);
                     _condition.wait(lock, [&] { return _finishedMainThreadOperation; });
-                    _context->makeCurrent();
-                    Q_ASSERT(isCurrentContext(_context->contextHandle()));
                 }
             }
 
@@ -147,13 +145,39 @@ public:
                     if (newPlugin != currentPlugin) {
                         // Deactivate the old plugin
                         if (currentPlugin != nullptr) {
+                            _context->makeCurrent();
                             currentPlugin->uncustomizeContext();
                             CHECK_GL_ERROR();
+                            _context->doneCurrent();
                         }
 
                         if (newPlugin) {
+                            bool wantVsync = newPlugin->wantVsync();
+                            _context->makeCurrent();
+                            bool hasVsync = wglGetSwapIntervalEXT() != 0;
+#if defined(Q_OS_WIN)
+                            for (size_t i = 0; i < 10; ++i) {
+                                if (hasVsync != wantVsync) {
+                                    _context->swapBuffers();
+                                    wglSwapIntervalEXT(wantVsync ? 1 : 0);
+                                    hasVsync = wglGetSwapIntervalEXT() != 0;
+                                    QThread::usleep(100);
+                                }
+                            }
+#elif defined(Q_OS_MAC)
+                            GLint interval = wantVsync ? 1 : 0;
+                            newPlugin->swapBuffers();
+                            CGLSetParameter(CGLGetCurrentContext(), kCGLCPSwapInterval, &interval);
+                            newPlugin->swapBuffers();
+                            CGLGetParameter(CGLGetCurrentContext(), kCGLCPSwapInterval, &interval);
+                            hasVsync = interval != 0;
+#else
+                            // TODO: Fill in for linux
+#endif
+                            newPlugin->setVsyncEnabled(hasVsync);
                             newPlugin->customizeContext();
                             CHECK_GL_ERROR();
+                            _context->doneCurrent();
                         }
                         currentPlugin = newPlugin;
                         _newPluginQueue.pop();
@@ -176,8 +200,8 @@ public:
                 currentPlugin->present();
                 CHECK_GL_ERROR();
             }
+            _context->doneCurrent();
         }
-        _context->doneCurrent();
 
         Lock lock(_mutex);
         _context->moveToThread(qApp->thread());
@@ -239,7 +263,6 @@ bool OpenGLDisplayPlugin::activate() {
     if (!_container) {
         return false;
     }
-    _vsyncSupported = _container->getPrimaryWidget()->isVsyncSupported();
 
     // Start the present thread if necessary
     QSharedPointer<PresentThread> presentThread;
@@ -309,7 +332,6 @@ void OpenGLDisplayPlugin::deactivate() {
 void OpenGLDisplayPlugin::customizeContext() {
     auto presentThread = DependencyManager::get<PresentThread>();
     Q_ASSERT(thread() == presentThread->thread());
-    enableVsync();
 
     getGLBackend()->setCameraCorrection(mat4());
 
@@ -617,37 +639,6 @@ float OpenGLDisplayPlugin::droppedFrameRate() const {
 
 float OpenGLDisplayPlugin::presentRate() const {
     return _presentRate.rate();
-}
-
-void OpenGLDisplayPlugin::enableVsync(bool enable) {
-    if (!_vsyncSupported) {
-        return;
-    }
-#if defined(Q_OS_WIN)
-    wglSwapIntervalEXT(enable ? 1 : 0);
-#elif defined(Q_OS_MAC)
-    GLint interval = enable ? 1 : 0;
-    CGLSetParameter(CGLGetCurrentContext(), kCGLCPSwapInterval, &interval);
-#else
-    // TODO: Fill in for linux
-    return;
-#endif
-}
-
-bool OpenGLDisplayPlugin::isVsyncEnabled() {
-    if (!_vsyncSupported) {
-        return true;
-    }
-#if defined(Q_OS_WIN)
-    return wglGetSwapIntervalEXT() != 0;
-#elif defined(Q_OS_MAC)
-    GLint interval;
-    CGLGetParameter(CGLGetCurrentContext(), kCGLCPSwapInterval, &interval);
-    return interval != 0;
-#else
-    // TODO: Fill in for linux
-    return true;
-#endif
 }
 
 void OpenGLDisplayPlugin::swapBuffers() {
