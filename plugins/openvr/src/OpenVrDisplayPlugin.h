@@ -15,20 +15,22 @@
 
 const float TARGET_RATE_OpenVr = 90.0f;  // FIXME: get from sdk tracked device property? This number is vive-only.
 
-class OpenVrSubmitThread;
+#define OPENVR_THREADED_SUBMIT 0
 
+#if OPENVR_THREADED_SUBMIT
+class OpenVrSubmitThread;
 static const size_t COMPOSITING_BUFFER_SIZE = 3;
 
 struct CompositeInfo {
     using Queue = std::queue<CompositeInfo>;
     using Array = std::array<CompositeInfo, COMPOSITING_BUFFER_SIZE>;
-    
+
     gpu::TexturePointer texture;
-    GLuint textureID { 0 };
+    GLuint textureID{ 0 };
     glm::mat4 pose;
     GLsync fence{ 0 };
 };
-
+#endif
 
 class OpenVrDisplayPlugin : public HmdDisplayPlugin {
     using Parent = HmdDisplayPlugin;
@@ -64,16 +66,18 @@ protected:
 
 
 private:
-    CompositeInfo::Array _compositeInfos;
-    size_t _renderingIndex { 0 };
-    vr::IVRSystem* _system { nullptr };
-    std::atomic<vr::EDeviceActivityLevel> _hmdActivityLevel { vr::k_EDeviceActivityLevel_Unknown };
+    vr::IVRSystem* _system{ nullptr };
+    std::atomic<vr::EDeviceActivityLevel> _hmdActivityLevel{ vr::k_EDeviceActivityLevel_Unknown };
     std::atomic<uint32_t> _keyboardSupressionCount{ 0 };
     static const QString NAME;
 
     vr::HmdMatrix34_t _lastGoodHMDPose;
-    std::shared_ptr<OpenVrSubmitThread> _submitThread;
     mat4 _sensorResetMat;
-    friend class OpenVrSubmitThread;
 
+#if OPENVR_THREADED_SUBMIT
+    CompositeInfo::Array _compositeInfos;
+    size_t _renderingIndex{ 0 };
+    std::shared_ptr<OpenVrSubmitThread> _submitThread;
+    friend class OpenVrSubmitThread;
+#endif
 };

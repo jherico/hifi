@@ -380,7 +380,6 @@ void EntityTreeRenderer::applyZonePropertiesToScene(std::shared_ptr<ZoneEntityIt
         }
 
         skyStage->setBackgroundMode(model::SunSkyStage::SKY_DOME); // let the application background through
-
         return; // Early exit
     }
 
@@ -534,7 +533,7 @@ void EntityTreeRenderer::processEraseMessage(ReceivedMessage& message, const Sha
     std::static_pointer_cast<EntityTree>(_tree)->processEraseMessage(message, sourceNode);
 }
 
-ModelPointer EntityTreeRenderer::allocateModel(const QString& url, const QString& collisionUrl) {
+ModelPointer EntityTreeRenderer::allocateModel(const QString& url, const QString& collisionUrl, float loadingPriority) {
     ModelPointer model = nullptr;
 
     // Only create and delete models on the thread that owns the EntityTreeRenderer
@@ -548,6 +547,7 @@ ModelPointer EntityTreeRenderer::allocateModel(const QString& url, const QString
     }
 
     model = std::make_shared<Model>(std::make_shared<Rig>());
+    model->setLoadingPriority(loadingPriority);
     model->init();
     model->setURL(QUrl(url));
     model->setCollisionModelURL(QUrl(collisionUrl));

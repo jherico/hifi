@@ -34,16 +34,11 @@ const QString StandingHMDSensorMode = "Standing HMD Sensor Mode"; // this probab
 PoseData _nextRenderPoseData;
 PoseData _nextSimPoseData;
 
-static std::array<vr::Hmd_Eye, 2> VR_EYES { { vr::Eye_Left, vr::Eye_Right } };
-bool _openVrDisplayActive { false };
+static std::array<vr::Hmd_Eye, 2> VR_EYES{ { vr::Eye_Left, vr::Eye_Right } };
+bool _openVrDisplayActive{ false };
 // Flip y-axis since GL UV coords are backwards.
 static vr::VRTextureBounds_t OPENVR_TEXTURE_BOUNDS_LEFT{ 0, 0, 0.5f, 1 };
 static vr::VRTextureBounds_t OPENVR_TEXTURE_BOUNDS_RIGHT{ 0.5f, 0, 1, 1 };
-
-
-
-#define OPENVR_THREADED_SUBMIT 1
-
 
 #if OPENVR_THREADED_SUBMIT
 
@@ -72,7 +67,7 @@ public:
     } _reprojectionUniforms;
 
 
-    OpenVrSubmitThread(OpenVrDisplayPlugin& plugin) : _plugin(plugin) { 
+    OpenVrSubmitThread(OpenVrDisplayPlugin& plugin) : _plugin(plugin) {
         _canvas.create(plugin._container->getPrimaryContext());
         _canvas.doneCurrent();
         _canvas.moveToThreadWithContext(this);
@@ -106,11 +101,12 @@ public:
                     _reprojectionUniforms.projectionMatrix = Uniform<glm::mat4>(*program, "projections").Location();
                     _program = program;
                 }
-            } catch (std::runtime_error& error) {
+            }
+            catch (std::runtime_error& error) {
                 qWarning() << "Error building reprojection shader " << error.what();
             }
         }
-    }
+        }
 
     void updateSource() {
         Lock lock(_plugin._presentMutex);
@@ -168,7 +164,7 @@ public:
                 });
                 static const vr::VRTextureBounds_t leftBounds{ 0, 0, 0.5f, 1 };
                 static const vr::VRTextureBounds_t rightBounds{ 0.5f, 0, 1, 1 };
-                
+
                 vr::Texture_t texture{ (void*)oglplus::GetName(_framebuffer->color), vr::API_OpenGL, vr::ColorSpace_Auto };
                 vr::VRCompositor()->Submit(vr::Eye_Left, &texture, &leftBounds);
                 vr::VRCompositor()->Submit(vr::Eye_Right, &texture, &rightBounds);
@@ -214,12 +210,12 @@ public:
     CompositeInfo::Queue _queue;
 
     PoseData _nextRender, _nextSim;
-    bool _quit { false };
-    GLuint _currentTexture { 0 };
-    std::atomic<uint32_t> _presentCount { 0 };
+    bool _quit{ false };
+    GLuint _currentTexture{ 0 };
+    std::atomic<uint32_t> _presentCount{ 0 };
     Condition _presented;
     OpenVrDisplayPlugin& _plugin;
-};
+    };
 
 #endif
 
@@ -287,9 +283,9 @@ bool OpenVrDisplayPlugin::internalActivate() {
         glm::vec3 uiPos(0.0f, UI_HEIGHT, UI_RADIUS - (0.5f * zSize) - UI_Z_OFFSET);
         _sensorResetMat = glm::inverse(createMatFromQuatAndPos(glm::quat(), uiPos));
     } else {
-        #if DEV_BUILD
-            qDebug() << "OpenVR: error could not get chaperone pointer";
-        #endif
+#if DEV_BUILD
+        qDebug() << "OpenVR: error could not get chaperone pointer";
+#endif
     }
 
 #if OPENVR_THREADED_SUBMIT
@@ -326,6 +322,7 @@ void OpenVrDisplayPlugin::customizeContext() {
 
     Parent::customizeContext();
 
+#if OPENVR_THREADED_SUBMIT
     _compositeInfos[0].texture = _compositeFramebuffer->getRenderBuffer(0);
     for (size_t i = 0; i < COMPOSITING_BUFFER_SIZE; ++i) {
         if (0 != i) {
@@ -333,8 +330,8 @@ void OpenVrDisplayPlugin::customizeContext() {
         }
         _compositeInfos[i].textureID = getGLBackend()->getTextureID(_compositeInfos[i].texture, false);
     }
-
     _submitThread->start(QThread::HighPriority);
+#endif
 }
 
 void OpenVrDisplayPlugin::uncustomizeContext() {
@@ -363,7 +360,7 @@ static bool isBadPose(vr::HmdMatrix34_t* mat) {
 
 bool OpenVrDisplayPlugin::beginFrameRender(uint32_t frameIndex) {
     PROFILE_RANGE_EX(__FUNCTION__, 0xff7fff00, frameIndex)
-    handleOpenVrEvents();
+        handleOpenVrEvents();
     _currentRenderFrameInfo = FrameInfo();
 
     withNonPresentThreadLock([&] {
@@ -383,7 +380,7 @@ bool OpenVrDisplayPlugin::beginFrameRender(uint32_t frameIndex) {
 
     vr::TrackedDeviceIndex_t handIndices[2] { vr::k_unTrackedDeviceIndexInvalid, vr::k_unTrackedDeviceIndexInvalid };
     {
-        vr::TrackedDeviceIndex_t controllerIndices[2] ;
+        vr::TrackedDeviceIndex_t controllerIndices[2];
         auto trackedCount = _system->GetSortedTrackedDeviceIndicesOfClass(vr::TrackedDeviceClass_Controller, controllerIndices, 2);
         // Find the left and right hand controllers, if they exist
         for (uint32_t i = 0; i < std::min<uint32_t>(trackedCount, 2); ++i) {
@@ -454,9 +451,9 @@ void OpenVrDisplayPlugin::hmdPresent() {
     PROFILE_RANGE_EX(__FUNCTION__, 0xff00ff00, (uint64_t)_currentFrame->frameIndex)
 
 #if OPENVR_THREADED_SUBMIT
-    _submitThread->waitForPresent();
-
+        _submitThread->waitForPresent();
 #else
+        GLuint glTexId = getGLBackend()->getTextureID(_compositeFramebuffer->getRenderBuffer(0), false);
     vr::Texture_t vrTexture{ (void*)glTexId, vr::API_OpenGL, vr::ColorSpace_Auto };
     vr::VRCompositor()->Submit(vr::Eye_Left, &vrTexture, &OPENVR_TEXTURE_BOUNDS_LEFT);
     vr::VRCompositor()->Submit(vr::Eye_Right, &vrTexture, &OPENVR_TEXTURE_BOUNDS_RIGHT);
@@ -466,7 +463,7 @@ void OpenVrDisplayPlugin::hmdPresent() {
 
 void OpenVrDisplayPlugin::postPreview() {
     PROFILE_RANGE_EX(__FUNCTION__, 0xff00ff00, (uint64_t)_currentFrame->frameIndex)
-    PoseData nextRender, nextSim;
+        PoseData nextRender, nextSim;
     nextRender.frameIndex = presentCount();
 #if !OPENVR_THREADED_SUBMIT
     vr::VRCompositor()->WaitGetPoses(nextRender.vrPoses, vr::k_unMaxTrackedDeviceCount, nextSim.vrPoses, vr::k_unMaxTrackedDeviceCount);
@@ -493,7 +490,7 @@ void OpenVrDisplayPlugin::updatePresentPose() {
     _currentPresentFrameInfo.presentPose = _nextRenderPoseData.poses[vr::k_unTrackedDeviceIndex_Hmd];
 }
 
-bool OpenVrDisplayPlugin::suppressKeyboard() { 
+bool OpenVrDisplayPlugin::suppressKeyboard() {
     if (isOpenVrKeyboardShown()) {
         return false;
     }
@@ -514,5 +511,5 @@ void OpenVrDisplayPlugin::unsuppressKeyboard() {
 }
 
 bool OpenVrDisplayPlugin::isKeyboardVisible() {
-    return isOpenVrKeyboardShown(); 
+    return isOpenVrKeyboardShown();
 }
