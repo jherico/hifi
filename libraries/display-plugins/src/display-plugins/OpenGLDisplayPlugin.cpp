@@ -152,18 +152,12 @@ public:
                         }
 
                         if (newPlugin) {
+                            bool hasVsync = true;
                             bool wantVsync = newPlugin->wantVsync();
                             _context->makeCurrent();
-                            bool hasVsync = wglGetSwapIntervalEXT() != 0;
 #if defined(Q_OS_WIN)
-                            for (size_t i = 0; i < 10; ++i) {
-                                if (hasVsync != wantVsync) {
-                                    _context->swapBuffers();
-                                    wglSwapIntervalEXT(wantVsync ? 1 : 0);
-                                    hasVsync = wglGetSwapIntervalEXT() != 0;
-                                    QThread::usleep(100);
-                                }
-                            }
+                            wglSwapIntervalEXT(wantVsync ? 1 : 0);
+                            hasVsync = wglGetSwapIntervalEXT() != 0;
 #elif defined(Q_OS_MAC)
                             GLint interval = wantVsync ? 1 : 0;
                             newPlugin->swapBuffers();
@@ -173,6 +167,7 @@ public:
                             hasVsync = interval != 0;
 #else
                             // TODO: Fill in for linux
+                            Q_UNUSED(wantVsync);
 #endif
                             newPlugin->setVsyncEnabled(hasVsync);
                             newPlugin->customizeContext();
