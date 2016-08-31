@@ -568,7 +568,7 @@ void OpenGLDisplayPlugin::compositeLayers() {
         compositeScene();
     }
 
-    {
+    if (_currentFrame->overlay) {
         PROFILE_RANGE_EX(render_detail, "compositeOverlay", 0xff0077ff, (uint64_t)presentCount())
         compositeOverlay();
     }
@@ -589,7 +589,7 @@ void OpenGLDisplayPlugin::internalPresent() {
         batch.enableStereo(false);
         batch.resetViewTransform();
         batch.setFramebuffer(gpu::FramebufferPointer());
-        batch.setViewportTransform(ivec4(uvec2(0), getSurfacePixels()));
+        batch.setViewportTransform(ivec4(ivec2(0), getSurfacePixels()));
         batch.setResourceTexture(0, _compositeFramebuffer->getRenderBuffer(0));
         batch.setPipeline(_presentPipeline);
         batch.draw(gpu::TRIANGLE_STRIP, 4);

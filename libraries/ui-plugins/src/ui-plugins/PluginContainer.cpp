@@ -36,15 +36,24 @@ PluginContainer::~PluginContainer() {
 
 
 void PluginContainer::addMenu(const QString& menuName) {
+    if (!getPrimaryMenu()) {
+        return;
+    }
     getPrimaryMenu()->addMenu(menuName);
 }
 
 void PluginContainer::removeMenu(const QString& menuName) {
+    if (!getPrimaryMenu()) {
+        return;
+    }
     getPrimaryMenu()->removeMenu(menuName);
 }
 
 QAction* PluginContainer::addMenuItem(PluginType type, const QString& path, const QString& name, std::function<void(bool)> onClicked, bool checkable, bool checked, const QString& groupName) {
     auto menu = getPrimaryMenu();
+    if (!menu) {
+        return nullptr;
+    }
     MenuWrapper* parentItem = menu->getMenu(path);
     QAction* action = menu->addActionToQMenuAndActionHash(parentItem, name);
     if (!groupName.isEmpty()) {
@@ -71,14 +80,24 @@ QAction* PluginContainer::addMenuItem(PluginType type, const QString& path, cons
 }
 
 void PluginContainer::removeMenuItem(const QString& menuName, const QString& menuItem) {
+    if (!getPrimaryMenu()) {
+        return;
+    }
     getPrimaryMenu()->removeMenuItem(menuName, menuItem);
 }
 
 bool PluginContainer::isOptionChecked(const QString& name) {
+    // FIXME add default
+    if (!getPrimaryMenu()) {
+        return false;
+    }
     return getPrimaryMenu()->isOptionChecked(name);
 }
 
 void PluginContainer::setIsOptionChecked(const QString& path, bool checked) {
+    if (!getPrimaryMenu()) {
+        return;
+    }
     getPrimaryMenu()->setIsOptionChecked(path, checked);
 }
 
