@@ -16,6 +16,7 @@
 
 #include <gl/Context.h>
 #include <gl/GLShaders.h>
+#include <gl/GLHelpers.h>
 
 #include <gpu/Frame.h>
 #include <gpu/gl/GLBackend.h>
@@ -40,8 +41,6 @@ PoseData _nextRenderPoseData;
 PoseData _nextSimPoseData;
 
 #define MIN_CORES_FOR_NORMAL_RENDER 5
-bool forceInterleavedReprojection = (QThread::idealThreadCount() < MIN_CORES_FOR_NORMAL_RENDER);
-
 
 static std::array<vr::Hmd_Eye, 2> VR_EYES { { vr::Eye_Left, vr::Eye_Right } };
 bool _openVrDisplayActive { false };
@@ -410,6 +409,20 @@ bool OpenVrDisplayPlugin::internalActivate() {
         // FIXME Calculate the proper combined projection by using GetProjectionRaw values from both eyes
         _cullingProjection = _eyeProjections[0];
     });
+
+
+    bool forceInterleavedReprojection = false;
+    if (!forceInterleavedReprojection && (QThread::idealThreadCount() < MIN_CORES_FOR_NORMAL_RENDER)) {
+        forceInterleavedReprojection = true;
+    }
+
+    static const QString NVIDIA_970_DETECT_STRING { "GTX 970" }; 
+    if (!forceInterleavedReprojection) {
+        auto renderer = getGLContextData()["renderer"].toString();
+        if (renderer.contains(NVIDIA_970_DETECT_STRING)) {
+            forceInterleavedReprojection = true;
+        }
+    }
 
     // enable async time warp
     if (forceInterleavedReprojection) {
