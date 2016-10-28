@@ -392,8 +392,14 @@ void showMinSpecWarning() {
     miniApp.exec();
 }
 
+static const QString DEBUG_FAIL_MIN_SPEC_FLAG("HIFI_FAIL_MIN_SPEC");
 
 bool checkMinSpecImpl() {
+    if (QProcessEnvironment::systemEnvironment().contains(DEBUG_FAIL_MIN_SPEC_FLAG)) {
+        showMinSpecWarning();
+        return false;
+    }
+
     // If OpenVR isn't supported, we have no min spec, so pass
     if (!openVrSupported()) {
         return true;

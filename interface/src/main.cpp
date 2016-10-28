@@ -41,7 +41,11 @@
 extern "C" {
     typedef int(__stdcall * CHECKMINSPECPROC) ();
 }
+
+static const QString DEBUG_FAIL_MIN_SPEC_FLAG("HIFI_FAIL_MIN_SPEC");
 #endif
+
+
 
 int main(int argc, const char* argv[]) {
 #if HAS_BUGSPLAT
@@ -161,7 +165,8 @@ int main(int argc, const char* argv[]) {
 
 #ifdef Q_OS_WIN
     // If we're running in steam mode, we need to do an explicit check to ensure we're up to the required min spec
-    if (SteamClient::isRunning()) {
+    if (SteamClient::isRunning() || 
+        QProcessEnvironment::systemEnvironment().contains(DEBUG_FAIL_MIN_SPEC_FLAG)) {
         QString appPath;
         {
             char filename[MAX_PATH];
