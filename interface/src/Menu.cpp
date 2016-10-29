@@ -388,7 +388,7 @@ Menu::Menu() {
 
 #ifdef Q_OS_WIN
     #define MIN_CORES_FOR_INCREMENTAL_TEXTURES 5
-    bool recommendedIncrementalTransfers = (QThread::idealThreadCount() >= MIN_CORES_FOR_INCREMENTAL_TEXTURES);
+    bool recommendedIncrementalTransfers = true;
     bool recommendedSparseTextures = recommendedIncrementalTransfers;
 
     qDebug() << "[TEXTURE TRANSFER SUPPORT]"
