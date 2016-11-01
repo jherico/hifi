@@ -17,9 +17,9 @@
 
 #include "GLShared.h"
 
-#ifdef Q_OS_WIN
-#define THREADED_TEXTURE_TRANSFER
-#endif
+//#ifdef Q_OS_WIN
+//#define THREADED_TEXTURE_TRANSFER
+//#endif
 
 #ifdef THREADED_TEXTURE_TRANSFER
 // FIXME when sparse textures are enabled, it's harder to force a draw on the transfer thread
