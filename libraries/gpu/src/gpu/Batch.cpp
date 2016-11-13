@@ -52,8 +52,6 @@ Batch::Batch(const Batch& batch_) {
     _commandOffsets.swap(batch._commandOffsets);
     _params.swap(batch._params);
     _data.swap(batch._data);
-    _invalidModel = batch._invalidModel;
-    _currentModel = batch._currentModel;
     _objects.swap(batch._objects);
     _currentNamedCall = batch._currentNamedCall;
 
@@ -225,18 +223,16 @@ void Batch::setIndirectBuffer(const BufferPointer& buffer, Offset offset, Offset
 }
 
 
-void Batch::setModelTransform(const Transform& model) {
+void Batch::setModelTransform(uint32_t transform) {
     ADD_COMMAND(setModelTransform);
 
-    _currentModel = model;
-    _invalidModel = true;
+    _params.emplace_back(transform);
 }
 
-void Batch::setViewTransform(const Transform& view, bool camera) {
+void Batch::setViewTransform(uint32_t transform) {
     ADD_COMMAND(setViewTransform);
-    uint cameraFlag = camera ? 1 : 0;
-    _params.emplace_back(_transforms.cache(view));
-    _params.emplace_back(cameraFlag);
+
+    _params.emplace_back(transform);
 }
 
 void Batch::setProjectionTransform(const Mat4& proj) {

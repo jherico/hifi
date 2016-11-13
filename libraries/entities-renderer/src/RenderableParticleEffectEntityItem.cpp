@@ -13,6 +13,7 @@
 #include <DependencyManager.h>
 #include <PerfStat.h>
 #include <GeometryCache.h>
+#include <gpu/Context.h>
 #include <AbstractViewStateInterface.h>
 #include "EntitiesRendererLogging.h"
 
@@ -93,14 +94,17 @@ public:
     void render(RenderArgs* args) const {
         assert(_pipeline);
 
+        if (!_modelTransformId) {
+            _modelTransformId = args->_context->registerModelTransform();
+        }
         gpu::Batch& batch = *args->_batch;
         batch.setPipeline(_pipeline);
 
         if (_texture) {
             batch.setResourceTexture(0, _texture);
         }
-
-        batch.setModelTransform(_modelTransform);
+        batch.updateModelTransform(_modelTransformId, _modelTransform);
+        batch.setModelTransform(_modelTransformId);
         batch.setUniformBuffer(0, _uniformBuffer);
         batch.setInputFormat(_vertexFormat);
         batch.setInputBuffer(0, _particleBuffer, 0, sizeof(ParticlePrimitive));
@@ -111,6 +115,7 @@ public:
 
 protected:
     Transform _modelTransform;
+    mutable uint32_t _modelTransformId { 0 };
     AABox _bound;
     PipelinePointer _pipeline;
     FormatPointer _vertexFormat { std::make_shared<Format>() };

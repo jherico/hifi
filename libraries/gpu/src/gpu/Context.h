@@ -152,6 +152,18 @@ public:
     void appendFrameBatch(Batch& batch);
     FramePointer endFrame();
 
+
+    // View transform management
+    uint32_t registerViewTransform();
+    void releaseViewTransform(uint32_t transform);
+
+    // Model transform management
+    uint32_t registerModelTransform();
+    std::vector<uint32_t> registerModelTransforms(size_t size);
+    void releaseModelTransform(uint32_t transform);
+    void releaseModelTransforms(std::vector<uint32_t> transform);
+
+
     // MUST only be called on the rendering thread
     // 
     // Handle any pending operations to clean up (recycle / deallocate) resources no longer in use

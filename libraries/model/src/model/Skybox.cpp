@@ -83,6 +83,7 @@ void Skybox::render(gpu::Batch& batch, const ViewFrustum& viewFrustum, const Sky
     static gpu::BufferPointer theConstants;
     static gpu::PipelinePointer thePipeline;
     static std::once_flag once;
+    static uint32_t viewTransform { gpu::VIEW_IDENTIY };
     std::call_once(once, [&] {
         {
             auto skyVS = gpu::Shader::createVertex(std::string(skybox_vert));
@@ -112,7 +113,7 @@ void Skybox::render(gpu::Batch& batch, const ViewFrustum& viewFrustum, const Sky
     viewFrustum.evalViewTransform(viewTransform);
     batch.setProjectionTransform(projMat);
     batch.setViewTransform(viewTransform);
-    batch.setModelTransform(Transform()); // only for Mac
+    batch.setModelTransform(gpu::MODEL_IDENTITY); // only for Mac
 
     batch.setPipeline(thePipeline);
     skybox.prepare(batch);

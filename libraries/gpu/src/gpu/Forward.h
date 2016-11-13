@@ -91,6 +91,18 @@ namespace gpu {
     class TextureView;
     using TextureViews = std::vector<TextureView>;
 
+    enum StandardCameraTransform {
+        VIEW_INVALID = 0,
+        VIEW_IDENTIY = 1,
+        VIEW_CAMERA = 2,
+    };
+
+    enum StandardModelTransform {
+        MODEL_INVALID = 0,
+        MODEL_IDENTITY = 1,
+    };
+
+
     struct StereoState {
         bool _enable{ false };
         bool _skybox{ false };

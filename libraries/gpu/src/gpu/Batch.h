@@ -169,9 +169,13 @@ public:
     // finaly projected into the clip space by the projection transform
     // WARNING: ViewTransform transform from eye space to world space, its inverse is composed
     // with the ModelTransform to create the equivalent of the gl ModelViewMatrix
-    void setModelTransform(const Transform& model);
-    void resetViewTransform() { setViewTransform(Transform(), false); }
-    void setViewTransform(const Transform& view, bool camera = true);
+    void updateViewTransform(uint32_t transform, const Transform& view);
+    void updateModelTransform(uint32_t transform, const Transform& view);
+
+    void setModelTransform(uint32_t transform);
+    void resetViewTransform() { setViewTransform(VIEW_IDENTIY); }
+    void setViewTransform(uint32_t transform);
+
     void setProjectionTransform(const Mat4& proj);
     // Viewport is xy = low left corner in framebuffer, zw = width height of the viewport, expressed in pixels
     void setViewportTransform(const Vec4i& viewport);
@@ -450,8 +454,6 @@ public:
     };
 
     using TransformObjects = std::vector<TransformObject>;
-    bool _invalidModel { true };
-    Transform _currentModel;
     TransformObjects _objects;
     static size_t _objectsMax;
 
@@ -489,8 +491,6 @@ protected:
 
     // Maybe useful but shoudln't be public. Please convince me otherwise
     void runLambda(std::function<void()> f);
-
-    void captureDrawCallInfoImpl();
 };
 
 template <typename T>

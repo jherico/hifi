@@ -54,7 +54,7 @@ void ProceduralSkybox::render(gpu::Batch& batch, const ViewFrustum& viewFrustum,
     viewFrustum.evalViewTransform(viewTransform);
     batch.setProjectionTransform(projMat);
     batch.setViewTransform(viewTransform);
-    batch.setModelTransform(Transform()); // only for Mac
+    batch.setModelTransform(gpu::MODEL_IDENTITY); // only for Mac
 
     auto& procedural = skybox._procedural;
     procedural.prepare(batch, glm::vec3(0), glm::vec3(1), glm::quat());

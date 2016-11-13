@@ -100,11 +100,12 @@ void DrawSceneOctree::run(const SceneContextPointer& sceneContext,
         Transform viewMat;
         args->getViewFrustum().evalProjectionMatrix(projMat);
         args->getViewFrustum().evalViewTransform(viewMat);
-        batch.setViewportTransform(args->_viewport);
+        batch.updateViewTransform(gpu::VIEW_CAMERA, viewMat);
 
+        batch.setViewportTransform(args->_viewport);
         batch.setProjectionTransform(projMat);
-        batch.setViewTransform(viewMat, true);
-        batch.setModelTransform(Transform());
+        batch.setViewTransform(gpu::VIEW_CAMERA);
+        batch.setModelTransform(gpu::MODEL_IDENTITY);
 
         // bind the one gpu::Pipeline we need
         batch.setPipeline(getDrawCellBoundsPipeline());
@@ -208,11 +209,13 @@ void DrawItemSelection::run(const SceneContextPointer& sceneContext,
         Transform viewMat;
         args->getViewFrustum().evalProjectionMatrix(projMat);
         args->getViewFrustum().evalViewTransform(viewMat);
+        batch.updateViewTransform(gpu::VIEW_CAMERA, viewMat);
+
         batch.setViewportTransform(args->_viewport);
 
         batch.setProjectionTransform(projMat);
-        batch.setViewTransform(viewMat, true);
-        batch.setModelTransform(Transform());
+        batch.setViewTransform(gpu::VIEW_CAMERA);
+        batch.setModelTransform(gpu::MODEL_IDENTITY);
 
         // bind the one gpu::Pipeline we need
         batch.setPipeline(getDrawItemBoundPipeline());
