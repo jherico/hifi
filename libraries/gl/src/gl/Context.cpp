@@ -274,11 +274,14 @@ void Context::create() {
         contextAttribs.push_back(WGL_CONTEXT_PROFILE_MASK_ARB);
         contextAttribs.push_back(WGL_CONTEXT_CORE_PROFILE_BIT_ARB);
         contextAttribs.push_back(WGL_CONTEXT_FLAGS_ARB);
-        if (enableDebugLogger) {
-            contextAttribs.push_back(WGL_CONTEXT_DEBUG_BIT_ARB);
-        } else {
-            contextAttribs.push_back(0);
+        int flags = 0;
+        if (_version >= 0x0405) {
+            flags |= WGL_CONTEXT_ROBUST_ACCESS_BIT_ARB;
         }
+        if (enableDebugLogger) {
+            flags |= WGL_CONTEXT_DEBUG_BIT_ARB;
+        }
+        contextAttribs.push_back(flags);
         contextAttribs.push_back(0);
         auto shareHglrc = PRIMARY ? PRIMARY->_hglrc : 0;
         _hglrc = wglCreateContextAttribsARB(_hdc, shareHglrc, &contextAttribs[0]);
