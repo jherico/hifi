@@ -1,5 +1,12 @@
 set(TARGET_NAME networking)
-setup_hifi_library(Network WebEngine)
+
+if (NOT DEFINED SERVER_ONLY)
+    setup_hifi_library(Network WebEngine)
+else()
+    setup_hifi_library(Network)
+    add_definitions(-DSERVER_ONLY)
+endif()
+
 link_hifi_libraries(shared)
 
 target_include_directories(${TARGET_NAME} PRIVATE "${CMAKE_BINARY_DIR}/includes")

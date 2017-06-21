@@ -9,6 +9,8 @@
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 //
 
+#ifndef SERVER_ONLY
+
 #include "HFWebEngineProfile.h"
 
 #include "HFWebEngineRequestInterceptor.h"
@@ -26,3 +28,5 @@ HFWebEngineProfile::HFWebEngineProfile(QObject* parent) :
     auto requestInterceptor = new HFWebEngineRequestInterceptor(this);
     setRequestInterceptor(requestInterceptor);
 }
+
+#endif

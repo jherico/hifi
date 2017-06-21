@@ -9,6 +9,8 @@
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 //
 
+#ifndef SERVER_ONLY
+
 #include "HFTabletWebEngineProfile.h"
 #include "HFTabletWebEngineRequestInterceptor.h"
 
@@ -25,3 +27,4 @@ HFTabletWebEngineProfile::HFTabletWebEngineProfile(QObject* parent) : QQuickWebE
     setRequestInterceptor(requestInterceptor);
 }
 
+#endif

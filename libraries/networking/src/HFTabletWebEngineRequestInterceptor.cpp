@@ -9,7 +9,10 @@
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 //
 
+#ifndef SERVER_ONLY
+
 #include "HFTabletWebEngineRequestInterceptor.h"
+
 #include <QtCore/QDebug>
 #include "AccountManager.h"
 
@@ -44,3 +47,5 @@ void HFTabletWebEngineRequestInterceptor::interceptRequest(QWebEngineUrlRequestI
         info.setHttpHeader(USER_AGENT.toLocal8Bit(), tokenString.toLocal8Bit());
     }
 }
+
+#endif

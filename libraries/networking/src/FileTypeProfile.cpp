@@ -9,6 +9,8 @@
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 //
 
+#ifndef SERVER_ONLY
+
 #include "FileTypeProfile.h"
 
 #include "FileTypeRequestInterceptor.h"
@@ -24,3 +26,5 @@ FileTypeProfile::FileTypeProfile(QObject* parent) :
     auto requestInterceptor = new FileTypeRequestInterceptor(this);
     setRequestInterceptor(requestInterceptor);
 }
+
+#endif
