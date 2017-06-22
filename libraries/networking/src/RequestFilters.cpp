@@ -9,6 +9,8 @@
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 //
 
+#ifndef SERVER_ONLY
+
 #include "RequestFilters.h"
 #include "NetworkingConstants.h"
 
@@ -63,3 +65,5 @@ void RequestFilters::interceptFileType(QWebEngineUrlRequestInfo& info) {
         info.setHttpHeader(CONTENT_HEADER.toLocal8Bit(), TYPE_VALUE.toLocal8Bit());
     }
 }
+
+#endif

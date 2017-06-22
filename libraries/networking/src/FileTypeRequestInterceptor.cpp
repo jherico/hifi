@@ -9,6 +9,8 @@
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 //
 
+#ifndef SERVER_ONLY
+
 #include "FileTypeRequestInterceptor.h"
 
 #include <QtCore/QDebug>
@@ -19,3 +21,5 @@ void FileTypeRequestInterceptor::interceptRequest(QWebEngineUrlRequestInfo& info
     RequestFilters::interceptHFWebEngineRequest(info);
     RequestFilters::interceptFileType(info);
 }
+
+#endif
