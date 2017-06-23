@@ -26,6 +26,7 @@
 
 #include <memory>
 
+FBXMesh::ModelMeshConverter FBXMesh::meshConverter = [](const FBXMesh&) { return model::MeshPointer(); };
 
 class Vertex {
 public:
@@ -406,170 +407,20 @@ void FBXReader::buildModelMesh(FBXMesh& extractedMesh, const QString& url) {
         return;
     }
 
-    FBXMesh& fbxMesh = extractedMesh;
-    model::MeshPointer mesh(new model::Mesh());
-
-    // Grab the vertices in a buffer
-    auto vb = std::make_shared<gpu::Buffer>();
-    vb->setData(extractedMesh.vertices.size() * sizeof(glm::vec3),
-                (const gpu::Byte*) extractedMesh.vertices.data());
-    gpu::BufferView vbv(vb, gpu::Element(gpu::VEC3, gpu::FLOAT, gpu::XYZ));
-    mesh->setVertexBuffer(vbv);
-
-    // evaluate all attribute channels sizes
-    int normalsSize = fbxMesh.normals.size() * sizeof(glm::vec3);
-    int tangentsSize = fbxMesh.tangents.size() * sizeof(glm::vec3);
-    int colorsSize = fbxMesh.colors.size() * sizeof(glm::vec3);
-    int texCoordsSize = fbxMesh.texCoords.size() * sizeof(glm::vec2);
-    int texCoords1Size = fbxMesh.texCoords1.size() * sizeof(glm::vec2);
-
-    int clusterIndicesSize = fbxMesh.clusterIndices.size() * sizeof(uint8_t);
-    if (fbxMesh.clusters.size() > UINT8_MAX) {
-        // we need 16 bits instead of just 8 for clusterIndices
-        clusterIndicesSize *= 2;
+    if (!extractedMesh.parts.size()) {
+        qCDebug(modelformat) << "buildModelMesh failed -- no parts, url = " << url;
+        return;
     }
-    int clusterWeightsSize = fbxMesh.clusterWeights.size() * sizeof(uint8_t);
-
-    int normalsOffset = 0;
-    int tangentsOffset = normalsOffset + normalsSize;
-    int colorsOffset = tangentsOffset + tangentsSize;
-    int texCoordsOffset = colorsOffset + colorsSize;
-    int texCoords1Offset = texCoordsOffset + texCoordsSize;
-    int clusterIndicesOffset = texCoords1Offset + texCoords1Size;
-    int clusterWeightsOffset = clusterIndicesOffset + clusterIndicesSize;
-    int totalAttributeSize = clusterWeightsOffset + clusterWeightsSize;
-
-    // Copy all attribute data in a single attribute buffer
-    auto attribBuffer = std::make_shared<gpu::Buffer>();
-    attribBuffer->resize(totalAttributeSize);
-    attribBuffer->setSubData(normalsOffset, normalsSize, (gpu::Byte*) fbxMesh.normals.constData());
-    attribBuffer->setSubData(tangentsOffset, tangentsSize, (gpu::Byte*) fbxMesh.tangents.constData());
-    attribBuffer->setSubData(colorsOffset, colorsSize, (gpu::Byte*) fbxMesh.colors.constData());
-    attribBuffer->setSubData(texCoordsOffset, texCoordsSize, (gpu::Byte*) fbxMesh.texCoords.constData());
-    attribBuffer->setSubData(texCoords1Offset, texCoords1Size, (gpu::Byte*) fbxMesh.texCoords1.constData());
-
-    if (fbxMesh.clusters.size() < UINT8_MAX) {
-        // yay! we can fit the clusterIndices within 8-bits
-        int32_t numIndices = fbxMesh.clusterIndices.size();
-        QVector<uint8_t> clusterIndices;
-        clusterIndices.resize(numIndices);
-        for (int32_t i = 0; i < numIndices; ++i) {
-            assert(fbxMesh.clusterIndices[i] <= UINT8_MAX);
-            clusterIndices[i] = (uint8_t)(fbxMesh.clusterIndices[i]);
-        }
-        attribBuffer->setSubData(clusterIndicesOffset, clusterIndicesSize, (gpu::Byte*) clusterIndices.constData());
-    } else {
-        attribBuffer->setSubData(clusterIndicesOffset, clusterIndicesSize, (gpu::Byte*) fbxMesh.clusterIndices.constData());
-    }
-    attribBuffer->setSubData(clusterWeightsOffset, clusterWeightsSize, (gpu::Byte*) fbxMesh.clusterWeights.constData());
-
-    if (normalsSize) {
-        mesh->addAttribute(gpu::Stream::NORMAL,
-                            model::BufferView(attribBuffer, normalsOffset, normalsSize,
-                            gpu::Element(gpu::VEC3, gpu::FLOAT, gpu::XYZ)));
-    }
-    if (tangentsSize) {
-        mesh->addAttribute(gpu::Stream::TANGENT,
-                            model::BufferView(attribBuffer, tangentsOffset, tangentsSize,
-                            gpu::Element(gpu::VEC3, gpu::FLOAT, gpu::XYZ)));
-    }
-    if (colorsSize) {
-        mesh->addAttribute(gpu::Stream::COLOR,
-                            model::BufferView(attribBuffer, colorsOffset, colorsSize,
-                            gpu::Element(gpu::VEC3, gpu::FLOAT, gpu::RGB)));
-    }
-    if (texCoordsSize) {
-        mesh->addAttribute(gpu::Stream::TEXCOORD,
-                            model::BufferView( attribBuffer, texCoordsOffset, texCoordsSize,
-                            gpu::Element(gpu::VEC2, gpu::FLOAT, gpu::UV)));
-    }
-    if (texCoords1Size) {
-        mesh->addAttribute( gpu::Stream::TEXCOORD1,
-                            model::BufferView(attribBuffer, texCoords1Offset, texCoords1Size,
-                            gpu::Element(gpu::VEC2, gpu::FLOAT, gpu::UV)));
-    } else if (texCoordsSize) {
-        mesh->addAttribute(gpu::Stream::TEXCOORD1,
-                            model::BufferView(attribBuffer, texCoordsOffset, texCoordsSize,
-                            gpu::Element(gpu::VEC2, gpu::FLOAT, gpu::UV)));
-    }
-
-    if (clusterIndicesSize) {
-        if (fbxMesh.clusters.size() < UINT8_MAX) {
-            mesh->addAttribute(gpu::Stream::SKIN_CLUSTER_INDEX,
-                               model::BufferView(attribBuffer, clusterIndicesOffset, clusterIndicesSize,
-                                                 gpu::Element(gpu::VEC4, gpu::UINT8, gpu::XYZW)));
-        } else {
-            mesh->addAttribute(gpu::Stream::SKIN_CLUSTER_INDEX,
-                               model::BufferView(attribBuffer, clusterIndicesOffset, clusterIndicesSize,
-                                                 gpu::Element(gpu::VEC4, gpu::UINT16, gpu::XYZW)));
-        }
-    }
-    if (clusterWeightsSize) {
-        mesh->addAttribute(gpu::Stream::SKIN_CLUSTER_WEIGHT,
-                          model::BufferView(attribBuffer, clusterWeightsOffset, clusterWeightsSize,
-                                            gpu::Element(gpu::VEC4, gpu::NUINT8, gpu::XYZW)));
-    }
-
 
     unsigned int totalIndices = 0;
     foreach(const FBXMeshPart& part, extractedMesh.parts) {
         totalIndices += (part.quadTrianglesIndices.size() + part.triangleIndices.size());
     }
 
-    if (! totalIndices) {
+    if (!totalIndices) {
         qCDebug(modelformat) << "buildModelMesh failed -- no indices, url = " << url;
         return;
     }
 
-    auto indexBuffer = std::make_shared<gpu::Buffer>();
-    indexBuffer->resize(totalIndices * sizeof(int));
-
-    int indexNum = 0;
-    int offset = 0;
-
-    std::vector< model::Mesh::Part > parts;
-    if (extractedMesh.parts.size() > 1) {
-        indexNum = 0;
-    }
-    foreach(const FBXMeshPart& part, extractedMesh.parts) {
-        model::Mesh::Part modelPart(indexNum, 0, 0, model::Mesh::TRIANGLES);
-        
-        if (part.quadTrianglesIndices.size()) {
-            indexBuffer->setSubData(offset,
-                            part.quadTrianglesIndices.size() * sizeof(int),
-                            (gpu::Byte*) part.quadTrianglesIndices.constData());
-            offset += part.quadTrianglesIndices.size() * sizeof(int);
-            indexNum += part.quadTrianglesIndices.size();
-            modelPart._numIndices += part.quadTrianglesIndices.size();
-        }
-
-        if (part.triangleIndices.size()) {
-            indexBuffer->setSubData(offset,
-                            part.triangleIndices.size() * sizeof(int),
-                            (gpu::Byte*) part.triangleIndices.constData());
-            offset += part.triangleIndices.size() * sizeof(int);
-            indexNum += part.triangleIndices.size();
-            modelPart._numIndices += part.triangleIndices.size();
-        }
-
-        parts.push_back(modelPart);
-    }
-
-    gpu::BufferView indexBufferView(indexBuffer, gpu::Element(gpu::SCALAR, gpu::UINT32, gpu::XYZ));
-    mesh->setIndexBuffer(indexBufferView);
-
-    if (parts.size()) {
-        auto pb = std::make_shared<gpu::Buffer>();
-        pb->setData(parts.size() * sizeof(model::Mesh::Part), (const gpu::Byte*) parts.data());
-        gpu::BufferView pbv(pb, gpu::Element(gpu::VEC4, gpu::UINT32, gpu::XYZW));
-        mesh->setPartBuffer(pbv);
-    } else {
-        qCDebug(modelformat) << "buildModelMesh failed -- no parts, url = " << url;
-        return;
-    }
-
-    // model::Box box =
-    mesh->evalPartBound(0);
-
-    extractedMesh._mesh = mesh;
+    extractedMesh._mesh = FBXMesh::meshConverter(extractedMesh);
 }

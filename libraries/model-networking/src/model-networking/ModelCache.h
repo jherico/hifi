@@ -152,6 +152,9 @@ protected:
                                                     const void* extra) override;
 
 private:
+    static const FBXMaterial::ModelMaterialConverter materialConverter;
+    static const FBXMesh::ModelMeshConverter meshConverter;
+
     ModelCache();
     virtual ~ModelCache() = default;
 };

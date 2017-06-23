@@ -28,7 +28,6 @@
 #include <GLMHelpers.h>
 #include <NumericalConstants.h>
 #include <OctalCode.h>
-#include <gpu/Format.h>
 #include <LogHandler.h>
 
 #include "FBXReader.h"
@@ -1756,8 +1755,6 @@ FBXGeometry* FBXReader::extractFBXGeometry(const QVariantHash& mapping, const QS
                 }
             }
         }
-        buildModelMesh(extracted.mesh, url);
-
         geometry.meshes.append(extracted.mesh);
         int meshIndex = geometry.meshes.size() - 1;
         meshIDsToMeshIndices.insert(it.key(), meshIndex);

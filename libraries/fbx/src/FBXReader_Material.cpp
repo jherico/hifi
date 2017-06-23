@@ -27,6 +27,9 @@
 
 #include "ModelFormatLogging.h"
 
+FBXMaterial::ModelMaterialConverter FBXMaterial::materialConverter = [](const FBXMaterial&){ return model::MaterialPointer(); };
+
+
 void FBXMaterial::getTextureNames(QSet<QString>& textureList) const {
     if (!normalTexture.isNull()) {
         textureList.insert(normalTexture.name);
@@ -278,30 +281,17 @@ void FBXReader::consolidateFBXMaterials(const QVariantHash& mapping) {
         }
 
         // Finally create the true material representation
-        material._material = std::make_shared<model::Material>();
 
         // Emissive color is the mix of emissiveColor with emissiveFactor
         auto emissive = material.emissiveColor * (isMaterialLambert ? 1.0f : material.emissiveFactor); // In lambert there is not emissiveFactor
-        material._material->setEmissive(emissive);
-
         // Final diffuse color is the mix of diffuseColor with diffuseFactor
         auto diffuse = material.diffuseColor * material.diffuseFactor;
-        material._material->setAlbedo(diffuse);
-
+        bool isAlbedo = glm::any(glm::greaterThan(diffuse, vec3(0.0f)));
         if (material.isPBSMaterial) {
-            material._material->setRoughness(material.roughness);
-            material._material->setMetallic(material.metallic);
         } else {
-            material._material->setRoughness(model::Material::shininessToRoughness(material.shininess));
-            float metallic = std::max(material.specularColor.x, std::max(material.specularColor.y, material.specularColor.z));
-            material._material->setMetallic(metallic);
-
             if (isMaterialLambert) {
-                if (!material._material->getKey().isAlbedo()) {
+                if (!isAlbedo) {
                     // switch emissive to material albedo as we tag the material to unlit
-                    material._material->setUnlit(true);
-                    material._material->setAlbedo(emissive);
-
                     if (!material.emissiveTexture.isNull()) {
                         material.albedoTexture = material.emissiveTexture;
                     }
@@ -315,8 +305,7 @@ void FBXReader::consolidateFBXMaterials(const QVariantHash& mapping) {
             qCDebug(modelformat) << "Mapping fbx material:" << material.name << " with HifiMaterial: " << materialOptions;
 
             if (materialOptions.contains("scattering")) {
-                float scattering = (float) materialOptions.value("scattering").toDouble();
-                material._material->setScattering(scattering);
+                material.scattering = (float) materialOptions.value("scattering").toDouble();
             }
 
             if (materialOptions.contains("scatteringMap")) {
@@ -327,10 +316,65 @@ void FBXReader::consolidateFBXMaterials(const QVariantHash& mapping) {
             }
         }
 
-        if (material.opacity <= 0.0f) {
-            material._material->setOpacity(1.0f);
-        } else {
-            material._material->setOpacity(material.opacity);
+        material._material = FBXMaterial::materialConverter(material);
+    }
+}
+
+#if 0
+// Finally create the true material representation
+material._material = std::make_shared<model::Material>();
+
+// Emissive color is the mix of emissiveColor with emissiveFactor
+auto emissive = material.emissiveColor * (isMaterialLambert ? 1.0f : material.emissiveFactor); // In lambert there is not emissiveFactor
+material._material->setEmissive(emissive);
+
+// Final diffuse color is the mix of diffuseColor with diffuseFactor
+auto diffuse = material.diffuseColor * material.diffuseFactor;
+material._material->setAlbedo(diffuse);
+
+if (material.isPBSMaterial) {
+    material._material->setRoughness(material.roughness);
+    material._material->setMetallic(material.metallic);
+} else {
+    material._material->setRoughness(model::Material::shininessToRoughness(material.shininess));
+    float metallic = std::max(material.specularColor.x, std::max(material.specularColor.y, material.specularColor.z));
+    material._material->setMetallic(metallic);
+
+    if (isMaterialLambert) {
+        if (!material._material->getKey().isAlbedo()) {
+            // switch emissive to material albedo as we tag the material to unlit
+            material._material->setUnlit(true);
+            material._material->setAlbedo(emissive);
+
+            if (!material.emissiveTexture.isNull()) {
+                material.albedoTexture = material.emissiveTexture;
+            }
         }
     }
 }
+qCDebug(modelformat) << " fbx material Name:" << material.name;
+
+if (materialMap.contains(material.name)) {
+    QJsonObject materialOptions = materialMap.value(material.name).toObject();
+    qCDebug(modelformat) << "Mapping fbx material:" << material.name << " with HifiMaterial: " << materialOptions;
+
+    if (materialOptions.contains("scattering")) {
+        float scattering = (float)materialOptions.value("scattering").toDouble();
+        material._material->setScattering(scattering);
+    }
+
+    if (materialOptions.contains("scatteringMap")) {
+        QByteArray scatteringMap = materialOptions.value("scatteringMap").toVariant().toByteArray();
+        material.scatteringTexture = FBXTexture();
+        material.scatteringTexture.name = material.name + ".scatteringMap";
+        material.scatteringTexture.filename = scatteringMap;
+    }
+}
+
+if (material.opacity <= 0.0f) {
+    material._material->setOpacity(1.0f);
+} else {
+    material._material->setOpacity(material.opacity);
+}
+
+#endif

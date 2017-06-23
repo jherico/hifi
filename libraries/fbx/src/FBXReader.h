@@ -25,11 +25,18 @@
 #include <Extents.h>
 #include <Transform.h>
 
-#include <model/Geometry.h>
-#include <model/Material.h>
 
 class QIODevice;
 class FBXNode;
+class FBXMaterial;
+class FBXMesh;
+
+namespace model {
+    class Mesh;
+    using MeshPointer = std::shared_ptr<model::Mesh>;
+    class Material;
+    using MaterialPointer = std::shared_ptr<model::Material>;
+}
 
 typedef QList<FBXNode> FBXNodeList;
 
@@ -138,6 +145,9 @@ public:
 
 class FBXMaterial {
 public:
+    using ModelMaterialConverter = std::function<model::MaterialPointer(const FBXMaterial&)>;
+    static ModelMaterialConverter materialConverter;
+
     FBXMaterial() {};
     FBXMaterial(const glm::vec3& diffuseColor, const glm::vec3& specularColor, const glm::vec3& emissiveColor,
          float shininess, float opacity) :
@@ -160,6 +170,7 @@ public:
 
     float shininess{ 23.0f };
     float opacity{ 1.0f };
+    float scattering { 0.0f };
 
     float metallic{ 0.0f };
     float roughness{ 1.0f };
@@ -202,6 +213,8 @@ public:
 /// A single mesh (with optional blendshapes) extracted from an FBX document.
 class FBXMesh {
 public:
+    using ModelMeshConverter = std::function<model::MeshPointer(const FBXMesh&)>;
+    static ModelMeshConverter meshConverter;
 
     QVector<FBXMeshPart> parts;
     

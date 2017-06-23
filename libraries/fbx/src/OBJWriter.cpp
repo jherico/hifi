@@ -11,10 +11,11 @@
 
 #include <QFile>
 #include <QFileInfo>
-#include "model/Geometry.h"
+
 #include "OBJWriter.h"
 #include "ModelFormatLogging.h"
 
+#if 0
 static QString formatFloat(double n) {
     // limit precision to 6, but don't output trailing zeros.
     QString s = QString::number(n, 'f', 6);
@@ -174,3 +175,4 @@ QString writeOBJToString(QList<MeshPointer> meshes) {
     }
     return QString("");
 }
+#endif

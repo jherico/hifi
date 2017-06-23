@@ -335,6 +335,7 @@ public:
 
     // conversion from legacy material properties to PBR equivalent
     static float shininessToRoughness(float shininess) { return 1.0f - shininess / 100.0f; }
+    static float specularToMetallic(const Color& specular) { return glm::compMax(specular); }
 
     // Texture Map Array Schema
     static const int NUM_TEXCOORD_TRANSFORMS{ 2 };
