@@ -34,11 +34,4 @@ if (APPLE)
   else ()
     message(STATUS "Could NOT find 3DConnexionClient")
   endif()
-elseif (WIN32)
-  find_path(3DCONNEXIONCLIENT_INCLUDE_DIRS I3dMouseParams.h PATH_SUFFIXES include HINTS ${3DCONNEXIONCLIENT_SEARCH_DIRS})
-
-  include(FindPackageHandleStandardArgs)
-  find_package_handle_standard_args(3DCONNEXIONCLIENT DEFAULT_MSG 3DCONNEXIONCLIENT_INCLUDE_DIRS)
-
-  mark_as_advanced(3DCONNEXIONCLIENT_INCLUDE_DIRS 3DCONNEXIONCLIENT_SEARCH_DIRS)
 endif()

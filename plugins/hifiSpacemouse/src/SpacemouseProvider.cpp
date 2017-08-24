@@ -30,12 +30,16 @@ public:
     virtual InputPluginList getInputPlugins() override {
         static std::once_flag once;
         std::call_once(once, [&] {
-            InputPluginPointer plugin(new SpacemouseManager());
+            auto plugin = std::make_shared<SpacemouseManager>();
             if (plugin->isSupported()) {
                 _inputPlugins.push_back(plugin);
             }
         });
         return _inputPlugins;
+    }
+
+    virtual void destroyInputPlugins() override {
+        _inputPlugins.clear();
     }
 
 private:
