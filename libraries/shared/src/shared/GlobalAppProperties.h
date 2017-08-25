@@ -27,6 +27,10 @@ namespace hifi { namespace properties {
         extern const char* PRIMARY_CONTEXT;
     }
 
+    namespace dx12 {
+        extern const char* BACKEND;
+    }
+
 } }
 
 

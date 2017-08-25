@@ -54,6 +54,7 @@ class Backend {
 public:
     virtual~ Backend() {};
 
+    void flushBuffer(const BufferPointer& buffer) { buffer->flush(); }
 
     virtual const std::string& getVersion() const = 0;
 

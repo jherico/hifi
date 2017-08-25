@@ -25,4 +25,8 @@ namespace hifi { namespace properties {
         const char* PRIMARY_CONTEXT = "com.highfidelity.gl.primaryContext";
     }
 
+    namespace dx12 {
+        const char* BACKEND = "com.highfidelity.dx12.backend";
+    }
+
 } }
