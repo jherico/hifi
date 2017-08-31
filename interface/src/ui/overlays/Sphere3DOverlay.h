@@ -27,6 +27,9 @@ public:
     virtual const render::ShapeKey getShapeKey() override;
 
     virtual Sphere3DOverlay* createClone() const override;
+
+private:
+    virtual Transform calculateRenderTransform() const override;
 };
 
  

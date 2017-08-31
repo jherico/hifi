@@ -121,6 +121,7 @@ protected:
     Anchor _anchor;
 
     unsigned int _stackOrder { 0 };
+    Transform _renderTransform;
 
 private:
     OverlayID _overlayID; // only used for non-3d overlays

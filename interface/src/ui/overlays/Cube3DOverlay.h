@@ -37,6 +37,7 @@ public:
     QVariant getProperty(const QString& property) override;
 
 private:
+    virtual Transform calculateRenderTransform() const override;
     float _borderSize;
     // edges on a cube
     std::array<int, 12> _geometryIds;

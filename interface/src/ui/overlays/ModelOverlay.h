@@ -52,6 +52,7 @@ protected:
         vectorType mapJoints(mapFunction<itemType> function) const;
 
 private:
+    virtual Transform calculateRenderTransform() const override;
 
     ModelPointer _model;
     QVariantMap _modelTextures;

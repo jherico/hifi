@@ -66,3 +66,9 @@ bool Planar3DOverlay::findRayIntersection(const glm::vec3& origin, const glm::ve
     // FIXME - face and surfaceNormal not being returned
     return findRayRectangleIntersection(origin, direction, getRotation(), getPosition(), getDimensions(), distance);
 }
+
+Transform Planar3DOverlay::calculateRenderTransform() const {
+    Transform transform = getTransform();
+    transform.postScale(glm::vec3(getDimensions(), 1.0f));
+    return transform;
+}

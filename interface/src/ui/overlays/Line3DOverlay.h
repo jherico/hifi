@@ -57,6 +57,7 @@ public:
     quint16 getEndJointIndex() const { return _endParentJointIndex; }
 
 private:
+    virtual Transform calculateRenderTransform() const { return Transform(); }
     QUuid _endParentID;
     quint16 _endParentJointIndex { INVALID_JOINT_INDEX };
 

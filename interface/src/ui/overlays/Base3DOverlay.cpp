@@ -268,3 +268,4 @@ void Base3DOverlay::locationChanged(bool tellPhysics) {
 void Base3DOverlay::parentDeleted() {
     qApp->getOverlays().deleteOverlay(getOverlayID());
 }
+

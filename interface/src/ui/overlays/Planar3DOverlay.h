@@ -34,6 +34,7 @@ public:
                                         BoxFace& face, glm::vec3& surfaceNormal) override;
     
 protected:
+    virtual Transform calculateRenderTransform() const override;
     glm::vec2 _dimensions;
 };
 

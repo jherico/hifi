@@ -64,6 +64,9 @@ public:
     }
 
 protected:
+    virtual Transform calculateRenderTransform() const = 0;
+    void setRenderTransform(Transform& transform);
+
     virtual void locationChanged(bool tellPhysics = true) override;
     virtual void parentDeleted() override;
 
