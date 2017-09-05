@@ -2,7 +2,7 @@ set(TARGET_NAME interface)
 project(${TARGET_NAME})
 
 # set a default root dir for each of our optional externals if it was not passed
-set(OPTIONAL_EXTERNALS "LeapMotion")
+set(OPTIONAL_EXTERNALS "LeapMotion" "BinaryVR")
 
 setup_memory_debugger()
 
@@ -182,6 +182,10 @@ if (WIN32)
   add_dependency_external_projects(neuron)
   add_dependency_external_projects(wasapi)
   add_dependency_external_projects(steamworks)
+
+  if (CMAKE_SIZEOF_VOID_P EQUAL 8) # support Win64 only
+    add_dependency_external_projects(binaryvr)
+  endif()
 endif()
 
 # include OPENSSL

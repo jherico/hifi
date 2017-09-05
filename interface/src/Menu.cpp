@@ -35,6 +35,7 @@
 #include "avatar/AvatarManager.h"
 #include "AvatarBookmarks.h"
 #include "devices/DdeFaceTracker.h"
+#include "devices/BinaryFaceHMDTracker.h"
 #include "MainWindow.h"
 #include "render/DrawStatus.h"
 #include "scripting/MenuScriptingInterface.h"
@@ -496,6 +497,12 @@ Menu::Menu() {
             qApp, SLOT(setActiveFaceTracker()));
         faceTrackerGroup->addAction(ddeFaceTracker);
 #endif
+#ifdef HAVE_BINARYFACEHMD
+        QAction* binaryfacehmdTracker = addCheckableActionToQMenuAndActionHash(faceTrackingMenu, MenuOption::BinaryFaceHMD,
+            0, false,
+            qApp, SLOT(setActiveFaceTracker()));
+        faceTrackerGroup->addAction(binaryfacehmdTracker);
+#endif
     }
 #ifdef HAVE_DDE
     faceTrackingMenu->addSeparator();
@@ -510,6 +517,17 @@ Menu::Menu() {
     QAction* ddeCalibrate = addActionToQMenuAndActionHash(faceTrackingMenu, MenuOption::CalibrateCamera, 0,
         DependencyManager::get<DdeFaceTracker>().data(), SLOT(calibrate()));
     ddeCalibrate->setVisible(true);  // DDE face tracking is on by default
+#endif
+
+#ifdef HAVE_BINARYFACEHMD
+    faceTrackingMenu->addSeparator();
+    QAction* binaryfacehmdReset = addActionToQMenuAndActionHash(faceTrackingMenu, MenuOption::ResetBinaryFaceHMD, 0,
+        DependencyManager::get<BinaryFaceHMDTracker>().data(), SLOT(resetTracker()));
+    QAction* binaryfacehmdCalibrate = addActionToQMenuAndActionHash(faceTrackingMenu, MenuOption::CalibrateBinaryFaceHMD, 0,
+        DependencyManager::get<BinaryFaceHMDTracker>().data(), SLOT(calibrate()));
+#endif
+
+#if defined(HAVE_DDE) || defined(HAVE_BINARYFACEHMD)
     faceTrackingMenu->addSeparator();
     addCheckableActionToQMenuAndActionHash(faceTrackingMenu, MenuOption::MuteFaceTracking,
         [](bool mute) { FaceTracker::setIsMuted(mute); },

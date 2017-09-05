@@ -146,6 +146,7 @@
 #include "avatar/MyHead.h"
 #include "CrashHandler.h"
 #include "devices/DdeFaceTracker.h"
+#include "devices/BinaryFaceHMDTracker.h"
 #include "DiscoverabilityManager.h"
 #include "GLCanvas.h"
 #include "InterfaceDynamicFactory.h"
@@ -618,6 +619,7 @@ bool setupEssentials(int& argc, char** argv, bool runningMarkerExisted) {
     DependencyManager::set<ScriptCache>();
     DependencyManager::set<SoundCache>();
     DependencyManager::set<DdeFaceTracker>();
+    DependencyManager::set<BinaryFaceHMDTracker>();
     DependencyManager::set<EyeTracker>();
     DependencyManager::set<AudioClient>();
     DependencyManager::set<AudioScope>();
@@ -1408,6 +1410,12 @@ Application::Application(int& argc, char** argv, QElapsedTimer& startupTimer, bo
     auto ddeTracker = DependencyManager::get<DdeFaceTracker>();
     ddeTracker->init();
     connect(ddeTracker.data(), &FaceTracker::muteToggled, this, &Application::faceTrackerMuteToggled);
+#endif
+
+#ifdef HAVE_BINARYFACEHMD
+    auto binaryfacehmdTracker = DependencyManager::get<BinaryFaceHMDTracker>();
+    binaryfacehmdTracker->init();
+    connect(binaryfacehmdTracker.data(), &FaceTracker::muteToggled, this, &Application::faceTrackerMuteToggled);
 #endif
 
 #ifdef HAVE_IVIEWHMD
@@ -4197,8 +4205,11 @@ ivec2 Application::getMouse() const {
 
 FaceTracker* Application::getActiveFaceTracker() {
     auto dde = DependencyManager::get<DdeFaceTracker>();
+    auto binaryfacehmd = DependencyManager::get<BinaryFaceHMDTracker>();
 
-    return dde->isActive() ? static_cast<FaceTracker*>(dde.data()) : nullptr;
+    return dde->isActive() ? static_cast<FaceTracker*>(dde.data()) 
+        : binaryfacehmd->isActive() ? static_cast<FaceTracker*>(binaryfacehmd.data()) 
+        : nullptr;
 }
 
 FaceTracker* Application::getSelectedFaceTracker() {
@@ -4206,6 +4217,11 @@ FaceTracker* Application::getSelectedFaceTracker() {
 #ifdef HAVE_DDE
     if (Menu::getInstance()->isOptionChecked(MenuOption::UseCamera)) {
         faceTracker = DependencyManager::get<DdeFaceTracker>().data();
+    }
+#endif
+#ifdef HAVE_BINARYFACEHMD
+    if (Menu::getInstance()->isOptionChecked(MenuOption::BinaryFaceHMD)) {
+        faceTracker = DependencyManager::get<BinaryFaceHMDTracker>().data();
     }
 #endif
     return faceTracker;
@@ -4223,6 +4239,16 @@ void Application::setActiveFaceTracker() const {
     auto ddeTracker = DependencyManager::get<DdeFaceTracker>();
     ddeTracker->setIsMuted(isMuted);
     ddeTracker->setEnabled(isUsingDDE && !isMuted);
+#endif
+#ifdef HAVE_BINARYFACEHMD
+    if (qApp->isHMDMode()) { // BinaryFaceHMD tracker works only in HMD mode
+        bool isUsingBinaryFaceHMD = Menu::getInstance()->isOptionChecked(MenuOption::BinaryFaceHMD);
+        Menu::getInstance()->getActionForOption(MenuOption::ResetBinaryFaceHMD)->setVisible(isUsingBinaryFaceHMD);
+        Menu::getInstance()->getActionForOption(MenuOption::CalibrateBinaryFaceHMD)->setVisible(isUsingBinaryFaceHMD);
+        auto binaryfacehmdTracker = DependencyManager::get<BinaryFaceHMDTracker>();
+        binaryfacehmdTracker->setIsMuted(isMuted);
+        binaryfacehmdTracker->setEnabled(isUsingBinaryFaceHMD && !isMuted);
+    }
 #endif
 }
 

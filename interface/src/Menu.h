@@ -48,8 +48,10 @@ namespace MenuOption {
     const QString AvatarBookmarks = "Avatar Bookmarks";
     const QString Back = "Back";
     const QString BinaryEyelidControl = "Binary Eyelid Control";
+    const QString BinaryFaceHMD = "BinaryfaceHMD";
     const QString BookmarkAvatar = "Bookmark Avatar";
     const QString BookmarkLocation = "Bookmark Location";
+    const QString CalibrateBinaryFaceHMD = "Calibrate BinaryFaceHMD";
     const QString CalibrateCamera = "Calibrate Camera";
     const QString CameraEntityMode = "Entity Mode";
     const QString CenterPlayerInView = "Center Player In View";
@@ -164,6 +166,7 @@ namespace MenuOption {
     const QString RenderIKChains = "Show IK Chains";
     const QString RenderDetailedCollision = "Show Detailed Collision";
     const QString ResetAvatarSize = "Reset Avatar Size";
+    const QString ResetBinaryFaceHMD = "Reset BinaryFaceHMD";
     const QString ResetSensors = "Reset Sensors";
     const QString RunningScripts = "Running Scripts...";
     const QString RunClientScriptTests = "Run Client Script Tests";
