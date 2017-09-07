@@ -9,13 +9,15 @@
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 //
 
+#include "BinaryFaceHMDTracker.h"
+
 #include <SharedUtil.h>
 
-#include <QCoreApplication>
-#include <QJsonDocument>
-#include <QJsonArray>
-#include <QJsonObject>
-#include <QTimer>
+#include <QtCore/QCoreApplication>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonArray>
+#include <QtCore/QJsonObject>
+#include <QtCore/QTimer>
 
 #include <GLMHelpers.h>
 #include <NumericalConstants.h>
@@ -23,7 +25,6 @@
 #include "Application.h"
 #include "avatar/AvatarManager.h"
 #include "FaceshiftConstants.h"
-#include "BinaryFaceHMDTracker.h"
 #include "InterfaceLogging.h"
 #include "Menu.h"
 #include "OffscreenUi.h"
