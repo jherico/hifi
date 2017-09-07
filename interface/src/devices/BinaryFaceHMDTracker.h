@@ -12,6 +12,8 @@
 #ifndef hifi_BinaryFaceHMDTracker_h
 #define hifi_BinaryFaceHMDTracker_h
 
+#include <QtCore/QtGlobal>
+
 #if defined(Q_OS_WIN) && !defined(Q_OS_OSX)
 #define HAVE_BINARYFACEHMD
 #endif
