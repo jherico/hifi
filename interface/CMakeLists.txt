@@ -257,6 +257,15 @@ foreach(EXTERNAL ${OPTIONAL_EXTERNALS})
     elseif (APPLE AND NOT INSTALLER_BUILD)
       add_definitions(-DSIXENSE_LIB_FILENAME=\"${${${EXTERNAL}_UPPERCASE}_LIBRARY_RELEASE}\")
     endif ()
+
+    if (${${EXTERNAL}_UPPERCASE} MATCHES "BINARYVR")
+      add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E copy_directory
+        "${BINARYVR_INCLUDE_DIRS}/../models"
+        $<TARGET_FILE_DIR:${TARGET_NAME}>/resources/binaryfacehmd
+      )
+    endif ()
+
   endif ()
 endforeach()
 
