@@ -4241,11 +4241,12 @@ void Application::setActiveFaceTracker() const {
     ddeTracker->setEnabled(isUsingDDE && !isMuted);
 #endif
 #ifdef HAVE_BINARYFACEHMD
-    if (qApp->isHMDMode()) { // BinaryFaceHMD tracker works only in HMD mode
+    {
         bool isUsingBinaryFaceHMD = Menu::getInstance()->isOptionChecked(MenuOption::BinaryFaceHMD);
         Menu::getInstance()->getActionForOption(MenuOption::ResetBinaryFaceHMD)->setVisible(isUsingBinaryFaceHMD);
         Menu::getInstance()->getActionForOption(MenuOption::CalibrateBinaryFaceHMD)->setVisible(isUsingBinaryFaceHMD);
         auto binaryfacehmdTracker = DependencyManager::get<BinaryFaceHMDTracker>();
+        bool isMuted = Menu::getInstance()->isOptionChecked(MenuOption::MuteFaceTracking);
         binaryfacehmdTracker->setIsMuted(isMuted);
         binaryfacehmdTracker->setEnabled(isUsingBinaryFaceHMD && !isMuted);
     }

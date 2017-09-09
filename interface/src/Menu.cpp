@@ -499,7 +499,7 @@ Menu::Menu() {
 #endif
 #ifdef HAVE_BINARYFACEHMD
         QAction* binaryfacehmdTracker = addCheckableActionToQMenuAndActionHash(faceTrackingMenu, MenuOption::BinaryFaceHMD,
-            0, false,
+            0, false, //BinaryVR face tracking is off by default
             qApp, SLOT(setActiveFaceTracker()));
         faceTrackerGroup->addAction(binaryfacehmdTracker);
 #endif
@@ -523,8 +523,10 @@ Menu::Menu() {
     faceTrackingMenu->addSeparator();
     QAction* binaryfacehmdReset = addActionToQMenuAndActionHash(faceTrackingMenu, MenuOption::ResetBinaryFaceHMD, 0,
         DependencyManager::get<BinaryFaceHMDTracker>().data(), SLOT(resetTracker()));
+    binaryfacehmdReset->setVisible(false); 
     QAction* binaryfacehmdCalibrate = addActionToQMenuAndActionHash(faceTrackingMenu, MenuOption::CalibrateBinaryFaceHMD, 0,
         DependencyManager::get<BinaryFaceHMDTracker>().data(), SLOT(calibrate()));
+    binaryfacehmdCalibrate->setVisible(false);
 #endif
 
 #if defined(HAVE_DDE) || defined(HAVE_BINARYFACEHMD)

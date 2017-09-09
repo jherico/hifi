@@ -36,6 +36,7 @@ using namespace std;
 
 static const int BINARYFACEHMD_TO_FACESHIFT_MAPPING[] = {
     21, // "JawOpen"
+    -1, // Not available
     20, // "JawLeft"
     23, // "JawWRight"
     19, // "JawFwd"
@@ -95,9 +96,6 @@ void BinaryFaceHMDTracker::openContext() {
     if (ret != BINARYFACEHMD_OK) {
         qCWarning(interfaceapp) << "BinaryFaceHMD Tracker: openContext: error occurred: " << ret;
         _isContextOpen = false;
-        Menu::getInstance()->getActionForOption(MenuOption::BinaryFaceHMD)->setEnabled(false);
-        Menu::getInstance()->setIsOptionChecked(MenuOption::NoFaceTracking, true);
-        setSubMenuEnabled(false);
     }
     else {
         qCDebug(interfaceapp) << "BinaryFaceHMD Tracker: openContext: success";
@@ -110,7 +108,7 @@ void BinaryFaceHMDTracker::closeContext() {
 
     binaryfacehmd_ret ret = binaryfacehmd_close_context(_context);
     if (ret != BINARYFACEHMD_OK) {
-        qCWarning(interfaceapp) << "bBinaryFaceHMD Tracker: closeContext: error occurred: " << ret;
+        qCWarning(interfaceapp) << "BinaryFaceHMD Tracker: closeContext: error occurred: " << ret;
     }
 }
 
@@ -126,6 +124,9 @@ void BinaryFaceHMDTracker::openDevice() {
     else {
         qCDebug(interfaceapp) << "BinaryFaceHMD Tracker: openDevice: success";
         _isDeviceOpen = true;
+
+        //binaryfacehmd_start_tracking(_context);
+        binaryfacehmd_start_tracking(_context);
     }
 }
 
@@ -139,7 +140,7 @@ void BinaryFaceHMDTracker::closeDevice() {
         return;
     }
     else {
-        qCDebug(interfaceapp) << "bBinaryFaceHMD Tracker: closeDevice: success";
+        qCDebug(interfaceapp) << "BinaryFaceHMD Tracker: closeDevice: success";
         _isDeviceOpen = false;
     }
 }
@@ -161,12 +162,6 @@ void BinaryFaceHMDTracker::setUser() {
     }
 }
 
-void BinaryFaceHMDTracker::setSubMenuEnabled(bool enabled) {
-    Menu::getInstance()->getActionForOption(MenuOption::ResetBinaryFaceHMD)->setEnabled(enabled);
-    Menu::getInstance()->getActionForOption(MenuOption::CalibrateBinaryFaceHMD)->setEnabled(enabled);
-}
-
-
 void BinaryFaceHMDTracker::setEnabled(bool enabled) {
     // Don't enable until have explicitly initialized
     if (!_isInitialized || !_isContextOpen) return;
@@ -174,22 +169,19 @@ void BinaryFaceHMDTracker::setEnabled(bool enabled) {
     if (enabled) {
         openDevice();
         if (_isUserModelLoaded)
-            reset(); // reset tracker before use
+            binaryfacehmd_start_tracking(_context);
         else // need to run calibration
             calibrate();
-
     }
     else {
         closeDevice();
     }
-
-    setSubMenuEnabled(enabled);
 }
 
 void BinaryFaceHMDTracker::reset() {
     FaceTracker::reset();
 
-    if (!checkDevice() || !isActive()) return;
+    if (!checkContextAndDevice() || !isActive()) return;
 
     // show reset instruction message popup window
     auto offscreenUi = DependencyManager::get<OffscreenUi>();
@@ -256,7 +248,7 @@ void BinaryFaceHMDTracker::update(float deltaTime) {
 
             _blendshapeCoefficients[index] = glm::clamp(blendshape_weights[i], 0.0f, 1.0f);
         }
-        //qCDebug(interfaceapp) << "time: " << deltaTime << "\n" << _blendshapeCoefficients;
+        qCDebug(interfaceapp) << "BinaryFaceHMD time: " << deltaTime << "\n" << _blendshapeCoefficients;
     }
 }
 
@@ -269,10 +261,11 @@ bool BinaryFaceHMDTracker::isTracking() const {
         && binaryfacehmd_get_processing_status(_context) == BINARYFACEHMD_ON_TRACKING;
 }
 
-bool BinaryFaceHMDTracker::checkDevice() {
+bool BinaryFaceHMDTracker::checkContextAndDevice() {
     auto offscreenUi = DependencyManager::get<OffscreenUi>();
 
-    if (!_isContextOpen) {
+    if (!_isContextOpen)
+    {
         auto messagebox = offscreenUi->createMessageBox(
             OffscreenUi::ICON_WARNING, BINARYFACEHMD_MESSAGEBOX_TITLE,
             "BinaryFaceHMD tracker is not installed correctly.",
@@ -294,7 +287,7 @@ bool BinaryFaceHMDTracker::checkDevice() {
 }
 
 void BinaryFaceHMDTracker::calibrate() {
-    if (!checkDevice() || !isActive()) return;
+    if (!checkContextAndDevice() || !isActive()) return;
     if (binaryfacehmd_get_processing_status(_context) == BINARYFACEHMD_ON_CALIBRATION) return;
 
     if (!_isUserModelLoaded)
@@ -331,13 +324,13 @@ void BinaryFaceHMDTracker::calibrate() {
         OffscreenUi::ICON_INFORMATION, BINARYFACEHMD_MESSAGEBOX_TITLE,
         _calibrationStatusMessage, QMessageBox::NoButton, QMessageBox::NoButton);
 
-    qCDebug(interfaceapp) << "BinaryFaceHMD Tracker: calibration started";
+    //qCDebug(interfaceapp) << "BinaryFaceHMD Tracker: calibration started";
 }
 
 void BinaryFaceHMDTracker::addCalibrationDatum() {
     const int SMALL_TICK_INTERVAL = 6;
     ++_calibrationCount;
-    if (_calibrationCount % SMALL_TICK_INTERVAL == 0) {
+    if (_calibrationCount < 150 && _calibrationCount % SMALL_TICK_INTERVAL == 0) {
         _calibrationStatusMessage += ".";
         _calibrationStatusMessageBox->setProperty("text", _calibrationStatusMessage);
     }

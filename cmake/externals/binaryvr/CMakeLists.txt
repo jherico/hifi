@@ -4,8 +4,8 @@ set(EXTERNAL_NAME binaryvr)
 
 string(TOUPPER ${EXTERNAL_NAME} EXTERNAL_NAME_UPPER)
 
-set(BINARYVR_URL "https://s3.ap-northeast-2.amazonaws.com/binaryvrsdk.binaryvr/binaryvr_sdk_1.0.zip")
-set(BINARYVR_URL_MD5 "d896aad8034b197f493b99e0eff11712")
+set(BINARYVR_URL "https://s3.ap-northeast-2.amazonaws.com/binaryvrsdk.binaryvr/binaryvr_sdk_hifi.zip")
+set(BINARYVR_URL_MD5 "1d667e148a4e94239991eb195c9e6b72")
 
 ExternalProject_Add(
   ${EXTERNAL_NAME}

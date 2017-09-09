@@ -49,10 +49,7 @@ private:
     void openDevice();
     void closeDevice();
     void setUser();
-    bool checkDevice();
-
-    // sub menu: reset, calibrate
-    void setSubMenuEnabled(bool enabled);
+    bool checkContextAndDevice();
 
     // status
     bool _isContextOpen;
