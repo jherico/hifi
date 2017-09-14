@@ -4239,6 +4239,7 @@ void Application::setActiveFaceTracker() const {
     auto ddeTracker = DependencyManager::get<DdeFaceTracker>();
     ddeTracker->setIsMuted(isMuted);
     ddeTracker->setEnabled(isUsingDDE && !isMuted);
+    qCDebug(interfaceapp) << "ddeTracker->setEnabled: " << (isUsingDDE && !isMuted);
 #endif
 #ifdef HAVE_BINARYFACEHMD
     {
@@ -4249,6 +4250,7 @@ void Application::setActiveFaceTracker() const {
         bool isMuted = Menu::getInstance()->isOptionChecked(MenuOption::MuteFaceTracking);
         binaryfacehmdTracker->setIsMuted(isMuted);
         binaryfacehmdTracker->setEnabled(isUsingBinaryFaceHMD && !isMuted);
+        qCDebug(interfaceapp) << "binaryfacehmdTracker->setEnabled: " << (isUsingBinaryFaceHMD && !isMuted);
     }
 #endif
 }

@@ -40,24 +40,26 @@ static const int BINARYFACEHMD_TO_FACESHIFT_MAPPING[] = {
     20, // "JawLeft"
     23, // "JawWRight"
     19, // "JawFwd"
-    36, // "LipsUpperUp_L"
-    37, // "LipsUpperUp_R"
-    32, // "LipsLowerDown_L"
-    33, // "LipsLowerDown_R"
+    -1, // "LipsUpperUp_L"
+    -1, // "LipsUpperUp_R"
+    -1, // "LipsLowerDown_L"
+    -1, // "LipsLowerDown_R"
     34, // "LipsUpperClose"
     35, // "LipsLowerClose"
     28, // "MouthSmile_L"
     29, // "MouthSmile_R"
-    44, // "LipStretch_L"
-    45, // "LipStretch_R"
+    32, // "LipStretch_L"
+    33, // "LipStretch_R"
     26, // "MouthFrown_L"
     27, // "MouthFrown_R"
     41, // "LipsPucker"
     40, // "LipsFunnel"
     24, // "MouthLeft"
     25, // "MouthRight"
-    48  // "Puff"
+    45  // "Puff"
 };
+
+
 
 BinaryFaceHMDTracker::BinaryFaceHMDTracker() :
     _isContextOpen(false),
@@ -163,7 +165,6 @@ void BinaryFaceHMDTracker::setUser() {
 }
 
 void BinaryFaceHMDTracker::setEnabled(bool enabled) {
-    // Don't enable until have explicitly initialized
     if (!_isInitialized || !_isContextOpen) return;
 
     if (enabled) {
@@ -248,12 +249,16 @@ void BinaryFaceHMDTracker::update(float deltaTime) {
 
             _blendshapeCoefficients[index] = glm::clamp(blendshape_weights[i], 0.0f, 1.0f);
         }
-        qCDebug(interfaceapp) << "BinaryFaceHMD time: " << deltaTime << "\n" << _blendshapeCoefficients;
+
+        // LipsUpperUp = 0.5 * (LipsUpperUp_L + LipsUpperUp_R)
+        _blendshapeCoefficients[36] = glm::clamp(0.5f * (blendshape_weights[5] + blendshape_weights[6]), 0.0f, 1.0f);
+        // LipsLowerDown = 0.5 * (LipsLowerDown_L + LipsLowerDown_R)
+        _blendshapeCoefficients[37] = glm::clamp(0.5f * (blendshape_weights[7] + blendshape_weights[8]), 0.0f, 1.0f);
     }
 }
 
 bool BinaryFaceHMDTracker::isActive() const {
-    return (!_isMuted && _isContextOpen && _isDeviceOpen);
+    return _isContextOpen;
 }
 
 bool BinaryFaceHMDTracker::isTracking() const {
