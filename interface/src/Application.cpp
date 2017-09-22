@@ -1980,6 +1980,9 @@ void Application::cleanupBeforeQuit() {
 #ifdef HAVE_DDE
     DependencyManager::get<DdeFaceTracker>()->setEnabled(false);
 #endif
+#ifdef HAVE_BINARYFACEHMD
+    DependencyManager::get<BinaryFaceHMDTracker>()->setEnabled(false);
+#endif
 #ifdef HAVE_IVIEWHMD
     DependencyManager::get<EyeTracker>()->setEnabled(false, true);
 #endif
@@ -2040,6 +2043,9 @@ void Application::cleanupBeforeQuit() {
     // Destroy third party processes after scripts have finished using them.
 #ifdef HAVE_DDE
     DependencyManager::destroy<DdeFaceTracker>();
+#endif
+#ifdef HAVE_BINARYFACEHMD
+    DependencyManager::destroy<BinaryFaceHMDTracker>();
 #endif
 #ifdef HAVE_IVIEWHMD
     DependencyManager::destroy<EyeTracker>();
@@ -4239,7 +4245,6 @@ void Application::setActiveFaceTracker() const {
     auto ddeTracker = DependencyManager::get<DdeFaceTracker>();
     ddeTracker->setIsMuted(isMuted);
     ddeTracker->setEnabled(isUsingDDE && !isMuted);
-    qCDebug(interfaceapp) << "ddeTracker->setEnabled: " << (isUsingDDE && !isMuted);
 #endif
 #ifdef HAVE_BINARYFACEHMD
     {
@@ -4250,7 +4255,6 @@ void Application::setActiveFaceTracker() const {
         bool isMuted = Menu::getInstance()->isOptionChecked(MenuOption::MuteFaceTracking);
         binaryfacehmdTracker->setIsMuted(isMuted);
         binaryfacehmdTracker->setEnabled(isUsingBinaryFaceHMD && !isMuted);
-        qCDebug(interfaceapp) << "binaryfacehmdTracker->setEnabled: " << (isUsingBinaryFaceHMD && !isMuted);
     }
 #endif
 }

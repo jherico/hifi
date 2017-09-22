@@ -86,8 +86,6 @@ void BinaryFaceHMDTracker::init() {
 void BinaryFaceHMDTracker::openContext() {
     QString model_file_path = PathUtils::resourcesPath() + "binaryfacehmd/model.bfh";
     QString cache_dir_path = PathUtils::getAppLocalDataPath();
-    //qCDebug(interfaceapp) << "BinaryFaceHMD Tracker: model_file_path: " << model_file_path;
-    //qCDebug(interfaceapp) << "BinaryFaceHMD Tracker: cache_dir_path: " << cache_dir_path;
     binaryfacehmd_ret ret = binaryfacehmd_open_context(
     model_file_path.toStdString().c_str(),
     cache_dir_path.toStdString().c_str(),
@@ -205,7 +203,7 @@ void BinaryFaceHMDTracker::resetTracker() {
 
 void BinaryFaceHMDTracker::update(float deltaTime) {
     FaceTracker::update(deltaTime);
-
+    
     // update head translation/rotation when using HMD
     if (qApp->isHMDMode())
     {
@@ -224,9 +222,19 @@ void BinaryFaceHMDTracker::update(float deltaTime) {
     if (!isActive()) return;
 
     binaryfacehmd_ret ret = binaryfacehmd_get_processing_status(_context);
+
     // calibration in progress 
     if (ret == BINARYFACEHMD_ON_CALIBRATION) {
         addCalibrationDatum();
+        return;
+    }
+    // calibration failed
+    else if (ret == BINARYFACEHMD_CALIBRATION_FAILED) {
+        _calibrationStatusMessageBox->setProperty("text", "Calibration failed. Please retry.");
+        _calibrationStatusMessageBox->setProperty("buttons", QMessageBox::Ok);
+        _calibrationStatusMessageBox->setProperty("defaultButton", QMessageBox::NoButton);
+        _isCalibrating = false;
+        binaryfacehmd_start_tracking(_context);
         return;
     }
     else if (ret == BINARYFACEHMD_ON_TRACKING) {
@@ -328,8 +336,6 @@ void BinaryFaceHMDTracker::calibrate() {
     _calibrationStatusMessageBox = offscreenUi->createMessageBox(
         OffscreenUi::ICON_INFORMATION, BINARYFACEHMD_MESSAGEBOX_TITLE,
         _calibrationStatusMessage, QMessageBox::NoButton, QMessageBox::NoButton);
-
-    //qCDebug(interfaceapp) << "BinaryFaceHMD Tracker: calibration started";
 }
 
 void BinaryFaceHMDTracker::addCalibrationDatum() {
