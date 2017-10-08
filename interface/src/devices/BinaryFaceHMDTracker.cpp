@@ -117,6 +117,7 @@ void BinaryFaceHMDTracker::openDevice() {
     if (!_isContextOpen || _isDeviceOpen) return;
   
     binaryfacehmd_ret ret = binaryfacehmd_open_device(_context, 0, &_imageInfo);
+    
     if (ret != BINARYFACEHMD_OK) {
         qCWarning(interfaceapp) << "BinaryFaceHMD Tracker: openDevice: error occurred: " << ret;
         _isDeviceOpen = false;
@@ -225,14 +226,16 @@ void BinaryFaceHMDTracker::update(float deltaTime) {
 
     // calibration in progress 
     if (ret == BINARYFACEHMD_ON_CALIBRATION) {
-        addCalibrationDatum();
         return;
     }
     // calibration failed
     else if (ret == BINARYFACEHMD_CALIBRATION_FAILED) {
-        _calibrationStatusMessageBox->setProperty("text", "Calibration failed. Please retry.");
-        _calibrationStatusMessageBox->setProperty("buttons", QMessageBox::Ok);
-        _calibrationStatusMessageBox->setProperty("defaultButton", QMessageBox::NoButton);
+        auto offscreenUi = DependencyManager::get<OffscreenUi>();
+        auto messagebox = offscreenUi->createMessageBox(
+            OffscreenUi::ICON_INFORMATION, BINARYFACEHMD_MESSAGEBOX_TITLE,
+            "Calibration failed. Please retry.", 
+            QMessageBox::Ok, QMessageBox::NoButton);
+   
         _isCalibrating = false;
         binaryfacehmd_start_tracking(_context);
         return;
@@ -240,9 +243,12 @@ void BinaryFaceHMDTracker::update(float deltaTime) {
     else if (ret == BINARYFACEHMD_ON_TRACKING) {
         // calibration is done
         if (_isCalibrating) {
-            _calibrationStatusMessageBox->setProperty("text", "Calibration is done.");
-            _calibrationStatusMessageBox->setProperty("buttons", QMessageBox::Ok);
-            _calibrationStatusMessageBox->setProperty("defaultButton", QMessageBox::NoButton);
+            auto offscreenUi = DependencyManager::get<OffscreenUi>();
+            auto messagebox = offscreenUi->createMessageBox(
+                OffscreenUi::ICON_INFORMATION, BINARYFACEHMD_MESSAGEBOX_TITLE,
+                "Calibration is done.", 
+                QMessageBox::Ok, QMessageBox::NoButton);
+     
             _isCalibrating = false;
             _isUserModelLoaded = true;
         }
@@ -303,8 +309,17 @@ void BinaryFaceHMDTracker::calibrate() {
     if (!checkContextAndDevice() || !isActive()) return;
     if (binaryfacehmd_get_processing_status(_context) == BINARYFACEHMD_ON_CALIBRATION) return;
 
-    if (!_isUserModelLoaded)
-    {
+    if (_isMuted) {
+        auto offscreenUi = DependencyManager::get<OffscreenUi>();
+        auto messagebox = offscreenUi->createMessageBox(
+            OffscreenUi::ICON_INFORMATION, BINARYFACEHMD_MESSAGEBOX_TITLE,
+            "Please enable face tracking by unchecking 'Mute Face Tracking' menu.",
+            QMessageBox::Ok, QMessageBox::NoButton);
+        auto result = offscreenUi->waitForMessageBoxResult(messagebox);
+        return;
+    }
+
+    if (!_isUserModelLoaded) {
         auto offscreenUi = DependencyManager::get<OffscreenUi>();
         auto messagebox = offscreenUi->createMessageBox(
             OffscreenUi::ICON_INFORMATION, BINARYFACEHMD_MESSAGEBOX_TITLE,
@@ -317,7 +332,7 @@ void BinaryFaceHMDTracker::calibrate() {
     auto offscreenUi = DependencyManager::get<OffscreenUi>();
     auto messagebox = offscreenUi->createMessageBox(
         OffscreenUi::ICON_INFORMATION, BINARYFACEHMD_MESSAGEBOX_TITLE,
-        "Close your mouth and keep a neutral face during the calibration process. Ready?",
+        "Close your mouth and keep a neutral face during the calibration process. It will take a few seconds. Ready?",
         QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Yes);
 
     auto result = offscreenUi->waitForMessageBoxResult(messagebox);
@@ -331,20 +346,6 @@ void BinaryFaceHMDTracker::calibrate() {
     binaryfacehmd_start_calibration_and_tracking(_context);
 
     _isCalibrating = true;
-    _calibrationCount = 0;
-    _calibrationStatusMessage = "Calibration in progress\n";
-    _calibrationStatusMessageBox = offscreenUi->createMessageBox(
-        OffscreenUi::ICON_INFORMATION, BINARYFACEHMD_MESSAGEBOX_TITLE,
-        _calibrationStatusMessage, QMessageBox::NoButton, QMessageBox::NoButton);
-}
-
-void BinaryFaceHMDTracker::addCalibrationDatum() {
-    const int SMALL_TICK_INTERVAL = 6;
-    ++_calibrationCount;
-    if (_calibrationCount < 150 && _calibrationCount % SMALL_TICK_INTERVAL == 0) {
-        _calibrationStatusMessage += ".";
-        _calibrationStatusMessageBox->setProperty("text", _calibrationStatusMessage);
-    }
 }
 
 #else

@@ -55,14 +55,8 @@ private:
     bool _isContextOpen;
     bool _isDeviceOpen;
     bool _isCalibrating;
-    bool _isCalibrated;
     bool _isUserModelLoaded;
 
-    int _calibrationCount;
-    QQuickItem* _calibrationStatusMessageBox;
-    QString _calibrationStatusMessage;
-    void addCalibrationDatum();
-  
     // binaryfacehmd sdk
     binaryfacehmd_context_t _context;
     binaryfacehmd_context_info_t _contextInfo;
