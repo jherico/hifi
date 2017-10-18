@@ -16,8 +16,9 @@ namespace hifi { namespace properties {
     extern const char* STEAM;
     extern const char* LOGGER;
     extern const char* OCULUS_STORE;
-    extern const char* TEST;
-    extern const char* TRACING;
+    extern const char* TEST_ENABLED;
+    extern const char* TEST_SCRIPT;
+    extern const char* TEST_TRACE;
     extern const char* HMD;
     extern const char* APP_LOCAL_DATA_PATH;
 
@@ -26,6 +27,8 @@ namespace hifi { namespace properties {
         extern const char* MAKE_PROGRAM_CALLBACK;
         extern const char* PRIMARY_CONTEXT;
     }
+
+    bool asBool(const char* flag);
 
 } }
 

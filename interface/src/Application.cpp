@@ -766,20 +766,29 @@ Application::Application(int& argc, char** argv, QElapsedTimer& startupTimer, bo
     setProperty(hifi::properties::CRASHED, _previousSessionCrashed);
 
     {
+        const QString TEST = "--test";
         const QString TEST_SCRIPT = "--testScript";
         const QString TRACE_FILE = "--traceFile";
         const QStringList args = arguments();
+        bool testEnabled = false;
         for (int i = 0; i < args.size() - 1; ++i) {
-            if (args.at(i) == TEST_SCRIPT) {
+            if (args.at(i) == TEST) {
+                testEnabled = true;
+            } else if (args.at(i) == TEST_SCRIPT) {
+                testEnabled = true;
                 QString testScriptPath = args.at(i + 1);
                 if (QFileInfo(testScriptPath).exists()) {
-                    setProperty(hifi::properties::TEST, QUrl::fromLocalFile(testScriptPath));
+                    setProperty(hifi::properties::TEST_SCRIPT, QUrl::fromLocalFile(testScriptPath));
                 }
             } else if (args.at(i) == TRACE_FILE) {
+                testEnabled = true;
                 QString traceFilePath = args.at(i + 1);
-                setProperty(hifi::properties::TRACING, traceFilePath);
+                setProperty(hifi::properties::TEST_TRACE, traceFilePath);
                 DependencyManager::get<tracing::Tracer>()->startTracing();
             }
+        }
+        if (testEnabled) {
+            setProperty(hifi::properties::TEST_ENABLED, true);
         }
     }
 
@@ -1790,11 +1799,11 @@ Application::Application(int& argc, char** argv, QElapsedTimer& startupTimer, bo
     QFileInfo inf = QFileInfo(PathUtils::resourcesPath() + "sounds/snap.wav");
     _snapshotSound = DependencyManager::get<SoundCache>()->getSound(QUrl::fromLocalFile(inf.absoluteFilePath()));
 
-    QVariant testProperty = property(hifi::properties::TEST);
+    QVariant testProperty = property(hifi::properties::TEST_SCRIPT);
     qDebug() << testProperty;
     if (testProperty.isValid()) {
         auto scriptEngines = DependencyManager::get<ScriptEngines>();
-        const auto testScript = property(hifi::properties::TEST).toUrl();
+        const auto testScript = property(hifi::properties::TEST_SCRIPT).toUrl();
         scriptEngines->loadScript(testScript, false);
     } else {
         PROFILE_RANGE(render, "GetSandboxStatus");
@@ -1984,7 +1993,7 @@ void Application::cleanupBeforeQuit() {
     if (tracing::enabled()) {
         auto tracer = DependencyManager::get<tracing::Tracer>();
         tracer->stopTracing();
-        auto outputFile = property(hifi::properties::TRACING).toString();
+        auto outputFile = property(hifi::properties::TEST_TRACE).toString();
         tracer->serialize(outputFile);
     }
 
@@ -2693,7 +2702,13 @@ void Application::handleSandboxStatus(QNetworkReply* reply) {
         { "content_version", contentVersion }
     });
 
-    _connectionMonitor.init();
+
+    auto testEnabled = qApp->property(hifi::properties::TEST_ENABLED);
+    // If we're in test mode, suppress connection warnings
+    if (!testEnabled.isValid() || !testEnabled.toBool()) {
+        _connectionMonitor.init();
+    }
+
 }
 
 bool Application::importJSONFromURL(const QString& urlString) {
@@ -5768,7 +5783,7 @@ void Application::registerScriptEngineWithApplicationServices(ScriptEnginePointe
     // give the script engine to the RecordingScriptingInterface for its callbacks
     DependencyManager::get<RecordingScriptingInterface>()->setScriptEngine(scriptEngine);
 
-    if (property(hifi::properties::TEST).isValid()) {
+    if (property(hifi::properties::TEST_ENABLED).isValid()) {
         scriptEngine->registerGlobalObject("Test", TestScriptingInterface::getInstance());
     }
 

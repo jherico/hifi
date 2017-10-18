@@ -17,6 +17,7 @@
 
 #include <PerfStat.h>
 #include <Extents.h>
+#include <shared/GlobalAppProperties.h>
 
 #include "EntitySimulation.h"
 #include "VariantMapToScriptValue.h"
@@ -447,6 +448,13 @@ bool EntityTree::updateEntity(EntityItemPointer entity, const EntityItemProperti
     return true;
 }
 
+// If we're in test mode and a disconnected state, we can rez entities.
+bool canRezTestEntities(const QSharedPointer<NodeList>& nodeList) {
+    // Allow test mode to create entities in a local tree without being connected
+    return hifi::properties::asBool(hifi::properties::TEST_ENABLED) &&
+        !nodeList->getDomainHandler().isConnected();
+}
+
 EntityItemPointer EntityTree::addEntity(const EntityItemID& entityID, const EntityItemProperties& properties) {
     EntityItemPointer result = NULL;
     EntityItemProperties props = properties;
@@ -457,7 +465,7 @@ EntityItemPointer EntityTree::addEntity(const EntityItemID& entityID, const Enti
         return nullptr;
     }
 
-    if (!properties.getClientOnly() && getIsClient() &&
+    if (!canRezTestEntities(nodeList) && !properties.getClientOnly() && getIsClient() &&
         !nodeList->getThisNodeCanRez() && !nodeList->getThisNodeCanRezTmp() &&
         !nodeList->getThisNodeCanRezCertified() && !nodeList->getThisNodeCanRezTmpCertified()) {
         return nullptr;

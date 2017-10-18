@@ -8,14 +8,18 @@
 
 #include "GlobalAppProperties.h"
 
+#include <QtCore/QCoreApplication>
+#include <QtCore/QVariant>
+
 namespace hifi { namespace properties {
 
     const char* CRASHED = "com.highfidelity.crashed";
     const char* STEAM = "com.highfidelity.launchedFromSteam";
     const char* LOGGER = "com.highfidelity.logger";
     const char* OCULUS_STORE = "com.highfidelity.oculusStore";
-    const char* TEST = "com.highfidelity.test";
-    const char* TRACING = "com.highfidelity.tracing";
+    const char* TEST_ENABLED = "com.highfidelity.test";
+    const char* TEST_SCRIPT = "com.highfidelity.test.script";
+    const char* TEST_TRACE = "com.highfidelity.test.trace";
     const char* HMD = "com.highfidelity.hmd";
     const char* APP_LOCAL_DATA_PATH = "com.highfidelity.appLocalDataPath";
 
@@ -23,6 +27,11 @@ namespace hifi { namespace properties {
         const char* BACKEND = "com.highfidelity.gl.backend";
         const char* MAKE_PROGRAM_CALLBACK = "com.highfidelity.gl.makeProgram";
         const char* PRIMARY_CONTEXT = "com.highfidelity.gl.primaryContext";
+    }
+
+    bool asBool(const char* flag) {
+        auto variant = qApp->property(flag);
+        return variant.isValid() && variant.toBool();
     }
 
 } }
