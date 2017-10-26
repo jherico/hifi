@@ -25,6 +25,7 @@
 #include <QtCore/QMutex>
 #include <QtCore/QWaitCondition>
 
+#include <AudioClient.h>
 #include <shared/NsightHelpers.h>
 #include <shared/GlobalAppProperties.h>
 #include <shared/QtHelpers.h>
@@ -565,6 +566,11 @@ void OffscreenQmlSurface::create() {
     _quickWindow = new QQuickWindow(_renderControl);
     _quickWindow->setColor(QColor(255, 255, 255, 0));
     _quickWindow->setClearBeforeRendering(false);
+
+    auto audioIO = DependencyManager::get<AudioClient>();
+    connect(audioIO.data(), &AudioClient::deviceChanged, this, [] {
+        qDebug() << "Device Changed";
+    });
 
     _renderControl->_renderWindow = _proxyWindow;
 
