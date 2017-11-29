@@ -65,15 +65,15 @@ namespace render {
     // Filter the items belonging to the job's keep layer
     class FilterLayeredItems {
     public:
-        using JobModel = Job::ModelIO<FilterLayeredItems, ItemBounds, ItemBounds>;
+        using Outputs = render::VaryingSet2<ItemBounds, ItemBounds>;
+        using JobModel = Job::ModelIO<FilterLayeredItems, ItemBounds, Outputs>;
 
-        FilterLayeredItems() {}
         FilterLayeredItems(int keepLayer) :
             _keepLayer(keepLayer) {}
 
-        int _keepLayer { 0 };
+        int _keepLayer;
 
-        void run(const RenderContextPointer& renderContext, const ItemBounds& inItems, ItemBounds& outItems);
+        void run(const RenderContextPointer& renderContext, const ItemBounds& inItems, Outputs& outputs);
     };
 
     // SliceItems job config defining the slice range
@@ -113,12 +113,13 @@ namespace render {
     // Keep items belonging to the job selection
     class SelectItems {
     public:
-        using Inputs = VaryingSet2<ItemBounds, ItemBounds>;
+        using Inputs = VaryingSet3<ItemBounds, ItemBounds, std::string>;
         using JobModel = Job::ModelIO<SelectItems, Inputs, ItemBounds>;
         
         std::string _name;
+        SelectItems() {}
         SelectItems(const Selection::Name& name) : _name(name) {}
-        
+
         void run(const RenderContextPointer& renderContext, const Inputs& inputs, ItemBounds& outItems);
     };
 

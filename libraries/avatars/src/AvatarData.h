@@ -15,21 +15,7 @@
 #include <string>
 #include <memory>
 #include <queue>
-
-/* VS2010 defines stdint.h, but not inttypes.h */
-#if defined(_MSC_VER)
-typedef signed char  int8_t;
-typedef signed short int16_t;
-typedef signed int   int32_t;
-typedef unsigned char  uint8_t;
-typedef unsigned short uint16_t;
-typedef unsigned int   uint32_t;
-typedef signed long long   int64_t;
-typedef unsigned long long quint64;
-#define PRId64 "I64d"
-#else
 #include <inttypes.h>
-#endif
 #include <vector>
 
 #include <glm/glm.hpp>
@@ -381,7 +367,7 @@ class AvatarData : public QObject, public SpatiallyNestable {
 
     Q_PROPERTY(QStringList jointNames READ getJointNames)
 
-    Q_PROPERTY(QUuid sessionUUID READ getSessionUUID)
+    Q_PROPERTY(QUuid sessionUUID READ getSessionUUID NOTIFY sessionUUIDChanged)
 
     Q_PROPERTY(glm::mat4 sensorToWorldMatrix READ getSensorToWorldMatrix)
     Q_PROPERTY(glm::mat4 controllerLeftHandMatrix READ getControllerLeftHandMatrix)
@@ -670,13 +656,19 @@ public:
 signals:
     void displayNameChanged();
     void lookAtSnappingChanged(bool enabled);
+    void sessionUUIDChanged();
 
 public slots:
     void sendAvatarDataPacket();
     void sendIdentityPacket();
 
     void setJointMappingsFromNetworkReply();
-    void setSessionUUID(const QUuid& sessionUUID) { setID(sessionUUID); }
+    void setSessionUUID(const QUuid& sessionUUID) {
+        if (sessionUUID != getID()) {
+            setID(sessionUUID);
+            emit sessionUUIDChanged();
+        }
+    }
 
     virtual glm::quat getAbsoluteJointRotationInObjectFrame(int index) const override;
     virtual glm::vec3 getAbsoluteJointTranslationInObjectFrame(int index) const override;
@@ -897,7 +889,7 @@ public:
     void fromJson(const QJsonObject& json);
 
     QVariant toVariant() const;
-    void fromVariant(const QVariant& variant);
+    bool fromVariant(const QVariant& variant);
 };
 
 QDataStream& operator<<(QDataStream& out, const AttachmentData& attachment);

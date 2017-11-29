@@ -21,19 +21,24 @@
 
 using namespace render;
 
-void FilterLayeredItems::run(const RenderContextPointer& renderContext, const ItemBounds& inItems, ItemBounds& outItems) {
+void FilterLayeredItems::run(const RenderContextPointer& renderContext, const ItemBounds& inItems, Outputs& outputs) {
     auto& scene = renderContext->_scene;
 
-    // Clear previous values
-    outItems.clear();
+    ItemBounds matchedItems;
+    ItemBounds nonMatchItems;
 
     // For each item, filter it into one bucket
     for (auto& itemBound : inItems) {
         auto& item = scene->getItem(itemBound.id);
         if (item.getLayer() == _keepLayer) {
-            outItems.emplace_back(itemBound);
+            matchedItems.emplace_back(itemBound);
+        } else {
+            nonMatchItems.emplace_back(itemBound);
         }
     }
+
+    outputs.edit0() = matchedItems;
+    outputs.edit1() = nonMatchItems;
 }
 
 void SliceItems::run(const RenderContextPointer& renderContext, const ItemBounds& inItems, ItemBounds& outItems) {
@@ -52,7 +57,12 @@ void SliceItems::run(const RenderContextPointer& renderContext, const ItemBounds
 }
 
 void SelectItems::run(const RenderContextPointer& renderContext, const Inputs& inputs, ItemBounds& outItems) {
-    auto selection = renderContext->_scene->getSelection(_name);
+    auto selectionName{ _name };
+    if (!inputs.get2().empty()) {
+        selectionName = inputs.get2();
+    }
+
+    auto selection = renderContext->_scene->getSelection(selectionName);
     const auto& selectedItems = selection.getItems();
     const auto& inItems = inputs.get0();
     const auto itemsToAppend = inputs[1];
@@ -113,8 +123,9 @@ void MetaToSubItems::run(const RenderContextPointer& renderContext, const ItemBo
 
     for (auto idBound : inItems) {
         auto& item = scene->getItem(idBound.id);
-
-        item.fetchMetaSubItems(outItems);
+        if (item.exist()) {
+            item.fetchMetaSubItems(outItems);
+        }
     }
 }
 
@@ -127,8 +138,9 @@ void IDsToBounds::run(const RenderContextPointer& renderContext, const ItemIDs& 
     if (!_disableAABBs) {
         for (auto id : inItems) {
             auto& item = scene->getItem(id);
-
-            outItems.emplace_back(ItemBound{ id, item.getBound() });
+            if (item.exist()) {
+                outItems.emplace_back(ItemBound{ id, item.getBound() });
+            }
         }
     } else {
         for (auto id : inItems) {

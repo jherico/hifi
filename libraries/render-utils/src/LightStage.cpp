@@ -14,6 +14,7 @@
 #include "LightStage.h"
 
 std::string LightStage::_stageName { "LIGHT_STAGE"};
+const LightStage::Index LightStage::INVALID_INDEX { render::indexed_container::INVALID_INDEX };
 
 LightStage::LightStage() {
 }
@@ -142,6 +143,11 @@ LightStage::LightPointer LightStage::removeLight(Index index) {
     LightPointer removed = _lights.freeElement(index);
     
     if (removed) {
+        auto shadowId = _descs[index].shadowId;
+        // Remove shadow if one exists for this light
+        if (shadowId != INVALID_INDEX) {
+            _shadows.freeElement(shadowId);
+        }
         _lightMap.erase(removed);
         _descs[index] = Desc();
     }

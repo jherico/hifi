@@ -155,6 +155,14 @@ protected:
     bool _opaquePass { true };
 };
 
+class CompositeHUD {
+public:
+    using JobModel = render::Job::Model<CompositeHUD>;
+
+    CompositeHUD() {}
+    void run(const render::RenderContextPointer& renderContext);
+};
+
 class Blit {
 public:
     using JobModel = render::Job::ModelI<Blit, gpu::FramebufferPointer>;
@@ -190,6 +198,10 @@ public:
     void configure(const Config& config);
     void build(JobModel& task, const render::Varying& inputs, render::Varying& outputs);
 
+private:
+
+    static const render::Varying addSelectItemJobs(JobModel& task, const char* selectionName, 
+                                                   const render::Varying& metas, const render::Varying& opaques, const render::Varying& transparents);
 };
 
 #endif // hifi_RenderDeferredTask_h
