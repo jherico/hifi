@@ -39,6 +39,8 @@ public:
     virtual bool isActive() const override;
     virtual bool isTracking() const override;
 
+    virtual bool doesTrackEyes() const override;
+
 public slots:
     void resetTracker();
     void calibrate();

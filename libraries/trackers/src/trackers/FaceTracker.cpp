@@ -131,3 +131,12 @@ void FaceTracker::updateFakeCoefficients(float leftBlink, float rightBlink, floa
     coefficients[FUNNEL_BLENDSHAPE] = mouth3;
 }
 
+void FaceTracker::updateFakeEyeAreaCoefficients(float leftBlink, float rightBlink, float browUp, 
+    QVector<float>& coefficients) {
+    coefficients[_leftBlinkIndex] = leftBlink;
+    coefficients[_rightBlinkIndex] = rightBlink;
+    coefficients[_browUpCenterIndex] = browUp;
+    coefficients[_browUpLeftIndex] = browUp;
+    coefficients[_browUpRightIndex] = browUp;
+}
+

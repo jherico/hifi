@@ -18,6 +18,7 @@
 #include <trackers/EyeTracker.h>
 
 #include "devices/DdeFaceTracker.h"
+#include "devices/BinaryFaceHMDTracker.h"
 #include "Application.h"
 #include "MyAvatar.h"
 
@@ -68,6 +69,9 @@ void MyHead::simulate(float deltaTime) {
                     _transientBlendshapeCoefficients[FUNNEL_BLENDSHAPE] += _mouth3;
                 }
                 applyEyelidOffset(getFinalOrientationInWorldFrame());
+            }
+            else if (typeid(*faceTracker) == typeid(BinaryFaceHMDTracker)) {
+                _doesTrackEyes = false;
             }
         }
         auto eyeTracker = DependencyManager::get<EyeTracker>();

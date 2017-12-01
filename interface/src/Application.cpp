@@ -4382,7 +4382,7 @@ void Application::updateMyAvatarLookAtPosition() {
         }
 
         // Deflect the eyes a bit to match the detected gaze from the face tracker if active.
-        if (faceTracker && !faceTracker->isMuted()) {
+        if (faceTracker && faceTracker->doesTrackEyes() && !faceTracker->isMuted()) {
             float eyePitch = faceTracker->getEstimatedEyePitch();
             float eyeYaw = faceTracker->getEstimatedEyeYaw();
             const float GAZE_DEFLECTION_REDUCTION_DURING_EYE_CONTACT = 0.1f;

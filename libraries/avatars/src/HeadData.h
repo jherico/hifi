@@ -84,6 +84,7 @@ protected:
     quint64 _lookAtPositionChanged { 0 };
 
     bool _isFaceTrackerConnected { false };
+    bool _doesTrackEyes { true };
     bool _isEyeTrackerConnected { false };
     float _leftEyeBlink { 0.0f };
     float _rightEyeBlink { 0.0f };

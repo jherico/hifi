@@ -280,6 +280,10 @@ bool BinaryFaceHMDTracker::isTracking() const {
         && binaryfacehmd_get_processing_status(_context) == BINARYFACEHMD_ON_TRACKING;
 }
 
+bool BinaryFaceHMDTracker::doesTrackEyes() const {
+    return false;
+}
+
 bool BinaryFaceHMDTracker::checkContextAndDevice() {
     auto offscreenUi = DependencyManager::get<OffscreenUi>();
 

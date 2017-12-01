@@ -29,6 +29,8 @@ public:
     virtual void update(float deltaTime);
     virtual void reset();
     
+    virtual bool doesTrackEyes() const { return true; }
+
     float getFadeCoefficient() const;
     
     const glm::vec3 getHeadTranslation() const;
@@ -48,14 +50,19 @@ public:
     static float getEyeDeflection() { return _eyeDeflection.get(); }
     static void setEyeDeflection(float eyeDeflection);
 
+    static void updateFakeEyeAreaCoefficients(float leftBlink,
+                                              float rightBlink,
+                                              float browUp,
+                                              QVector<float>& coefficients);
+
     static void updateFakeCoefficients(float leftBlink,
-                                float rightBlink,
-                                float browUp,
-                                float jawOpen,
-                                float mouth2,
-                                float mouth3,
-                                float mouth4,
-                                QVector<float>& coefficients);
+                                       float rightBlink,
+                                       float browUp,
+                                       float jawOpen,
+                                       float mouth2,
+                                       float mouth3,
+                                       float mouth4,
+                                       QVector<float>& coefficients);
 
 signals:
     void muteToggled();
