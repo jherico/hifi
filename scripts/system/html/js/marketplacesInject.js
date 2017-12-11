@@ -318,6 +318,28 @@
         });
     }
 
+    function injectUnfocusOnSearch() {
+        // unfocus input field on search, thus hiding virtual keyboard
+        $('#search-box').on('submit', function () {
+            if (document.activeElement) {
+                document.activeElement.blur();
+            }
+        });
+    }
+
+    // fix for 10108 - marketplace category cannot scroll
+    function injectAddScrollbarToCategories() {
+        $('#categories-dropdown').on('show.bs.dropdown', function () {
+            $('body > div.container').css('display', 'none')
+            $('#categories-dropdown > ul.dropdown-menu').css({ 'overflow': 'auto', 'height': 'calc(100vh - 110px)' })
+        });
+
+        $('#categories-dropdown').on('hide.bs.dropdown', function () {
+            $('body > div.container').css('display', '')
+            $('#categories-dropdown > ul.dropdown-menu').css({ 'overflow': '', 'height': '' })
+        });
+    }
+
     function injectHiFiCode() {
         if (commerceMode) {
             maybeAddLogInButton();
@@ -347,6 +369,9 @@
                 maybeAddPurchasesButton();
             }
         }
+
+        injectUnfocusOnSearch();
+        injectAddScrollbarToCategories();
     }
 
     function injectHiFiItemPageCode() {
@@ -386,6 +411,8 @@
                 maybeAddPurchasesButton();
             }
         }
+
+        injectUnfocusOnSearch();
     }
 
     function updateClaraCode() {
