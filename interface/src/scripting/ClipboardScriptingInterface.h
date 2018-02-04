@@ -25,7 +25,7 @@
 class ClipboardScriptingInterface : public QObject {
     Q_OBJECT
 public:
-    ClipboardScriptingInterface();
+    ClipboardScriptingInterface(QObject* parent = nullptr);
 
 public:
     /**jsdoc

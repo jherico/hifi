@@ -71,6 +71,9 @@ class Vec3 : public QObject, protected QScriptable {
     Q_PROPERTY(glm::vec3 UP READ UP CONSTANT)
     Q_PROPERTY(glm::vec3 FRONT READ FRONT CONSTANT)
 
+public:
+    Vec3(QObject* parent = nullptr) : QObject(parent) {}
+
 public slots:
     glm::vec3 reflect(const glm::vec3& v1, const glm::vec3& v2) { return glm::reflect(v1, v2); }
     glm::vec3 cross(const glm::vec3& v1, const glm::vec3& v2) { return glm::cross(v1, v2); }

@@ -31,6 +31,9 @@ class ScriptUUID : public QObject, protected QScriptable {
     Q_OBJECT
     Q_PROPERTY(QString NULL READ NULL_UUID CONSTANT) // String for use in scripts.
 
+public:
+    ScriptUUID(QObject* parent = nullptr) : QObject(parent) {}
+
 public slots:
     /**jsdoc
      * Generates a UUID from a string representation of the UUID.

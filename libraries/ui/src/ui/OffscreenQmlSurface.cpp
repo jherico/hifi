@@ -426,18 +426,12 @@ static size_t globalEngineRefCount{ 0 };
 
 void initializeQmlEngine(QQmlEngine* engine, QQuickWindow* window) {
     new QQmlFileSelector(engine, window);
-
     // register the pixmap image provider (used only for security image, for now)
     engine->addImageProvider(ImageProvider::PROVIDER_NAME, new ImageProvider());
-
     engine->setNetworkAccessManagerFactory(new QmlNetworkAccessManagerFactory);
     auto importList = engine->importPathList();
     importList.insert(importList.begin(), PathUtils::resourcesPath());
     engine->setImportPathList(importList);
-    for (const auto& path : importList) {
-        qDebug() << path;
-    }
-
     if (!engine->incubationController()) {
         engine->setIncubationController(window->incubationController());
     }
@@ -455,14 +449,6 @@ void initializeQmlEngine(QQmlEngine* engine, QQuickWindow* window) {
     rootContext->setContextProperty("FileTypeProfile", new FileTypeProfile(rootContext));
     rootContext->setContextProperty("HFWebEngineProfile", new HFWebEngineProfile(rootContext));
 #endif
-    rootContext->setContextProperty("Paths", DependencyManager::get<PathUtils>().data());
-    static std::once_flag once;
-    std::call_once(once, [&] {
-        qRegisterMetaType<TabletProxy*>();
-        qRegisterMetaType<TabletButtonProxy*>();
-    });
-    rootContext->setContextProperty("Tablet", DependencyManager::get<TabletScriptingInterface>().data());
-    rootContext->setContextProperty("Toolbars", DependencyManager::get<ToolbarScriptingInterface>().data());
     TabletProxy* tablet = DependencyManager::get<TabletScriptingInterface>()->getTablet("com.highfidelity.interface.tablet.system");
     engine->setObjectOwnership(tablet, QQmlEngine::CppOwnership);
 }

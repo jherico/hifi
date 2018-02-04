@@ -17,7 +17,7 @@
 class DialogsManagerScriptingInterface : public QObject {
     Q_OBJECT
 public:
-    DialogsManagerScriptingInterface();
+    DialogsManagerScriptingInterface(QObject* parent = nullptr);
     static DialogsManagerScriptingInterface* getInstance();
     Q_INVOKABLE void showFeed();
 

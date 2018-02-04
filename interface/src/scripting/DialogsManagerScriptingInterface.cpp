@@ -15,7 +15,7 @@
 
 #include "ui/DialogsManager.h"
 
-DialogsManagerScriptingInterface::DialogsManagerScriptingInterface() {
+DialogsManagerScriptingInterface::DialogsManagerScriptingInterface(QObject* parent) : QObject(parent) {
     connect(DependencyManager::get<DialogsManager>().data(), &DialogsManager::addressBarShown,
             this, &DialogsManagerScriptingInterface::addressBarShown);
 }

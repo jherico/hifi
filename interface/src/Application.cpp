@@ -53,6 +53,7 @@
 #include <gl/QOpenGLContextWrapper.h>
 
 #include <shared/FileUtils.h>
+#include <shared/InterfaceRegistry.h>
 #include <shared/QtHelpers.h>
 #include <shared/GlobalAppProperties.h>
 #include <StatTracker.h>
@@ -698,6 +699,7 @@ bool setupEssentials(int& argc, char** argv, bool runningMarkerExisted) {
     DependencyManager::registerInheritance<SpatialParentFinder, InterfaceParentFinder>();
 
     // Set dependencies
+    DependencyManager::set<InterfaceRegistry>();
     DependencyManager::set<PickManager>();
     DependencyManager::set<PointerManager>();
     DependencyManager::set<LaserPointerScriptingInterface>();
@@ -2349,6 +2351,109 @@ void Application::initializeGL() {
 
 extern void setupPreferences();
 
+void Application::initializeInterfaces() {
+    auto registry = DependencyManager::get<InterfaceRegistry>();
+    registry->registerInterface("AudioStats", [] { return DependencyManager::get<AudioClient>()->getStats().data(); });
+    registry->registerInterface("AudioScope", [] { return DependencyManager::get<AudioScope>().data(); });
+    registry->registerInterface("Controller", [] { return DependencyManager::get<controller::ScriptingInterface>().data(); });
+    registry->registerInterface("Entities", [] { return DependencyManager::get<EntityScriptingInterface>().data(); });
+    registry->registerInterface("Messages", [] { return DependencyManager::get<MessagesClient>().data(); });
+    registry->registerInterface("Recording", [] { return DependencyManager::get<RecordingScriptingInterface>().data(); });
+    registry->registerInterface("Preferences", [] { return DependencyManager::get<Preferences>().data(); });
+    registry->registerInterface("AddressManager", [] { return DependencyManager::get<AddressManager>().data(); });
+
+
+    if (property(hifi::properties::TEST).isValid()) {
+        registry->registerInterface("Test", [] { return TestScriptingInterface::getInstance(); });
+    }
+
+    registry->registerInterface("OffscreenFlags", [] { return DependencyManager::get<OffscreenUi>()->getFlags(); });
+    registry->registerInterface("DesktopPreviewProvider", [] { return DependencyManager::get<DesktopPreviewProvider>().data(); });
+    registry->registerInterface("LimitlessSpeechRecognition", [] { return DependencyManager::get<LimitlessVoiceRecognitionScriptingInterface>().data(); });
+    registry->registerInterface("GooglePoly", [] { return DependencyManager::get<GooglePolyScriptingInterface>().data(); });
+    registry->registerInterface("EntityScriptServerLog", [] { return DependencyManager::get<EntityScriptServerLogClient>().data(); });
+    qRegisterMetaType<TabletProxy*>();
+    qRegisterMetaType<TabletButtonProxy*>();
+    registry->registerInterface("Toolbars", [] { return DependencyManager::get<ToolbarScriptingInterface>().data(); });
+    registry->registerInterface("Tablet", [] { return DependencyManager::get<TabletScriptingInterface>().data(); });
+
+    registry->registerInterface("Assets", [] { return DependencyManager::get<AssetMappingsScriptingInterface>().data(); });
+    registry->registerInterface("AvatarList", [] { return DependencyManager::get<AvatarManager>().data(); });
+    registry->registerInterface("AvatarManager", [] { return DependencyManager::get<AvatarManager>().data(); });
+    registry->registerInterface("MyAvatar", [] { return DependencyManager::get<AvatarManager>()->getMyAvatar().get(); });
+    registry->registerInterface("Users", [] { return DependencyManager::get<UsersScriptingInterface>().data(); });
+    registry->registerInterface("UserActivityLogger", [] { return DependencyManager::get<UserActivityLoggerScriptingInterface>().data(); });
+
+#if defined(Q_OS_MAC) || defined(Q_OS_WIN)
+    registry->registerInterface("SpeechRecognizer", [] { return DependencyManager::get<SpeechRecognizer>().data(); });
+#endif
+    registry->registerInterface("Window", [] { return DependencyManager::get<WindowScriptingInterface>().data(); });
+    registry->registerInterface("MenuInterface", [] { return MenuScriptingInterface::getInstance(); });
+    registry->registerInterface("Stats", [] { return Stats::getInstance(); });
+    registry->registerInterface("Settings", [] { return SettingsScriptingInterface::getInstance(); });
+
+    registry->registerInterface("ScriptDiscoveryService", [] { return DependencyManager::get<ScriptEngines>().data(); });
+    registry->registerInterface("AvatarBookmarks", [] { return DependencyManager::get<AvatarBookmarks>().data(); });
+    registry->registerInterface("AvatarEntitiesBookmarks", [] { return DependencyManager::get<AvatarEntitiesBookmarks>().data(); });
+    registry->registerInterface("LocationBookmarks", [] { return DependencyManager::get<LocationBookmarks>().data(); });
+
+    registry->registerInterface("RayPick", [] { return DependencyManager::get<RayPickScriptingInterface>().data(); });
+    registry->registerInterface("LaserPointers", [] { return DependencyManager::get<LaserPointerScriptingInterface>().data(); });
+    registry->registerInterface("Picks", [] { return DependencyManager::get<PickScriptingInterface>().data(); });
+    registry->registerInterface("Pointers", [] { return DependencyManager::get<PointerScriptingInterface>().data(); });
+    registry->registerInterface("Paths", [] { return DependencyManager::get<PathUtils>().data(); });
+
+    // Caches
+    registry->registerInterface("AnimationCache", [] { return DependencyManager::get<AnimationCache>().data(); });
+    registry->registerInterface("TextureCache", [] { return DependencyManager::get<TextureCache>().data(); });
+    registry->registerInterface("ModelCache", [] { return DependencyManager::get<ModelCache>().data(); });
+    registry->registerInterface("SoundCache", [] { return DependencyManager::get<SoundCache>().data(); });
+
+    registry->registerInterface("InputConfiguration", [] { return DependencyManager::get<InputConfiguration>().data(); });
+
+    registry->registerInterface("Account", [] { return AccountServicesScriptingInterface::getInstance(); }); // DEPRECATED - TO BE REMOVED
+    registry->registerInterface("GlobalServices", [] { return AccountServicesScriptingInterface::getInstance(); }); // DEPRECATED - TO BE REMOVED
+    registry->registerInterface("AccountServices", [] { return AccountServicesScriptingInterface::getInstance(); });
+    registry->registerInterface("FaceTracker", [] { return DependencyManager::get<DdeFaceTracker>().data(); });
+    registry->registerInterface("LODManager", [] { return DependencyManager::get<LODManager>().data(); });
+    registry->registerInterface("HMD", [] { return DependencyManager::get<HMDScriptingInterface>().data(); });
+    registry->registerInterface("Scene", [] { return DependencyManager::get<SceneScriptingInterface>().data(); });
+    registry->registerInterface("Snapshot", [] { return DependencyManager::get<Snapshot>().data(); });
+    registry->registerInterface("AvatarInputs", [] { return AvatarInputs::getInstance(); });
+    registry->registerInterface("Selection", [] { return DependencyManager::get<SelectionScriptingInterface>().data(); });
+    registry->registerInterface("ContextOverlay", [] { return DependencyManager::get<ContextOverlayInterface>().data(); });
+    registry->registerInterface("Wallet", [] { return DependencyManager::get<WalletScriptingInterface>().data(); });
+    registry->registerInterface("ApplicationCompositor", [] { return DependencyManager::get<CompositorHelper>().data(); });
+    registry->registerInterface("Reticle", [] { return DependencyManager::get<CompositorHelper>()->getReticleInterface(); });
+
+    registry->registerInterface("DialogsManager", [](QObject* parent)->QObject* { return new DialogsManagerScriptingInterface(parent); });
+    registry->registerInterface("Clipboard", [](QObject* parent)->QObject* { return new ClipboardScriptingInterface(parent); });
+    registry->registerInterface("Rates", [](QObject* parent)->QObject* { return new RatesScriptingInterface(parent); });
+    // FIXME Quat and Vec3 won't work with QJSEngine used by QML
+    registry->registerInterface("Quat", [](QObject* parent)->QObject* { return new Quat(parent); });
+    registry->registerInterface("Uuid", [](QObject* parent)->QObject* { return new ScriptUUID(parent); });
+    // FIXME Quat and Vec3 won't work with QJSEngine used by QML
+    registry->registerInterface("Vec3", [](QObject* parent)->QObject* { return new Vec3(parent); });
+    registry->registerInterface("File", [](QObject* parent)->QObject* { 
+        auto result = new FileScriptingInterface(parent);
+        connect(result, &FileScriptingInterface::unzipResult, qApp, &Application::handleUnzip);
+        return result;
+    });
+
+    registry->registerInterface("FrameTimings", [this] { return &_frameTimingsScriptingInterface; });
+    registry->registerInterface("Camera", [this] { return &_myCamera; });
+    registry->registerInterface("Overlays", [this] { return &_overlays; });
+    registry->registerInterface("UndoStack", [this] { return &_undoStackScriptingInterface; });
+    registry->registerInterface("Render", [this] { return _renderEngine->getConfiguration().get(); });
+
+    if (auto steamClient = PluginManager::getInstance()->getSteamClientPlugin()) {
+        auto steamClientPtr = steamClient.get();
+        registry->registerInterface("Steam", [steamClientPtr](QObject* parent)->QObject* { return new SteamScriptingInterface(parent, steamClientPtr); });
+    }
+
+}
+
+
 void Application::initializeUi() {
     // Make sure all QML surfaces share the main thread GL context
     OffscreenQmlSurface::setSharedContext(_offscreenContext->getContext());
@@ -2427,83 +2532,13 @@ void Application::initializeUi() {
     // though I failed to find it (from QtMultimedia??). So..  let it be "AudioScriptingInterface"
     surfaceContext->setContextProperty("AudioScriptingInterface", DependencyManager::get<AudioScriptingInterface>().data());
 
-    surfaceContext->setContextProperty("AudioStats", DependencyManager::get<AudioClient>()->getStats().data());
-    surfaceContext->setContextProperty("AudioScope", DependencyManager::get<AudioScope>().data());
+    DependencyManager::get<InterfaceRegistry>()->applyRegistry(surfaceContext, [surfaceContext](const std::string& name, QObject* value) {
+        surfaceContext->setContextProperty(name.c_str(), value);
+    });
 
-    surfaceContext->setContextProperty("Controller", DependencyManager::get<controller::ScriptingInterface>().data());
-    surfaceContext->setContextProperty("Entities", DependencyManager::get<EntityScriptingInterface>().data());
-    _fileDownload = new FileScriptingInterface(engine);
-    surfaceContext->setContextProperty("File", _fileDownload);
-    connect(_fileDownload, &FileScriptingInterface::unzipResult, this, &Application::handleUnzip);
-    surfaceContext->setContextProperty("MyAvatar", getMyAvatar().get());
-    surfaceContext->setContextProperty("Messages", DependencyManager::get<MessagesClient>().data());
-    surfaceContext->setContextProperty("Recording", DependencyManager::get<RecordingScriptingInterface>().data());
-    surfaceContext->setContextProperty("Preferences", DependencyManager::get<Preferences>().data());
-    surfaceContext->setContextProperty("AddressManager", DependencyManager::get<AddressManager>().data());
-    surfaceContext->setContextProperty("FrameTimings", &_frameTimingsScriptingInterface);
-    surfaceContext->setContextProperty("Rates", new RatesScriptingInterface(this));
+
 
     surfaceContext->setContextProperty("TREE_SCALE", TREE_SCALE);
-    // FIXME Quat and Vec3 won't work with QJSEngine used by QML
-    surfaceContext->setContextProperty("Quat", new Quat());
-    surfaceContext->setContextProperty("Vec3", new Vec3());
-    surfaceContext->setContextProperty("Uuid", new ScriptUUID());
-    surfaceContext->setContextProperty("Assets", DependencyManager::get<AssetMappingsScriptingInterface>().data());
-
-    surfaceContext->setContextProperty("AvatarList", DependencyManager::get<AvatarManager>().data());
-    surfaceContext->setContextProperty("Users", DependencyManager::get<UsersScriptingInterface>().data());
-
-    surfaceContext->setContextProperty("UserActivityLogger", DependencyManager::get<UserActivityLoggerScriptingInterface>().data());
-
-    surfaceContext->setContextProperty("Camera", &_myCamera);
-
-#if defined(Q_OS_MAC) || defined(Q_OS_WIN)
-    surfaceContext->setContextProperty("SpeechRecognizer", DependencyManager::get<SpeechRecognizer>().data());
-#endif
-
-    surfaceContext->setContextProperty("Overlays", &_overlays);
-    surfaceContext->setContextProperty("Window", DependencyManager::get<WindowScriptingInterface>().data());
-    surfaceContext->setContextProperty("MenuInterface", MenuScriptingInterface::getInstance());
-    surfaceContext->setContextProperty("Stats", Stats::getInstance());
-    surfaceContext->setContextProperty("Settings", SettingsScriptingInterface::getInstance());
-    surfaceContext->setContextProperty("ScriptDiscoveryService", DependencyManager::get<ScriptEngines>().data());
-    surfaceContext->setContextProperty("AvatarBookmarks", DependencyManager::get<AvatarBookmarks>().data());
-    surfaceContext->setContextProperty("AvatarEntitiesBookmarks", DependencyManager::get<AvatarEntitiesBookmarks>().data());
-    surfaceContext->setContextProperty("LocationBookmarks", DependencyManager::get<LocationBookmarks>().data());
-
-    // Caches
-    surfaceContext->setContextProperty("AnimationCache", DependencyManager::get<AnimationCache>().data());
-    surfaceContext->setContextProperty("TextureCache", DependencyManager::get<TextureCache>().data());
-    surfaceContext->setContextProperty("ModelCache", DependencyManager::get<ModelCache>().data());
-    surfaceContext->setContextProperty("SoundCache", DependencyManager::get<SoundCache>().data());
-    surfaceContext->setContextProperty("InputConfiguration", DependencyManager::get<InputConfiguration>().data());
-
-    surfaceContext->setContextProperty("Account", AccountServicesScriptingInterface::getInstance()); // DEPRECATED - TO BE REMOVED
-    surfaceContext->setContextProperty("GlobalServices", AccountServicesScriptingInterface::getInstance()); // DEPRECATED - TO BE REMOVED
-    surfaceContext->setContextProperty("AccountServices", AccountServicesScriptingInterface::getInstance());
-
-    surfaceContext->setContextProperty("DialogsManager", _dialogsManagerScriptingInterface);
-    surfaceContext->setContextProperty("FaceTracker", DependencyManager::get<DdeFaceTracker>().data());
-    surfaceContext->setContextProperty("AvatarManager", DependencyManager::get<AvatarManager>().data());
-    surfaceContext->setContextProperty("UndoStack", &_undoStackScriptingInterface);
-    surfaceContext->setContextProperty("LODManager", DependencyManager::get<LODManager>().data());
-    surfaceContext->setContextProperty("HMD", DependencyManager::get<HMDScriptingInterface>().data());
-    surfaceContext->setContextProperty("Scene", DependencyManager::get<SceneScriptingInterface>().data());
-    surfaceContext->setContextProperty("Render", _renderEngine->getConfiguration().get());
-    surfaceContext->setContextProperty("Reticle", getApplicationCompositor().getReticleInterface());
-    surfaceContext->setContextProperty("Snapshot", DependencyManager::get<Snapshot>().data());
-
-    surfaceContext->setContextProperty("ApplicationCompositor", &getApplicationCompositor());
-
-    surfaceContext->setContextProperty("AvatarInputs", AvatarInputs::getInstance());
-    surfaceContext->setContextProperty("Selection", DependencyManager::get<SelectionScriptingInterface>().data());
-    surfaceContext->setContextProperty("ContextOverlay", DependencyManager::get<ContextOverlayInterface>().data());
-    surfaceContext->setContextProperty("Wallet", DependencyManager::get<WalletScriptingInterface>().data());
-
-    if (auto steamClient = PluginManager::getInstance()->getSteamClientPlugin()) {
-        surfaceContext->setContextProperty("Steam", new SteamScriptingInterface(engine, steamClient.get()));
-    }
-
 
     _glWidget->installEventFilter(offscreenUi.data());
     offscreenUi->setMouseTranslator([=](const QPointF& pt) {
@@ -5812,51 +5847,28 @@ void Application::registerScriptEngineWithApplicationServices(ScriptEnginePointe
     // give the script engine to the RecordingScriptingInterface for its callbacks
     DependencyManager::get<RecordingScriptingInterface>()->setScriptEngine(scriptEngine);
 
-    if (property(hifi::properties::TEST).isValid()) {
-        scriptEngine->registerGlobalObject("Test", TestScriptingInterface::getInstance());
-    }
-
-    scriptEngine->registerGlobalObject("Rates", new RatesScriptingInterface(this));
-
     // hook our avatar and avatar hash map object into this script engine
     getMyAvatar()->registerMetaTypes(scriptEngine);
 
-    scriptEngine->registerGlobalObject("AvatarList", DependencyManager::get<AvatarManager>().data());
+    // FIXME remove these deprecated names for the tablet scripting interface
+    scriptEngine->registerGlobalObject("tabletInterface", DependencyManager::get<TabletScriptingInterface>().data());
 
-    scriptEngine->registerGlobalObject("Camera", &_myCamera);
-
-#if defined(Q_OS_MAC) || defined(Q_OS_WIN)
-    scriptEngine->registerGlobalObject("SpeechRecognizer", DependencyManager::get<SpeechRecognizer>().data());
-#endif
-
-    ClipboardScriptingInterface* clipboardScriptable = new ClipboardScriptingInterface();
-    scriptEngine->registerGlobalObject("Clipboard", clipboardScriptable);
-    connect(scriptEngine.data(), &ScriptEngine::finished, clipboardScriptable, &ClipboardScriptingInterface::deleteLater);
-
-    scriptEngine->registerGlobalObject("Overlays", &_overlays);
     qScriptRegisterMetaType(scriptEngine.data(), OverlayPropertyResultToScriptValue, OverlayPropertyResultFromScriptValue);
     qScriptRegisterMetaType(scriptEngine.data(), RayToOverlayIntersectionResultToScriptValue,
                             RayToOverlayIntersectionResultFromScriptValue);
 
-    scriptEngine->registerGlobalObject("OffscreenFlags", DependencyManager::get<OffscreenUi>()->getFlags());
+    // Can't be injected in the InterfaceRegistry because name would conflict with the QML Desktop type
     scriptEngine->registerGlobalObject("Desktop", DependencyManager::get<DesktopScriptingInterface>().data());
 
     qScriptRegisterMetaType(scriptEngine.data(), wrapperToScriptValue<ToolbarProxy>, wrapperFromScriptValue<ToolbarProxy>);
-    qScriptRegisterMetaType(scriptEngine.data(),
-                            wrapperToScriptValue<ToolbarButtonProxy>, wrapperFromScriptValue<ToolbarButtonProxy>);
-    scriptEngine->registerGlobalObject("Toolbars", DependencyManager::get<ToolbarScriptingInterface>().data());
+    qScriptRegisterMetaType(scriptEngine.data(), wrapperToScriptValue<ToolbarButtonProxy>, wrapperFromScriptValue<ToolbarButtonProxy>);
 
     qScriptRegisterMetaType(scriptEngine.data(), wrapperToScriptValue<TabletProxy>, wrapperFromScriptValue<TabletProxy>);
     qScriptRegisterMetaType(scriptEngine.data(),
                             wrapperToScriptValue<TabletButtonProxy>, wrapperFromScriptValue<TabletButtonProxy>);
-    scriptEngine->registerGlobalObject("Tablet", DependencyManager::get<TabletScriptingInterface>().data());
-    // FIXME remove these deprecated names for the tablet scripting interface
-    scriptEngine->registerGlobalObject("tabletInterface", DependencyManager::get<TabletScriptingInterface>().data());
 
     auto toolbarScriptingInterface = DependencyManager::get<ToolbarScriptingInterface>().data();
     DependencyManager::get<TabletScriptingInterface>().data()->setToolbarScriptingInterface(toolbarScriptingInterface);
-
-    scriptEngine->registerGlobalObject("Window", DependencyManager::get<WindowScriptingInterface>().data());
     qScriptRegisterMetaType(scriptEngine.data(), CustomPromptResultToScriptValue, CustomPromptResultFromScriptValue);
     scriptEngine->registerGetterSetter("location", LocationScriptingInterface::locationGetter,
                         LocationScriptingInterface::locationSetter, "Window");
@@ -5869,78 +5881,12 @@ void Application::registerScriptEngineWithApplicationServices(ScriptEnginePointe
 #endif
     scriptEngine->registerFunction("OverlayWindow", QmlWindowClass::constructor);
 
-    scriptEngine->registerGlobalObject("Menu", MenuScriptingInterface::getInstance());
-    scriptEngine->registerGlobalObject("DesktopPreviewProvider", DependencyManager::get<DesktopPreviewProvider>().data());
-    scriptEngine->registerGlobalObject("Stats", Stats::getInstance());
-    scriptEngine->registerGlobalObject("Settings", SettingsScriptingInterface::getInstance());
-    scriptEngine->registerGlobalObject("Snapshot", DependencyManager::get<Snapshot>().data());
-    scriptEngine->registerGlobalObject("AudioStats", DependencyManager::get<AudioClient>()->getStats().data());
-    scriptEngine->registerGlobalObject("AudioScope", DependencyManager::get<AudioScope>().data());
-    scriptEngine->registerGlobalObject("AvatarBookmarks", DependencyManager::get<AvatarBookmarks>().data());
-    scriptEngine->registerGlobalObject("AvatarEntitiesBookmarks", DependencyManager::get<AvatarEntitiesBookmarks>().data());
-    scriptEngine->registerGlobalObject("LocationBookmarks", DependencyManager::get<LocationBookmarks>().data());
-
-    scriptEngine->registerGlobalObject("RayPick", DependencyManager::get<RayPickScriptingInterface>().data());
-    scriptEngine->registerGlobalObject("LaserPointers", DependencyManager::get<LaserPointerScriptingInterface>().data());
-    scriptEngine->registerGlobalObject("Picks", DependencyManager::get<PickScriptingInterface>().data());
-    scriptEngine->registerGlobalObject("Pointers", DependencyManager::get<PointerScriptingInterface>().data());
-
-    // Caches
-    scriptEngine->registerGlobalObject("AnimationCache", DependencyManager::get<AnimationCache>().data());
-    scriptEngine->registerGlobalObject("TextureCache", DependencyManager::get<TextureCache>().data());
-    scriptEngine->registerGlobalObject("ModelCache", DependencyManager::get<ModelCache>().data());
-    scriptEngine->registerGlobalObject("SoundCache", DependencyManager::get<SoundCache>().data());
-
-    scriptEngine->registerGlobalObject("DialogsManager", _dialogsManagerScriptingInterface);
-
-    scriptEngine->registerGlobalObject("Account", AccountServicesScriptingInterface::getInstance()); // DEPRECATED - TO BE REMOVED
-    scriptEngine->registerGlobalObject("GlobalServices", AccountServicesScriptingInterface::getInstance()); // DEPRECATED - TO BE REMOVED
-    scriptEngine->registerGlobalObject("AccountServices", AccountServicesScriptingInterface::getInstance());
     qScriptRegisterMetaType(scriptEngine.data(), DownloadInfoResultToScriptValue, DownloadInfoResultFromScriptValue);
-
-    scriptEngine->registerGlobalObject("FaceTracker", DependencyManager::get<DdeFaceTracker>().data());
-
-    scriptEngine->registerGlobalObject("AvatarManager", DependencyManager::get<AvatarManager>().data());
-
-    scriptEngine->registerGlobalObject("UndoStack", &_undoStackScriptingInterface);
-
-    scriptEngine->registerGlobalObject("LODManager", DependencyManager::get<LODManager>().data());
-
-    scriptEngine->registerGlobalObject("Paths", DependencyManager::get<PathUtils>().data());
-
-    scriptEngine->registerGlobalObject("HMD", DependencyManager::get<HMDScriptingInterface>().data());
     scriptEngine->registerFunction("HMD", "getHUDLookAtPosition2D", HMDScriptingInterface::getHUDLookAtPosition2D, 0);
     scriptEngine->registerFunction("HMD", "getHUDLookAtPosition3D", HMDScriptingInterface::getHUDLookAtPosition3D, 0);
 
-    scriptEngine->registerGlobalObject("Scene", DependencyManager::get<SceneScriptingInterface>().data());
-    scriptEngine->registerGlobalObject("Render", _renderEngine->getConfiguration().get());
 
-    scriptEngine->registerGlobalObject("ScriptDiscoveryService", DependencyManager::get<ScriptEngines>().data());
-    scriptEngine->registerGlobalObject("Reticle", getApplicationCompositor().getReticleInterface());
-
-    scriptEngine->registerGlobalObject("UserActivityLogger", DependencyManager::get<UserActivityLoggerScriptingInterface>().data());
-    scriptEngine->registerGlobalObject("Users", DependencyManager::get<UsersScriptingInterface>().data());
-
-    scriptEngine->registerGlobalObject("LimitlessSpeechRecognition", DependencyManager::get<LimitlessVoiceRecognitionScriptingInterface>().data());
-    scriptEngine->registerGlobalObject("GooglePoly", DependencyManager::get<GooglePolyScriptingInterface>().data());
-
-    if (auto steamClient = PluginManager::getInstance()->getSteamClientPlugin()) {
-        scriptEngine->registerGlobalObject("Steam", new SteamScriptingInterface(scriptEngine.data(), steamClient.get()));
-    }
-    auto scriptingInterface = DependencyManager::get<controller::ScriptingInterface>();
-    scriptEngine->registerGlobalObject("Controller", scriptingInterface.data());
     UserInputMapper::registerControllerTypes(scriptEngine.data());
-
-    auto recordingInterface = DependencyManager::get<RecordingScriptingInterface>();
-    scriptEngine->registerGlobalObject("Recording", recordingInterface.data());
-
-    auto entityScriptServerLog = DependencyManager::get<EntityScriptServerLogClient>();
-    scriptEngine->registerGlobalObject("EntityScriptServerLog", entityScriptServerLog.data());
-    scriptEngine->registerGlobalObject("AvatarInputs", AvatarInputs::getInstance());
-    scriptEngine->registerGlobalObject("Selection", DependencyManager::get<SelectionScriptingInterface>().data());
-    scriptEngine->registerGlobalObject("ContextOverlay", DependencyManager::get<ContextOverlayInterface>().data());
-    scriptEngine->registerGlobalObject("Wallet", DependencyManager::get<WalletScriptingInterface>().data());
-
     qScriptRegisterMetaType(scriptEngine.data(), OverlayIDtoScriptValue, OverlayIDfromScriptValue);
 
     DependencyManager::get<PickScriptingInterface>()->registerMetaTypes(scriptEngine.data());
@@ -5957,6 +5903,9 @@ void Application::registerScriptEngineWithApplicationServices(ScriptEnginePointe
     connect(scriptEngine.data(), &ScriptEngine::clearDebugWindow,
             DependencyManager::get<ScriptEngines>().data(), &ScriptEngines::onClearDebugWindow);
 
+    DependencyManager::get<InterfaceRegistry>()->applyRegistry(scriptEngine.data(), [scriptEngine](const std::string& name, QObject* value) {
+        scriptEngine->registerGlobalObject(name.c_str(), value);
+    });
 }
 
 bool Application::canAcceptURL(const QString& urlString) const {

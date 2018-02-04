@@ -46,6 +46,9 @@ class Quat : public QObject, protected QScriptable {
     Q_OBJECT
     Q_PROPERTY(glm::quat IDENTITY READ IDENTITY CONSTANT)
 
+public:
+    Quat(QObject* parent = nullptr) : QObject(parent) {}
+
 public slots:
 
     /**jsdoc

@@ -145,6 +145,7 @@ public:
 
     void initializeGL();
     void initializeUi();
+    void initializeInterfaces();
 
     void updateCamera(RenderArgs& renderArgs, float deltaTime);
     void paintGL();
@@ -629,8 +630,6 @@ private:
     Overlays _overlays;
     ApplicationOverlay _applicationOverlay;
     OverlayConductor _overlayConductor;
-
-    DialogsManagerScriptingInterface* _dialogsManagerScriptingInterface = new DialogsManagerScriptingInterface();
 
     ThreadSafeValueCache<EntityItemID> _keyboardFocusedEntity;
     ThreadSafeValueCache<OverlayID> _keyboardFocusedOverlay;

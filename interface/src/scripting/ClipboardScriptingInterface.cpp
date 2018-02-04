@@ -14,7 +14,7 @@
 
 #include "Application.h"
 
-ClipboardScriptingInterface::ClipboardScriptingInterface() {
+ClipboardScriptingInterface::ClipboardScriptingInterface(QObject* parent) : QObject(parent) {
 }
 
 glm::vec3 ClipboardScriptingInterface::getContentsDimensions() {
