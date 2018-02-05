@@ -17,6 +17,7 @@
 
 #include <GLMHelpers.h>
 
+#include <gl/Config.h>
 #include <gl/Context.h>
 #include <gl/GLShaders.h>
 
@@ -44,315 +45,13 @@ PoseData _nextRenderPoseData;
 PoseData _nextSimPoseData;
 
 #define MIN_CORES_FOR_NORMAL_RENDER 5
-bool forceInterleavedReprojection = (QThread::idealThreadCount() < MIN_CORES_FOR_NORMAL_RENDER);
+const bool forceInterleavedReprojection = (QThread::idealThreadCount() < MIN_CORES_FOR_NORMAL_RENDER);
 
 static std::array<vr::Hmd_Eye, 2> VR_EYES { { vr::Eye_Left, vr::Eye_Right } };
 bool _openVrDisplayActive { false };
 // Flip y-axis since GL UV coords are backwards.
 static vr::VRTextureBounds_t OPENVR_TEXTURE_BOUNDS_LEFT{ 0, 0, 0.5f, 1 };
 static vr::VRTextureBounds_t OPENVR_TEXTURE_BOUNDS_RIGHT{ 0.5f, 0, 1, 1 };
-
-#define REPROJECTION_BINDING 1
-
-static const char* HMD_REPROJECTION_VERT = R"SHADER(
-#version 450 core
-
-out vec3 vPosition;
-out vec2 vTexCoord;
-
-void main(void) {
-    const float depth = 0.0;
-    const vec4 UNIT_QUAD[4] = vec4[4](
-        vec4(-1.0, -1.0, depth, 1.0),
-        vec4(1.0, -1.0, depth, 1.0),
-        vec4(-1.0, 1.0, depth, 1.0),
-        vec4(1.0, 1.0, depth, 1.0)
-    );
-    vec4 pos = UNIT_QUAD[gl_VertexID];
-
-    gl_Position = pos;
-    vPosition = pos.xyz;
-    vTexCoord = (pos.xy + 1.0) * 0.5;
-}
-)SHADER";
-
-static const char* HMD_REPROJECTION_FRAG = R"SHADER(
-#version 450 core
-
-uniform sampler2D sampler;
-layout(binding = 1, std140) uniform Reprojection
-{
-    mat4 projections[2];
-    mat4 inverseProjections[2];
-    mat4 reprojection;
-};
-
-in vec3 vPosition;
-in vec2 vTexCoord;
-
-out vec4 FragColor;
-
-void main() {
-    vec2 uv = vTexCoord;
-    
-    mat4 eyeInverseProjection;
-    mat4 eyeProjection;
-    
-    float xoffset = 1.0;
-    vec2 uvmin = vec2(0.0);
-    vec2 uvmax = vec2(1.0);
-    // determine the correct projection and inverse projection to use.
-    if (vTexCoord.x < 0.5) {
-        uvmax.x = 0.5;
-        eyeInverseProjection = inverseProjections[0];
-        eyeProjection = projections[0];
-    } else {
-        xoffset = -1.0;
-        uvmin.x = 0.5;
-        uvmax.x = 1.0;
-        eyeInverseProjection = inverseProjections[1];
-        eyeProjection = projections[1];
-    }
-
-    // Account for stereo in calculating the per-eye NDC coordinates
-    vec4 ndcSpace = vec4(vPosition, 1.0);
-    ndcSpace.x *= 2.0;
-    ndcSpace.x += xoffset;
-    
-    // Convert from NDC to eyespace
-    vec4 eyeSpace = eyeInverseProjection * ndcSpace;
-    eyeSpace /= eyeSpace.w;
-
-    // Convert to a noramlized ray 
-    vec3 ray = eyeSpace.xyz;
-    ray = normalize(ray);
-
-    // Adjust the ray by the rotation
-    ray = mat3(reprojection) * ray;
-
-    // Project back on to the texture plane
-    ray *= eyeSpace.z / ray.z;
-
-    // Update the eyespace vector
-    eyeSpace.xyz = ray;
-
-    // Reproject back into NDC
-    ndcSpace = eyeProjection * eyeSpace;
-    ndcSpace /= ndcSpace.w;
-    ndcSpace.x -= xoffset;
-    ndcSpace.x /= 2.0;
-    
-    // Calculate the new UV coordinates
-    uv = (ndcSpace.xy / 2.0) + 0.5;
-    if (any(greaterThan(uv, uvmax)) || any(lessThan(uv, uvmin))) {
-        FragColor = vec4(0.0, 0.0, 0.0, 1.0);
-    } else {
-        FragColor = texture(sampler, uv);
-    }
-}
-)SHADER";
-
-struct Reprojection {
-    mat4 projections[2];
-    mat4 inverseProjections[2];
-    mat4 reprojection;
-};
-
-class OpenVrSubmitThread : public QThread, public Dependency {
-public:
-    using Mutex = std::mutex;
-    using Condition = std::condition_variable;
-    using Lock = std::unique_lock<Mutex>;
-    friend class OpenVrDisplayPlugin;
-    std::shared_ptr<gl::OffscreenContext> _canvas;
-
-    OpenVrSubmitThread(OpenVrDisplayPlugin& plugin) : _plugin(plugin) { 
-        setObjectName("OpenVR Submit Thread");
-    }
-
-    void updateSource() {
-        _plugin.withNonPresentThreadLock([&] {
-            while (!_queue.empty()) {
-                auto& front = _queue.front();
-
-                auto result = glClientWaitSync((GLsync)front.fence, 0, 0);
-
-                if (GL_TIMEOUT_EXPIRED == result || GL_WAIT_FAILED == result) {
-                    break;
-                } else if (GL_CONDITION_SATISFIED == result || GL_ALREADY_SIGNALED == result) {
-                    glDeleteSync((GLsync)front.fence);
-                } else {
-                    assert(false);
-                }
-
-                front.fence = 0;
-                _current = front;
-                _queue.pop();
-            }
-        });
-    }
-
-    GLuint _program { 0 };
-
-    void updateProgram() {
-        if (!_program) {
-            std::string vsSource = HMD_REPROJECTION_VERT;
-            std::string fsSource = HMD_REPROJECTION_FRAG;
-            GLuint vertexShader { 0 }, fragmentShader { 0 };
-            std::string error;
-            std::vector<char> binary;
-            ::gl::compileShader(GL_VERTEX_SHADER, vsSource, "", vertexShader, error);
-            ::gl::compileShader(GL_FRAGMENT_SHADER, fsSource, "", fragmentShader, error);
-            _program = ::gl::compileProgram({ { vertexShader, fragmentShader } }, error, binary);
-            glDeleteShader(vertexShader);
-            glDeleteShader(fragmentShader);
-            qDebug() << "Rebuild proigram";
-        }
-    }
-
-#define COLOR_BUFFER_COUNT 4
-
-    void run() override {
-
-        GLuint _framebuffer { 0 };
-        std::array<GLuint, COLOR_BUFFER_COUNT> _colors;
-        size_t currentColorBuffer { 0 };
-        size_t globalColorBufferCount { 0 };
-        GLuint _uniformBuffer { 0 };
-        GLuint _vao { 0 };
-        GLuint _depth { 0 };
-        Reprojection _reprojection;
-
-        QThread::currentThread()->setPriority(QThread::Priority::TimeCriticalPriority);
-        _canvas->makeCurrent();
-
-        glCreateBuffers(1, &_uniformBuffer);
-        glNamedBufferStorage(_uniformBuffer, sizeof(Reprojection), 0, GL_DYNAMIC_STORAGE_BIT);
-        glCreateVertexArrays(1, &_vao);
-        glBindVertexArray(_vao);
-
-
-        glCreateFramebuffers(1, &_framebuffer);
-        {
-            glCreateRenderbuffers(1, &_depth);
-            glNamedRenderbufferStorage(_depth, GL_DEPTH24_STENCIL8, _plugin._renderTargetSize.x, _plugin._renderTargetSize.y);
-            glNamedFramebufferRenderbuffer(_framebuffer, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _depth);
-            glCreateTextures(GL_TEXTURE_2D, COLOR_BUFFER_COUNT, &_colors[0]);
-            for (size_t i = 0; i < COLOR_BUFFER_COUNT; ++i) {
-                glTextureStorage2D(_colors[i], 1, GL_RGBA8, _plugin._renderTargetSize.x, _plugin._renderTargetSize.y);
-            }
-        }
-
-        glDisable(GL_DEPTH_TEST);
-        glViewport(0, 0, _plugin._renderTargetSize.x, _plugin._renderTargetSize.y);
-        _canvas->doneCurrent();
-        while (!_quit) {
-            _canvas->makeCurrent();
-            updateSource();
-            if (!_current.texture) {
-                _canvas->doneCurrent();
-                QThread::usleep(1);
-                continue;
-            }
-
-
-            updateProgram();
-            {
-                auto presentRotation = glm::mat3(_nextRender.poses[0]);
-                auto renderRotation = glm::mat3(_current.pose);
-                for (size_t i = 0; i < 2; ++i) {
-                    _reprojection.projections[i] = _plugin._eyeProjections[i];
-                    _reprojection.inverseProjections[i] = _plugin._eyeInverseProjections[i];
-                }
-                _reprojection.reprojection = glm::inverse(renderRotation) * presentRotation;
-                glNamedBufferSubData(_uniformBuffer, 0, sizeof(Reprojection), &_reprojection);
-                glNamedFramebufferTexture(_framebuffer, GL_COLOR_ATTACHMENT0, _colors[currentColorBuffer], 0);
-                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _framebuffer);
-                {
-                    glClearColor(1, 1, 0, 1);
-                    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                    glTextureParameteri(_current.textureID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                    glTextureParameteri(_current.textureID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                    glUseProgram(_program);
-                    glBindBufferBase(GL_UNIFORM_BUFFER, REPROJECTION_BINDING, _uniformBuffer);
-                    glBindTexture(GL_TEXTURE_2D, _current.textureID);
-                    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-                }
-
-                glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-                static const vr::VRTextureBounds_t leftBounds{ 0, 0, 0.5f, 1 };
-                static const vr::VRTextureBounds_t rightBounds{ 0.5f, 0, 1, 1 };
-
-                vr::Texture_t texture{ (void*)(uintptr_t)_colors[currentColorBuffer], vr::TextureType_OpenGL, vr::ColorSpace_Auto };
-                vr::VRCompositor()->Submit(vr::Eye_Left, &texture, &leftBounds);
-                vr::VRCompositor()->Submit(vr::Eye_Right, &texture, &rightBounds);
-                _plugin._presentRate.increment();
-                PoseData nextRender, nextSim;
-                nextRender.frameIndex = _plugin.presentCount();
-                vr::VRCompositor()->WaitGetPoses(nextRender.vrPoses, vr::k_unMaxTrackedDeviceCount, nextSim.vrPoses, vr::k_unMaxTrackedDeviceCount);
-
-                // Copy invalid poses in nextSim from nextRender
-                for (uint32_t i = 0; i < vr::k_unMaxTrackedDeviceCount; ++i) {
-                    if (!nextSim.vrPoses[i].bPoseIsValid) {
-                        nextSim.vrPoses[i] = nextRender.vrPoses[i];
-                    }
-                }
-
-                mat4 sensorResetMat;
-                _plugin.withNonPresentThreadLock([&] {
-                    sensorResetMat = _plugin._sensorResetMat;
-                });
-
-                nextRender.update(sensorResetMat);
-                nextSim.update(sensorResetMat);
-                _plugin.withNonPresentThreadLock([&] {
-                    _nextRender = nextRender;
-                    _nextSim = nextSim;
-                    ++_presentCount;
-                    _presented.notify_one();
-                });
-
-                ++globalColorBufferCount;
-                currentColorBuffer = globalColorBufferCount % COLOR_BUFFER_COUNT;
-            }
-            _canvas->doneCurrent();
-        }
-
-        _canvas->makeCurrent();
-        glDeleteBuffers(1, &_uniformBuffer);
-        glDeleteFramebuffers(1, &_framebuffer);
-        CHECK_GL_ERROR();
-        glDeleteTextures(4, &_colors[0]);
-        glDeleteProgram(_program);
-        glBindVertexArray(0);
-        glDeleteVertexArrays(1, &_vao);
-        _canvas->doneCurrent();
-    }
-
-    void update(const CompositeInfo& newCompositeInfo) {
-        _queue.push(newCompositeInfo);
-    }
-
-    void waitForPresent() {
-        auto lastCount = _presentCount.load();
-        Lock lock(_plugin._presentMutex);
-        _presented.wait(lock, [&]()->bool {
-            return _presentCount.load() > lastCount;
-        });
-        _nextSimPoseData = _nextSim;
-        _nextRenderPoseData = _nextRender;
-    }
-
-    CompositeInfo _current;
-    CompositeInfo::Queue _queue;
-
-    PoseData _nextRender, _nextSim;
-    bool _quit { false };
-    GLuint _currentTexture { 0 };
-    std::atomic<uint32_t> _presentCount { 0 };
-    Condition _presented;
-    OpenVrDisplayPlugin& _plugin;
-};
 
 bool OpenVrDisplayPlugin::isSupported() const {
     return openVrSupported();
@@ -385,9 +84,16 @@ glm::mat4 OpenVrDisplayPlugin::getCullingProjection(const glm::mat4& baseProject
 }
 
 float OpenVrDisplayPlugin::getTargetFrameRate() const {
-    if (forceInterleavedReprojection && !_asyncReprojectionActive) {
+
+    uint32_t reprojectionFlags = 0;
+    withNonPresentThreadLock([&] {
+        reprojectionFlags = _frameTiming.m_nReprojectionFlags;
+    });
+
+    if (VRCompositor_ReprojectionAsync == (reprojectionFlags & VRCompositor_ReprojectionAsync)) {
         return TARGET_RATE_OpenVr / 2.0f;
     }
+
     return TARGET_RATE_OpenVr;
 }
 
@@ -428,19 +134,9 @@ bool OpenVrDisplayPlugin::internalActivate() {
         return false;
     }
 
-    vr::Compositor_FrameTiming timing;
-    memset(&timing, 0, sizeof(timing));
-    timing.m_nSize = sizeof(vr::Compositor_FrameTiming);
-    vr::VRCompositor()->GetFrameTiming(&timing);
-    auto usingOpenVRForOculus = oculusViaOpenVR();
-    _asyncReprojectionActive = (timing.m_nReprojectionFlags & VRCompositor_ReprojectionAsync) || usingOpenVRForOculus;
-
-    _threadedSubmit = !_asyncReprojectionActive;
-    if (usingOpenVRForOculus) {
-        qDebug() << "Oculus active via OpenVR:  " << usingOpenVRForOculus;
+    if (oculusViaOpenVR()) {
+        qDebug() << "Oculus active via OpenVR";
     }
-    qDebug() << "OpenVR Async Reprojection active:  " << _asyncReprojectionActive;
-    qDebug() << "OpenVR Threaded submit enabled:  " << _threadedSubmit;
 
     _openVrDisplayActive = true;
     _container->setIsOptionChecked(StandingHMDSensorMode, true);
@@ -463,7 +159,6 @@ bool OpenVrDisplayPlugin::internalActivate() {
     if (forceInterleavedReprojection) {
         vr::VRCompositor()->ForceInterleavedReprojectionOn(true);
     }
-    
 
     // set up default sensor space such that the UI overlay will align with the front of the room.
     auto chaperone = vr::VRChaperone();
@@ -480,17 +175,6 @@ bool OpenVrDisplayPlugin::internalActivate() {
         #if DEV_BUILD
             qDebug() << "OpenVR: error could not get chaperone pointer";
         #endif
-    }
-
-    if (_threadedSubmit) {
-        _submitThread = std::make_shared<OpenVrSubmitThread>(*this);
-        if (!_submitCanvas) {
-            withMainThreadContext([&] {
-                _submitCanvas = std::make_shared<gl::OffscreenContext>();
-                _submitCanvas->create();
-                _submitCanvas->doneCurrent();
-            });
-        }
     }
 
     return Parent::internalActivate();
@@ -514,28 +198,6 @@ void OpenVrDisplayPlugin::customizeContext() {
     // Display plugins in DLLs must initialize GL locally
     gl::initModuleGl();
     Parent::customizeContext();
-
-    if (_threadedSubmit) {
-        _compositeInfos[0].texture = _compositeFramebuffer->getRenderBuffer(0);
-        for (size_t i = 0; i < COMPOSITING_BUFFER_SIZE; ++i) {
-            if (0 != i) {
-                _compositeInfos[i].texture = gpu::Texture::createRenderBuffer(gpu::Element::COLOR_RGBA_32, _renderTargetSize.x, _renderTargetSize.y, gpu::Texture::SINGLE_MIP, gpu::Sampler(gpu::Sampler::FILTER_MIN_MAG_POINT));
-            }
-            _compositeInfos[i].textureID = getGLBackend()->getTextureID(_compositeInfos[i].texture);
-        }
-        _submitThread->_canvas = _submitCanvas;
-        _submitThread->start(QThread::HighPriority);
-    }
-}
-
-void OpenVrDisplayPlugin::uncustomizeContext() {
-    Parent::uncustomizeContext();
-
-    if (_threadedSubmit) {
-        _submitThread->_quit = true;
-        _submitThread->wait();
-        _submitThread.reset();
-    }
 }
 
 void OpenVrDisplayPlugin::resetSensors() {
@@ -620,59 +282,24 @@ bool OpenVrDisplayPlugin::beginFrameRender(uint32_t frameIndex) {
     return Parent::beginFrameRender(frameIndex);
 }
 
-void OpenVrDisplayPlugin::compositeLayers() {
-    if (_threadedSubmit) {
-        ++_renderingIndex;
-        _renderingIndex %= COMPOSITING_BUFFER_SIZE;
-
-        auto& newComposite = _compositeInfos[_renderingIndex];
-        newComposite.pose = _currentPresentFrameInfo.presentPose;
-        _compositeFramebuffer->setRenderBuffer(0, newComposite.texture);
-    }
-
-    Parent::compositeLayers();
-
-    if (_threadedSubmit) {
-        auto& newComposite = _compositeInfos[_renderingIndex];
-        newComposite.fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-        // https://www.opengl.org/registry/specs/ARB/sync.txt:
-        // > The simple flushing behavior defined by
-        // > SYNC_FLUSH_COMMANDS_BIT will not help when waiting for a fence
-        // > command issued in another context's command stream to complete.
-        // > Applications which block on a fence sync object must take
-        // > additional steps to assure that the context from which the
-        // > corresponding fence command was issued has flushed that command
-        // > to the graphics pipeline.
-        glFlush();
-
-        if (!newComposite.textureID) {
-            newComposite.textureID = getGLBackend()->getTextureID(newComposite.texture);
-        }
-        withPresentThreadLock([&] {
-            _submitThread->update(newComposite);
-        });
-    }
-}
-
 void OpenVrDisplayPlugin::hmdPresent() {
     PROFILE_RANGE_EX(render, __FUNCTION__, 0xff00ff00, (uint64_t)_currentFrame->frameIndex)
+    GLuint glTexId = getGLBackend()->getTextureID(_compositeFramebuffer->getRenderBuffer(0));
+    vr::Texture_t vrTexture { (void*)(uintptr_t)glTexId, vr::TextureType_OpenGL, vr::ColorSpace_Auto };
+    vr::VRCompositor()->Submit(vr::Eye_Left, &vrTexture, &OPENVR_TEXTURE_BOUNDS_LEFT);
+    vr::VRCompositor()->Submit(vr::Eye_Right, &vrTexture, &OPENVR_TEXTURE_BOUNDS_RIGHT);
+    vr::VRCompositor()->PostPresentHandoff();
+    _presentRate.increment();
 
-    if (_threadedSubmit) {
-        _submitThread->waitForPresent();
-    } else {
-        GLuint glTexId = getGLBackend()->getTextureID(_compositeFramebuffer->getRenderBuffer(0));
-        vr::Texture_t vrTexture { (void*)(uintptr_t)glTexId, vr::TextureType_OpenGL, vr::ColorSpace_Auto };
-        vr::VRCompositor()->Submit(vr::Eye_Left, &vrTexture, &OPENVR_TEXTURE_BOUNDS_LEFT);
-        vr::VRCompositor()->Submit(vr::Eye_Right, &vrTexture, &OPENVR_TEXTURE_BOUNDS_RIGHT);
-        vr::VRCompositor()->PostPresentHandoff();
-        _presentRate.increment();
-    }
+    vr::Compositor_FrameTiming newFrameTiming;
+    memset(&newFrameTiming, 0, sizeof(vr::Compositor_FrameTiming));
+    newFrameTiming.m_nSize = sizeof(vr::Compositor_FrameTiming);
+    vr::VRCompositor()->GetFrameTiming(&newFrameTiming);
+    _stutterRate.increment(newFrameTiming.m_nNumDroppedFrames);
 
-    vr::Compositor_FrameTiming frameTiming;
-    memset(&frameTiming, 0, sizeof(vr::Compositor_FrameTiming));
-    frameTiming.m_nSize = sizeof(vr::Compositor_FrameTiming);
-    vr::VRCompositor()->GetFrameTiming(&frameTiming);
-    _stutterRate.increment(frameTiming.m_nNumDroppedFrames);
+    withPresentThreadLock([&] {
+        _frameTiming = newFrameTiming;
+    });
 }
 
 void OpenVrDisplayPlugin::postPreview() {
@@ -682,21 +309,18 @@ void OpenVrDisplayPlugin::postPreview() {
 
     _hmdActivityLevel = _system->GetTrackedDeviceActivityLevel(vr::k_unTrackedDeviceIndex_Hmd);
 
-    if (!_threadedSubmit) {
-        vr::VRCompositor()->WaitGetPoses(nextRender.vrPoses, vr::k_unMaxTrackedDeviceCount, nextSim.vrPoses, vr::k_unMaxTrackedDeviceCount);
+    vr::VRCompositor()->WaitGetPoses(nextRender.vrPoses, vr::k_unMaxTrackedDeviceCount, nextSim.vrPoses, vr::k_unMaxTrackedDeviceCount);
 
-        glm::mat4 resetMat;
-        withPresentThreadLock([&] {
-            resetMat = _sensorResetMat;
-        });
-        nextRender.update(resetMat);
-        nextSim.update(resetMat);
-        withPresentThreadLock([&] {
-            _nextSimPoseData = nextSim;
-        });
-        _nextRenderPoseData = nextRender;
-
-    }
+    glm::mat4 resetMat;
+    withPresentThreadLock([&] {
+        resetMat = _sensorResetMat;
+    });
+    nextRender.update(resetMat);
+    nextSim.update(resetMat);
+    withPresentThreadLock([&] {
+        _nextSimPoseData = nextSim;
+    });
+    _nextRenderPoseData = nextRender;
 }
 
 bool OpenVrDisplayPlugin::isHmdMounted() const {
@@ -729,10 +353,6 @@ void OpenVrDisplayPlugin::unsuppressKeyboard() {
 
 bool OpenVrDisplayPlugin::isKeyboardVisible() {
     return isOpenVrKeyboardShown(); 
-}
-
-int OpenVrDisplayPlugin::getRequiredThreadCount() const { 
-    return Parent::getRequiredThreadCount() + (_threadedSubmit ? 1 : 0);
 }
 
 QString OpenVrDisplayPlugin::getPreferredAudioInDevice() const {
