@@ -50,6 +50,7 @@ namespace MenuOption {
     const QString BinaryEyelidControl = "Binary Eyelid Control";
     const QString BinaryFaceHMD = "BinaryfaceHMD";
     const QString BookmarkAvatar = "Bookmark Avatar";
+    const QString BookmarkAvatarEntities = "Bookmark Avatar Entities";
     const QString BookmarkLocation = "Bookmark Location";
     const QString CalibrateBinaryFaceHMD = "Calibrate BinaryFaceHMD";
     const QString CalibrateCamera = "Calibrate Camera";
@@ -77,9 +78,11 @@ namespace MenuOption {
     const QString CrashNewFault = "New Fault";
     const QString CrashNewFaultThreaded = "New Fault (threaded)";
     const QString DeadlockInterface = "Deadlock Interface";
+    const QString UnresponsiveInterface = "Unresponsive Interface";
     const QString DecreaseAvatarSize = "Decrease Avatar Size";
     const QString DefaultSkybox = "Default Skybox";
     const QString DeleteAvatarBookmark = "Delete Avatar Bookmark...";
+    const QString DeleteAvatarEntitiesBookmark = "Delete Avatar Entities Bookmark";
     const QString DeleteBookmark = "Delete Bookmark...";
     const QString DisableActivityLogger = "Disable Activity Logger";
     const QString DisableEyelidAdjustment = "Disable Eyelid Adjustment";
@@ -197,7 +200,6 @@ namespace MenuOption {
     const QString TurnWithHead = "Turn using Head";
     const QString UseAudioForMouth = "Use Audio for Mouth";
     const QString UseCamera = "Use Camera";
-    const QString UseAnimPreAndPostRotations = "Use Anim Pre and Post Rotations";
     const QString VelocityFilter = "Velocity Filter";
     const QString VisibleToEveryone = "Everyone";
     const QString VisibleToFriends = "Friends";
@@ -205,6 +207,8 @@ namespace MenuOption {
     const QString WorldAxes = "World Axes";
     const QString DesktopTabletToToolbar = "Desktop Tablet Becomes Toolbar";
     const QString HMDTabletToToolbar = "HMD Tablet Becomes Toolbar";
+    const QString Shadows = "Shadows";
+    const QString AmbientOcclusion = "AmbientOcclusion";
 }
 
 #endif // hifi_Menu_h

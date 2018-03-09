@@ -321,12 +321,17 @@ public:
 
         void reset() override { }
 
+        // Don't keep files open forever.  We close them at the beginning of each frame (GLBackend::recycle)
+        static void releaseOpenKtxFiles();
+
     protected:
         std::shared_ptr<storage::FileStorage> maybeOpenFile() const;
 
-        mutable std::mutex _cacheFileCreateMutex;
-        mutable std::mutex _cacheFileWriteMutex;
+        mutable std::shared_ptr<std::mutex> _cacheFileMutex { std::make_shared<std::mutex>() };
         mutable std::weak_ptr<storage::FileStorage> _cacheFile;
+
+        static std::vector<std::pair<std::shared_ptr<storage::FileStorage>, std::shared_ptr<std::mutex>>> _cachedKtxFiles;
+        static std::mutex _cachedKtxFilesMutex;
 
         std::string _filename;
         cache::FilePointer _cacheEntry;
@@ -534,7 +539,7 @@ public:
 
     static TexturePointer build(const ktx::KTXDescriptor& descriptor);
     static TexturePointer unserialize(const std::string& ktxFile);
-    static TexturePointer unserialize(const cache::FilePointer& cacheEntry);
+    static TexturePointer unserialize(const cache::FilePointer& cacheEntry, const std::string& source = std::string());
 
     static bool evalKTXFormat(const Element& mipFormat, const Element& texelFormat, ktx::Header& header);
     static bool evalTextureFormat(const ktx::Header& header, Element& mipFormat, Element& texelFormat);
@@ -642,13 +647,11 @@ typedef std::vector<TextureView> TextureViews;
 // It provides the mechanism to create a texture using a customizable TextureLoader
 class TextureSource {
 public:
-    TextureSource();
-    ~TextureSource();
+    TextureSource(const QUrl& url, int type = 0) : _imageUrl(url), _type(type) {}
 
     const QUrl& getUrl() const { return _imageUrl; }
     const gpu::TexturePointer getGPUTexture() const { return _gpuTexture; }
-
-    void reset(const QUrl& url);
+    int getType() const { return _type; }
 
     void resetTexture(gpu::TexturePointer texture);
 
@@ -657,6 +660,7 @@ public:
 protected:
     gpu::TexturePointer _gpuTexture;
     QUrl _imageUrl;
+    int _type { 0 };
 };
 typedef std::shared_ptr< TextureSource > TextureSourcePointer;
 

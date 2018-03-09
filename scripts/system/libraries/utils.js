@@ -356,7 +356,7 @@ getTabletWidthFromSettings = function () {
     var DEFAULT_TABLET_WIDTH = 0.4375;
     var tablet = Tablet.getTablet("com.highfidelity.interface.tablet.system");
     var toolbarMode = tablet.toolbarMode;
-    var DEFAULT_TABLET_SCALE = 100;
+    var DEFAULT_TABLET_SCALE = 70;
     var tabletScalePercentage = DEFAULT_TABLET_SCALE;
     if (!toolbarMode) {
         if (HMD.active) {
@@ -400,7 +400,8 @@ resizeTablet = function (width, newParentJointIndex, sensorToWorldScaleOverride)
     });
 
     // update webOverlay
-    var WEB_ENTITY_Z_OFFSET = (tabletDepth / 2.0) * sensorScaleOffsetOverride;
+    var RAYPICK_OFFSET = 0.0007; // Sufficient for raypick to reliably intersect tablet screen before tablet model.
+    var WEB_ENTITY_Z_OFFSET = (tabletDepth / 2.0) * sensorScaleOffsetOverride + RAYPICK_OFFSET;
     var WEB_ENTITY_Y_OFFSET = 0.004 * sensorScaleFactor * sensorScaleOffsetOverride;
     var screenWidth = 0.82 * tabletWidth;
     var screenHeight = 0.81 * tabletHeight;
@@ -417,11 +418,27 @@ resizeTablet = function (width, newParentJointIndex, sensorToWorldScaleOverride)
     var homeButtonDim = 4.0 * tabletScaleFactor / 3.0;
     Overlays.editOverlay(HMD.homeButtonID, {
         localPosition: { x: 0, y: -HOME_BUTTON_Y_OFFSET, z: -WEB_ENTITY_Z_OFFSET },
+        localRotation: Quat.angleAxis(180, Vec3.UNIT_Y),
         dimensions: { x: homeButtonDim, y: homeButtonDim, z: homeButtonDim }
     });
 
     Overlays.editOverlay(HMD.homeButtonHighlightID, {
         localPosition: { x: 0, y: -HOME_BUTTON_Y_OFFSET, z: -WEB_ENTITY_Z_OFFSET },
+        localRotation: Quat.angleAxis(180, Vec3.UNIT_Y),
         dimensions: { x: homeButtonDim, y: homeButtonDim, z: homeButtonDim }
     });
+};
+
+getMainTabletIDs = function () {
+    var tabletIDs = [];
+    if (HMD.tabletID) {
+        tabletIDs.push(HMD.tabletID);
+    }
+    if (HMD.tabletScreenID) {
+        tabletIDs.push(HMD.tabletScreenID);
+    }
+    if (HMD.homeButtonID) {
+        tabletIDs.push(HMD.homeButtonID);
+    }
+    return tabletIDs;
 };
