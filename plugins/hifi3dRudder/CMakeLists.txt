@@ -1,0 +1,19 @@
+#
+#  Created by Bradley Austin Davis on 2015/11/18
+#  Copyright 2015 High Fidelity, Inc.
+#
+#  Distributed under the Apache License, Version 2.0.
+#  See the accompanying file LICENSE or http:#www.apache.org/licenses/LICENSE-2.0.html
+#
+
+if (WIN32)
+    find_package(3dRudderSdk)
+    if (KINECT_FOUND) 
+		set(TARGET_NAME hifi3dRudder)
+		setup_hifi_plugin(Qml)
+		link_hifi_libraries(shared controllers ui plugins input-plugins script-engine)
+
+        # need to setup appropriate externals...
+		target_3dRudderSdk()
+    endif()
+endif()

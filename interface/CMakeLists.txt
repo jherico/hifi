@@ -200,6 +200,7 @@ if (WIN32)
   add_dependency_external_projects(neuron)
   add_dependency_external_projects(wasapi)
   add_dependency_external_projects(steamworks)
+  add_dependency_external_projects(3dRudderSDK)  
 endif()
 
 # disable /OPT:REF and /OPT:ICF for the Debug builds
