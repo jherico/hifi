@@ -37,6 +37,7 @@ static const int MIN_TIMER_MS = 5;
 using namespace hifi::qml;
 using namespace hifi::qml::impl;
 
+#if !defined(DISABLE_QML)
 TextureCache& SharedObject::getTextureCache() {
     static TextureCache offscreenTextures;
     return offscreenTextures;
@@ -53,25 +54,30 @@ void SharedObject::setSharedContext(QOpenGLContext* sharedContext) {
 QOpenGLContext* SharedObject::getSharedContext() {
     return static_cast<QOpenGLContext*>(qApp->property(OFFSCREEN_QML_SHARED_CONTEXT_PROPERTY).value<void*>());
 }
+#endif
 
 SharedObject::SharedObject() {
-    // Create render control
-    _renderControl = new RenderControl();
-
     // Create a QQuickWindow that is associated with our render control.
     // This window never gets created or shown, meaning that it will never get an underlying native (platform) window.
     // NOTE: Must be created on the main thread so that OffscreenQmlSurface can send it events
     // NOTE: Must be created on the rendering thread or it will refuse to render,
     //       so we wait until after its ctor to move object/context to this thread.
     QQuickWindow::setDefaultAlphaBuffer(true);
+
+#if !defined(DISABLE_QML)
+    // Create render control
+    _renderControl = new RenderControl();
     _quickWindow = new QQuickWindow(_renderControl);
+#else
+    _quickWindow = new QQuickWindow();
+#endif
+
     _quickWindow->setColor(QColor(255, 255, 255, 0));
     _quickWindow->setClearBeforeRendering(true);
 
 
     QObject::connect(qApp, &QCoreApplication::aboutToQuit, this, &SharedObject::onAboutToQuit);
 }
-
 
 SharedObject::~SharedObject() {
     // After destroy returns, the rendering thread should be gone
@@ -80,6 +86,7 @@ SharedObject::~SharedObject() {
     // _renderTimer is created with `this` as the parent, so need no explicit destruction
 
     // Destroy the event hand
+#if !defined(DISABLE_QML)
     if (_renderObject) {
         delete _renderObject;
         _renderObject = nullptr;
@@ -89,6 +96,7 @@ SharedObject::~SharedObject() {
         delete _renderControl;
         _renderControl = nullptr;
     }
+#endif
 
     if (_rootItem) {
         delete _rootItem;
@@ -139,6 +147,7 @@ void SharedObject::setRootItem(QQuickItem* rootItem) {
     _rootItem = rootItem;
     _rootItem->setSize(_quickWindow->size());
 
+#if !defined(DISABLE_QML)
     // Create the render thread
     _renderThread = new QThread();
     _renderThread->setObjectName(objectName());
@@ -150,6 +159,7 @@ void SharedObject::setRootItem(QQuickItem* rootItem) {
 
     QObject::connect(_renderControl, &QQuickRenderControl::renderRequested, this, &SharedObject::requestRender);
     QObject::connect(_renderControl, &QQuickRenderControl::sceneChanged, this, &SharedObject::requestRenderSync);
+#endif
 }
 
 void SharedObject::destroy() {
@@ -162,7 +172,10 @@ void SharedObject::destroy() {
         return;
     }
 
+    QObject::disconnect(qApp);
+
     _paused = true;
+#if !defined(DISABLE_QML)
     if (_renderTimer) {
         _renderTimer->stop();
         QObject::disconnect(_renderTimer);
@@ -171,8 +184,6 @@ void SharedObject::destroy() {
     if (_renderControl) {
         QObject::disconnect(_renderControl);
     }
-
-    QObject::disconnect(qApp);
 
     {
         QMutexLocker lock(&_mutex);
@@ -190,6 +201,7 @@ void SharedObject::destroy() {
         delete _renderThread;
         _renderThread = nullptr;
     }
+#endif
 }
 
 
@@ -239,18 +251,19 @@ void SharedObject::releaseEngine(QQmlEngine* engine) {
 #endif
 }
 
+#if !defined(DISABLE_QML)
 bool SharedObject::event(QEvent* e) {
     switch (static_cast<OffscreenEvent::Type>(e->type())) {
-        case OffscreenEvent::Initialize:
-            onInitialize();
-            return true;
+    case OffscreenEvent::Initialize:
+        onInitialize();
+        return true;
 
-        case OffscreenEvent::Render:
-            onRender();
-            return true;
+    case OffscreenEvent::Render:
+        onRender();
+        return true;
 
-        default:
-            break;
+    default:
+        break;
     }
     return QObject::event(e);
 }
@@ -279,6 +292,46 @@ void SharedObject::setRenderTarget(uint32_t fbo, const QSize& size) {
     _quickWindow->setRenderTarget(fbo, size);
 }
 
+bool SharedObject::preRender() {
+    QMutexLocker lock(&_mutex);
+    if (_paused) {
+        if (_syncRequested) {
+            wake();
+        }
+        return false;
+    }
+
+    if (_syncRequested) {
+        bool syncResult = true;
+        if (!nsightActive()) {
+            PROFILE_RANGE(render_qml_gl, "sync")
+                syncResult = _renderControl->sync();
+        }
+        wake();
+        if (!syncResult) {
+            return false;
+        }
+        _syncRequested = false;
+    }
+
+    return true;
+}
+
+void SharedObject::shutdownRendering(OffscreenGLCanvas& canvas, const QSize& size) {
+    QMutexLocker locker(&_mutex);
+    if (size != QSize(0, 0)) {
+        getTextureCache().releaseSize(size);
+        if (_latestTextureAndFence.first) {
+            getTextureCache().releaseTexture(_latestTextureAndFence);
+        }
+    }
+    _renderControl->invalidate();
+    canvas.doneCurrent();
+    wake();
+}
+
+#endif
+
 QSize SharedObject::getSize() const {
     QMutexLocker locker(&_mutex);
     return _size;
@@ -304,44 +357,6 @@ void SharedObject::setSize(const QSize& size) {
     }
 
     requestRenderSync();
-}
-
-bool SharedObject::preRender() {
-    QMutexLocker lock(&_mutex);
-    if (_paused) {
-        if (_syncRequested) {
-            wake();
-        }
-        return false;
-    }
-
-    if (_syncRequested) {
-        bool syncResult = true;
-        if (!nsightActive()) {
-            PROFILE_RANGE(render_qml_gl, "sync")
-            syncResult = _renderControl->sync();
-        }
-        wake();
-        if (!syncResult) {
-            return false;
-        }
-        _syncRequested = false;
-    }
-
-    return true;
-}
-
-void SharedObject::shutdownRendering(OffscreenGLCanvas& canvas, const QSize& size) {
-    QMutexLocker locker(&_mutex);
-    if (size != QSize(0, 0)) {
-        getTextureCache().releaseSize(size);
-        if (_latestTextureAndFence.first) {
-            getTextureCache().releaseTexture(_latestTextureAndFence);
-        }
-    }
-    _renderControl->invalidate();
-    canvas.doneCurrent();
-    wake();
 }
 
 bool SharedObject::isQuit() {
@@ -371,6 +386,7 @@ void SharedObject::requestRenderSync() {
 }
 
 bool SharedObject::fetchTexture(TextureAndFence& textureAndFence) {
+#if !defined(DISABLE_QML)
     QMutexLocker locker(&_mutex);
     if (0 == _latestTextureAndFence.first) {
         return false;
@@ -378,13 +394,19 @@ bool SharedObject::fetchTexture(TextureAndFence& textureAndFence) {
     textureAndFence = { 0, 0 };
     std::swap(textureAndFence, _latestTextureAndFence);
     return true;
+#else
+    return false;
+#endif
 }
 
 void SharedObject::setProxyWindow(QWindow* window) {
     _proxyWindow = window;
+#if !defined(DISABLE_QML)
     _renderControl->setRenderWindow(window);
+#endif
 }
 
+#if !defined(DISABLE_QML)
 void SharedObject::wait() {
     _cond.wait(&_mutex);
 }
@@ -396,6 +418,7 @@ void SharedObject::wake() {
 void SharedObject::onInitialize() {
     // Associate root item with the window.
     _rootItem->setParentItem(_quickWindow->contentItem());
+
     _renderControl->prepareThread(_renderThread);
 
     // Set up the render thread
@@ -433,7 +456,6 @@ void SharedObject::onRender() {
 }
 
 void SharedObject::onTimer() {
-    getTextureCache().report();
     if (!_renderRequested) {
         return;
     }
@@ -457,12 +479,14 @@ void SharedObject::onTimer() {
 
     QCoreApplication::postEvent(this, new OffscreenEvent(OffscreenEvent::Render));
 }
+#endif
 
 void SharedObject::onAboutToQuit() {
     destroy();
 }
 
 void SharedObject::updateTextureAndFence(const TextureAndFence& newTextureAndFence) {
+#if !defined(DISABLE_QML)
     QMutexLocker locker(&_mutex);
     // If the most recent texture was unused, we can directly recycle it
     if (_latestTextureAndFence.first) {
@@ -471,6 +495,7 @@ void SharedObject::updateTextureAndFence(const TextureAndFence& newTextureAndFen
     }
 
     _latestTextureAndFence = newTextureAndFence;
+#endif
 }
 
 void SharedObject::pause() {

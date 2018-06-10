@@ -8,6 +8,8 @@
 
 #include "RenderEventHandler.h"
 
+#if !defined(DISABLE_QML)
+
 #include <gl/Config.h>
 #include <gl/QOpenGLContextWrapper.h>
 
@@ -165,3 +167,5 @@ void RenderEventHandler::onQuit() {
     moveToThread(qApp->thread());
     QThread::currentThread()->quit();
 }
+
+#endif

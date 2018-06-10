@@ -48,16 +48,24 @@ void OffscreenSurface::initializeEngine(QQmlEngine* engine) {
 using namespace hifi::qml::impl;
 
 size_t OffscreenSurface::getUsedTextureMemory() {
+#if !defined(DISABLE_QML)
     return SharedObject::getTextureCache().getUsedTextureMemory();
+#else
+    return 0;
+#endif
 }
 
 void OffscreenSurface::setSharedContext(QOpenGLContext* sharedContext) {
+#if !defined(DISABLE_QML)
     SharedObject::setSharedContext(sharedContext);
+#endif
 }
 
 std::function<void(uint32_t, void*)> OffscreenSurface::getDiscardLambda() {
     return [](uint32_t texture, void* fence) {
+#if !defined(DISABLE_QML)
         SharedObject::getTextureCache().releaseTexture({ texture, static_cast<GLsync>(fence) });
+#endif
     };
 }
 

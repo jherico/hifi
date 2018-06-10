@@ -14,6 +14,8 @@
 #include <GLMHelpers.h>
 #include <gl/OffscreenGLCanvas.h>
 
+#if !defined(DISABLE_QML)
+
 namespace hifi { namespace qml { namespace impl {
 
 class SharedObject;
@@ -54,3 +56,5 @@ private:
 };
 
 }}}  // namespace hifi::qml::impl
+
+#endif

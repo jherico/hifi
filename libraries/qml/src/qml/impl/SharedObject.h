@@ -21,10 +21,13 @@ class QWindow;
 class QTimer;
 class QQuickWindow;
 class QQuickItem;
-class QOpenGLContext;
 class QQmlEngine;
 class QQmlContext;
+
+#if !defined(DISABLE_QML)
+class QOpenGLContext;
 class OffscreenGLCanvas;
+#endif
 
 namespace hifi { namespace qml {
 
@@ -38,12 +41,16 @@ class RenderEventHandler;
 class SharedObject : public QObject {
     Q_OBJECT
 
+#if !defined(DISABLE_QML)
     friend class RenderEventHandler;
+#endif
 
 public:
+#if !defined(DISABLE_QML)
     static void setSharedContext(QOpenGLContext* context);
     static QOpenGLContext* getSharedContext();
     static TextureCache& getTextureCache();
+#endif
 
     SharedObject();
     virtual ~SharedObject();
@@ -69,39 +76,44 @@ public:
 
 
 private:
+#if !defined(DISABLE_QML)
     bool event(QEvent* e) override;
-
     bool preRender();
     void shutdownRendering(OffscreenGLCanvas& canvas, const QSize& size);
     // Called by the render event handler, from the render thread
     void initializeRenderControl(QOpenGLContext* context);
     void releaseTextureAndFence();
     void setRenderTarget(uint32_t fbo, const QSize& size);
+#endif
 
     QQmlEngine* acquireEngine(OffscreenSurface* surface);
     void releaseEngine(QQmlEngine* engine);
 
     void requestRender();
     void requestRenderSync();
+#if !defined(DISABLE_QML)
     void wait();
     void wake();
     void onInitialize();
     void onRender();
     void onTimer();
+#endif
     void onAboutToQuit();
     void updateTextureAndFence(const TextureAndFence& newTextureAndFence);
 
     // Texture management
+#if !defined(DISABLE_QML)
     TextureAndFence _latestTextureAndFence{ 0, 0 };
     RenderControl* _renderControl{ nullptr };
     RenderEventHandler* _renderObject{ nullptr };
+    QTimer* _renderTimer{ nullptr };
+    QThread* _renderThread{ nullptr };
+#endif
     QQuickWindow* _quickWindow{ nullptr };
     QWindow* _proxyWindow{ nullptr };
     QQuickItem* _item{ nullptr };
     QQuickItem* _rootItem{ nullptr };
     QQmlContext* _qmlContext{ nullptr };
-    QTimer* _renderTimer{ nullptr };
-    QThread* _renderThread{ nullptr };
     QWaitCondition _cond;
     mutable QMutex _mutex;
 
