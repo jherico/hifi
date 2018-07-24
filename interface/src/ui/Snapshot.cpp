@@ -29,6 +29,7 @@
 #include <avatar/AvatarManager.h>
 #include <avatar/MyAvatar.h>
 #include <shared/FileUtils.h>
+#include <shared/LocalFileWhitelist.h>
 #include <NodeList.h>
 #include <OffscreenUi.h>
 #include <SharedUtil.h>
@@ -441,6 +442,8 @@ QFile* Snapshot::savedFileForSnapshot(QImage& shot,
             shot.save(imageFile, 0, imageQuality);
             imageFile->close();
 
+            DependencyManager::get<LocalFileWhitelist>()->addEntry(QFileInfo(snapshotFullPath));
+
             return imageFile;
         }
     }
@@ -455,6 +458,8 @@ QFile* Snapshot::savedFileForSnapshot(QImage& shot,
 
     shot.save(imageTempFile, 0, imageQuality);
     imageTempFile->close();
+
+    DependencyManager::get<LocalFileWhitelist>()->addEntry(QFileInfo(imageTempFile->fileName()));
 
     return imageTempFile;
 }

@@ -107,6 +107,7 @@
 #include <OffscreenUi.h>
 #include <gl/OffscreenGLCanvas.h>
 #include <ui/OffscreenQmlSurfaceCache.h>
+#include <shared/LocalFileWhitelist.h>
 #include <PathUtils.h>
 #include <PerfStat.h>
 #include <PhysicsEngine.h>
@@ -935,6 +936,7 @@ bool setupEssentials(int& argc, char** argv, bool runningMarkerExisted) {
     DependencyManager::set<WalletScriptingInterface>();
 
     DependencyManager::set<FadeEffect>();
+    DependencyManager::set<LocalFileWhitelist>();
 
     return previousSessionCrashed;
 }

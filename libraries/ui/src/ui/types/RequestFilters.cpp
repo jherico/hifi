@@ -17,6 +17,7 @@
 #include <QtCore/QDir>
 
 #include <SettingHandle.h>
+#include <shared/LocalFileWhitelist.h>
 
 #include "AccountManager.h"
 
@@ -45,19 +46,6 @@ namespace {
      }
 
 
-     bool isApplicationFilePath(const QString& path) {
-         static const QString applicationRootDir;
-         static std::once_flag once;
-         std::call_once(once, [&] {
-             auto dir = QFileInfo(QCoreApplication::applicationFilePath()).absoluteDir();
-#if defined(Q_OS_OSX)
-             dir.cdUp();
-#endif
-             const_cast<QString&>(applicationRootDir) = dir.canonicalPath();
-         });
-         return path.startsWith(applicationRootDir);
-     }
-
     static bool ALLOW_WEB_LOCAL_FILE_ACCESS() {
         static bool result = false;
         static std::once_flag once;
@@ -68,23 +56,32 @@ namespace {
         return result;
     }
 
-     bool blockLocalFiles(QWebEngineUrlRequestInfo& info) {
-         if (ALLOW_WEB_LOCAL_FILE_ACCESS()) {
-             return false;
-         }
+    bool blockLocalFiles(QWebEngineUrlRequestInfo& info) {
+        // Global environment variable check
+        if (ALLOW_WEB_LOCAL_FILE_ACCESS()) {
+            // Developer mode on, do not block
+            return false;
+        }
 
-         auto requestUrl = info.requestUrl();
-         if (requestUrl.isLocalFile()) {
-             QString targetFilePath = QFileInfo(requestUrl.toLocalFile()).canonicalFilePath();
-             // Files installed by the application are allowed to be rendered in web views
-             if (isApplicationFilePath(targetFilePath)) {
-                 return false;
-             }
-             qWarning() << "Blocking web access to local file path" << targetFilePath;
-             info.block(true);
-             return true;
-         }
-         return false;
+        auto requestUrl = info.requestUrl();
+        if (!requestUrl.isLocalFile()) {
+            // Not a local file, do not block
+            return false;
+        }
+
+
+        QString targetFilePath = QFileInfo(requestUrl.toLocalFile()).canonicalFilePath();
+        if (DependencyManager::get<LocalFileWhitelist>()->isWhitelisted(targetFilePath)) {
+            // Whitelisted file, do not block
+            // (i.e. do not block)
+            return false;
+        }
+
+        // If we get here, then it's a local file that isn't whitelisted and the 
+        // developer mode environment variable is not enabled.  Block access to the file
+        qWarning() << "Blocking web access to local file path" << targetFilePath;
+        info.block(true);
+        return true;
      }
 } // anonymous namespace
 

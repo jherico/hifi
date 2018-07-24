@@ -39,6 +39,7 @@
 #include <QtScriptTools/QScriptEngineDebugger>
 
 #include <shared/QtHelpers.h>
+#include <shared/LocalFileWhitelist.h>
 #include <AudioConstants.h>
 #include <AudioEffectOptions.h>
 #include <AvatarData.h>
@@ -460,6 +461,19 @@ void ScriptEngine::loadURL(const QUrl& scriptURL, bool reload) {
     }
 
     QUrl url = expandScriptUrl(scriptURL);
+
+    if (isClientScript() && url.isLocalFile() && DependencyManager::isSet<LocalFileWhitelist>()) {
+        auto localFileWhitelist = DependencyManager::get<LocalFileWhitelist>();
+        auto scriptFilePath = scriptURL.toLocalFile();
+        auto scriptFileInfo = QFileInfo(scriptFilePath);
+        if (scriptFileInfo.exists() && !localFileWhitelist->isWhitelisted(scriptFileInfo.canonicalFilePath())) {
+            // We add the PARENT folder of the script as the whitelist entry, so that if
+            // foo.js has a sibling file foo.html, it's accessible to web views
+            // created by the script
+            localFileWhitelist->addEntry(scriptFileInfo.canonicalPath());
+        }
+    }
+
     _fileNameString = url.toString();
     _isReloading = reload;
 

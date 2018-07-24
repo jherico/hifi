@@ -49,21 +49,30 @@ static bool USE_SOURCE_TREE_RESOURCES() {
 }
 #endif
 
+const QString& PathUtils::getApplicationPath() {
+    static QString installLocation;
+    static std::once_flag once;
+    std::call_once(once, [&] {
+#if defined(Q_OS_OSX)
+        char buffer[8192];
+        uint32_t bufferSize = sizeof(buffer);
+        _NSGetExecutablePath(buffer, &bufferSize);
+        installLocation = QDir::cleanPath(QFileInfo(buffer).dir().absoluteFilePath("../Resources"));
+#elif defined(Q_OS_ANDROID)
+        installLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+#else
+        installLocation = QCoreApplication::applicationDirPath();
+#endif
+    });
+    return installLocation;
+}
+
 const QString& PathUtils::getRccPath() {
     static QString rccLocation;
     static std::once_flag once;
     std::call_once(once, [&] {
         static const QString rccName{ "/resources.rcc" };
-#if defined(Q_OS_OSX)
-        char buffer[8192];
-        uint32_t bufferSize = sizeof(buffer);
-        _NSGetExecutablePath(buffer, &bufferSize);
-        rccLocation = QDir::cleanPath(QFileInfo(buffer).dir().absoluteFilePath("../Resources")) + rccName;
-#elif defined(Q_OS_ANDROID)
-        rccLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + rccName;
-#else
-        rccLocation = QCoreApplication::applicationDirPath() + rccName;
-#endif
+        rccLocation = getApplicationPath() + rccName;
     });
     return rccLocation;
 }

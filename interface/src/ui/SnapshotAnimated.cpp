@@ -17,6 +17,7 @@
 #include <QtGui/QImage>
 #include <QtConcurrent/QtConcurrentRun>
 
+#include <shared/LocalFileWhitelist.h>
 #include <plugins/DisplayPlugin.h>
 
 QTimer* SnapshotAnimated::snapshotAnimatedTimer = NULL;
@@ -149,7 +150,9 @@ void SnapshotAnimated::processFrames() {
     GifEnd(&(SnapshotAnimated::snapshotAnimatedGifWriter));
 
     SnapshotAnimated::clearTempVariables();
-    
+
+    DependencyManager::get<LocalFileWhitelist>()->addEntry(QFileInfo(SnapshotAnimated::snapshotAnimatedPath));
+
     // Update the "Share" dialog with the processed GIF.
     emit SnapshotAnimated::snapshotAnimatedDM->processingGifCompleted(SnapshotAnimated::snapshotAnimatedPath);
 }
