@@ -523,7 +523,8 @@ void DebugSubsurfaceScattering::run(const render::RenderContextPointer& renderCo
                	batch.setResourceTexture(ru::Texture::DeferredDepth, linearDepthTexture);
 
 
-                batch._glUniform2f(gpu::slot::uniform::Extra0, _debugCursorTexcoord.x, _debugCursorTexcoord.y);
+                // FIXME convert into uniform buffer
+                //batch._glUniform2f(gpu::slot::uniform::Extra0, _debugCursorTexcoord.x, _debugCursorTexcoord.y);
                 batch.draw(gpu::TRIANGLE_STRIP, 4);
             }
         }
