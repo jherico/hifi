@@ -65,14 +65,22 @@ public:
     void setDoesFade(bool doesFade) { _doesFade = doesFade; }
 
     gpu::Shader::Source _vertexSource;
-    gpu::Shader::Source _opaquefragmentSource;
-    gpu::Shader::Source _transparentfragmentSource;
+    gpu::Shader::Source _opaqueFragmentSource;
+    gpu::Shader::Source _transparentFragmentSource;
 
     gpu::StatePointer _opaqueState { std::make_shared<gpu::State>() };
     gpu::StatePointer _transparentState { std::make_shared<gpu::State>() };
 
 
 protected:
+    struct StandardInputs {
+        vec4 date;
+        vec4 posAndTime;
+        vec4 scaleAndCount;
+        mat4 orientation;
+        vec4 resolution[4];
+    };
+
     // Procedural metadata
     ProceduralData _data;
 
@@ -95,6 +103,8 @@ protected:
     NetworkTexturePointer _channels[MAX_PROCEDURAL_TEXTURE_CHANNELS];
     gpu::PipelinePointer _opaquePipeline;
     gpu::PipelinePointer _transparentPipeline;
+    StandardInputs _standardInputs;
+    gpu::BufferPointer _standardInputsBuffer;
     gpu::ShaderPointer _vertexShader;
     gpu::ShaderPointer _opaqueFragmentShader;
     gpu::ShaderPointer _transparentFragmentShader;
@@ -111,7 +121,7 @@ private:
     void setupUniforms(bool transparent);
     void setupChannels(bool shouldCreate, bool transparent);
 
-    std::string replaceProceduralBlock(const std::string& fragmentSource);
+    //std::string replaceProceduralBlock(const std::string& fragmentSource);
 
     mutable quint64 _fadeStartTime { 0 };
     mutable bool _hasStartedFade { false };

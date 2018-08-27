@@ -40,9 +40,9 @@ void GLESBackend::transferTransformState(const Batch& batch) const {
     }
 
     if (!batch._objects.empty()) {
-        glBindBuffer(GL_TEXTURE_BUFFER, _transform._objectBuffer);
-        glBufferData(GL_TEXTURE_BUFFER, batch._objects.size() * sizeof(Batch::TransformObject), batch._objects.data(), GL_DYNAMIC_DRAW);
-        glBindBuffer(GL_TEXTURE_BUFFER, 0);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, _transform._objectBuffer);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, batch._objects.size() * sizeof(Batch::TransformObject), batch._objects.data(), GL_DYNAMIC_DRAW);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     }
 
     if (!batch._namedData.empty()) {
@@ -60,12 +60,15 @@ void GLESBackend::transferTransformState(const Batch& batch) const {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
-    glActiveTexture(GL_TEXTURE0 +  GLESBackend::TRANSFORM_OBJECT_SLOT);
+#if GPU_SSBO_TRANSFORM_OBJECT
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, slot::storage::ObjectTransforms, _transform._objectBuffer);
+#else
+    glActiveTexture(GL_TEXTURE0 +  slot::texture::ObjectTransforms);
     glBindTexture(GL_TEXTURE_BUFFER, _transform._objectBufferTexture);
     if (!batch._objects.empty()) {
         glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32F, _transform._objectBuffer);
     }
-
+#endif
     CHECK_GL_ERROR();
 
     // Make sure the current Camera offset is unknown before render Draw

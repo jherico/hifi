@@ -167,8 +167,7 @@ protected:
     // Output stage
     void do_blit(const Batch& batch, size_t paramOffset) override;
 
-    std::string getBackendShaderHeader() const override;
-
+    shader::Dialect getShaderDialect() const override { return shader::Dialect::e410; }
     void postLinkProgram(ShaderObject& programObject, const Shader& program) const override;
 };
 

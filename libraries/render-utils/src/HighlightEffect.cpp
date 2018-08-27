@@ -389,6 +389,7 @@ void DebugHighlight::run(const render::RenderContextPointer& renderContext, cons
 }
 
 void DebugHighlight::initializePipelines() {
+#if 0
     static const auto FRAGMENT_SHADER_SOURCE = gpu::Shader::createPixel(shader::render_utils::fragment::debug_deferred_buffer)->getSource();
     static const std::string SOURCE_PLACEHOLDER{ "//SOURCE_PLACEHOLDER" };
     static const auto SOURCE_PLACEHOLDER_INDEX = FRAGMENT_SHADER_SOURCE.getCode().find(SOURCE_PLACEHOLDER);
@@ -418,6 +419,7 @@ void DebugHighlight::initializePipelines() {
         const auto program = gpu::Shader::createProgram(vs, ps);
         _depthPipeline = gpu::Pipeline::create(program, state);
     }
+#endif
 }
 
 const gpu::PipelinePointer& DebugHighlight::getDepthPipeline() {

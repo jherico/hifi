@@ -229,7 +229,7 @@ void initDeferredPipelines(render::ShapePlumber& plumber, const render::ShapePip
 }
 
 void initForwardPipelines(ShapePlumber& plumber) {
-    using namespace shader::render_utils::program;
+    using namespace shader::render_utils;
 
     using Key = render::ShapeKey;
     auto addPipelineBind = std::bind(&addPlumberPipeline, std::ref(plumber), _1, _2, _3, _4);
@@ -244,33 +244,33 @@ void initForwardPipelines(ShapePlumber& plumber) {
     forceLightBatchSetter = true;
 
     // Simple Opaques
-    addPipeline(Key::Builder(), simple);
-    addPipeline(Key::Builder().withUnlit(), simpleUnlit);
+    addPipeline(Key::Builder(), program::forward_simple_textured);
+    addPipeline(Key::Builder().withUnlit(), program::forward_simple_textured_unlit);
 
     // Simple Translucents
-    addPipeline(Key::Builder().withTranslucent(), simpleTranslucent);
-    addPipeline(Key::Builder().withTranslucent().withUnlit(), simpleTranslucentUnlit);
+    addPipeline(Key::Builder().withTranslucent(), program::forward_simple_textured_transparent);
+    addPipeline(Key::Builder().withTranslucent().withUnlit(), program::simple_transparent_textured_unlit);
 
     // Opaques
-    addPipeline(Key::Builder().withMaterial(), forward_model);
-    addPipeline(Key::Builder().withMaterial().withUnlit(), forward_model_unlit);
-    addPipeline(Key::Builder().withMaterial().withTangents(), forward_model_translucent);
+    addPipeline(Key::Builder().withMaterial(), program::forward_model);
+    addPipeline(Key::Builder().withMaterial().withUnlit(), program::forward_model_unlit);
+    addPipeline(Key::Builder().withMaterial().withTangents(), program::forward_model_translucent);
  
     // Skinned Opaques
-    addPipeline(Key::Builder().withMaterial().withSkinned(), forward_skin_model);
-    addPipeline(Key::Builder().withMaterial().withSkinned().withTangents(), forward_skin_model_normal_map);
-    addPipeline(Key::Builder().withMaterial().withSkinned().withDualQuatSkinned(), forward_skin_model_dq);
-    addPipeline(Key::Builder().withMaterial().withSkinned().withTangents().withDualQuatSkinned(), forward_skin_model_normal_map_dq);
+    addPipeline(Key::Builder().withMaterial().withSkinned(), program::forward_skin_model);
+    addPipeline(Key::Builder().withMaterial().withSkinned().withTangents(), program::forward_skin_model_normal_map);
+    addPipeline(Key::Builder().withMaterial().withSkinned().withDualQuatSkinned(), program::forward_skin_model_dq);
+    addPipeline(Key::Builder().withMaterial().withSkinned().withTangents().withDualQuatSkinned(), program::forward_skin_model_normal_map_dq);
 
     // Translucents
-    addPipeline(Key::Builder().withMaterial().withTranslucent(), forward_model_translucent);
-    addPipeline(Key::Builder().withMaterial().withTranslucent().withTangents(), forward_model_normal_map_translucent);
+    addPipeline(Key::Builder().withMaterial().withTranslucent(), program::forward_model_translucent);
+    addPipeline(Key::Builder().withMaterial().withTranslucent().withTangents(), program::forward_model_normal_map_translucent);
 
     // Skinned Translucents
-    addPipeline(Key::Builder().withMaterial().withSkinned().withTranslucent(), forward_skin_translucent);
-    addPipeline(Key::Builder().withMaterial().withSkinned().withTranslucent().withTangents(), forward_skin_translucent_normal_map);
-    addPipeline(Key::Builder().withMaterial().withSkinned().withTranslucent().withDualQuatSkinned(), forward_skin_translucent_dq);
-    addPipeline(Key::Builder().withMaterial().withSkinned().withTranslucent().withTangents().withDualQuatSkinned(), forward_skin_translucent_normal_map_dq);
+    addPipeline(Key::Builder().withMaterial().withSkinned().withTranslucent(), program::forward_skin_translucent);
+    addPipeline(Key::Builder().withMaterial().withSkinned().withTranslucent().withTangents(), program::forward_skin_translucent_normal_map);
+    addPipeline(Key::Builder().withMaterial().withSkinned().withTranslucent().withDualQuatSkinned(), program::forward_skin_translucent_dq);
+    addPipeline(Key::Builder().withMaterial().withSkinned().withTranslucent().withTangents().withDualQuatSkinned(), program::forward_skin_translucent_normal_map_dq);
 
     forceLightBatchSetter = false;
 }
