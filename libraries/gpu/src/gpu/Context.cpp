@@ -98,7 +98,7 @@ FramePointer Context::endFrame() {
 void Context::executeBatch(Batch& batch) const {
     PROFILE_RANGE(render_gpu, __FUNCTION__);
     batch.flush();
-    _backend->render(batch);
+    //_backend->render(batch);
 }
 
 void Context::recycle() const {
@@ -118,23 +118,7 @@ void Context::executeFrame(const FramePointer& frame) const {
     ContextStats beginStats;
     getStats(beginStats);
 
-    // FIXME? probably not necessary, but safe
-    consumeFrameUpdates(frame);
-    _backend->setStereoState(frame->stereoState);
-    {
-        Batch beginBatch("Context::executeFrame::begin");
-        _frameRangeTimer->begin(beginBatch);
-        _backend->render(beginBatch);
-
-        // Execute the frame rendering commands
-        for (auto& batch : frame->batches) {
-            _backend->render(*batch);
-        }
-
-        Batch endBatch("Context::executeFrame::end");
-        _frameRangeTimer->end(endBatch);
-        _backend->render(endBatch);
-    }
+    _backend->executeFrame(frame);
 
     ContextStats endStats;
     getStats(endStats);

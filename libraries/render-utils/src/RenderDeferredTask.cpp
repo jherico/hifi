@@ -205,7 +205,7 @@ void RenderDeferredTask::build(JobModel& task, const render::Varying& input, ren
     const auto transparentsInputs = DrawDeferred::Inputs(transparents, lightingModel, lightClusters, jitter).asVarying();
     task.addJob<DrawDeferred>("DrawTransparentDeferred", transparentsInputs, shapePlumber);
 
-    // Light Cluster Grid Debuging job
+    // Light Cluster Grid Debugging job
     {
         const auto debugLightClustersInputs = DebugLightClusters::Inputs(deferredFrameTransform, deferredFramebuffer, lightingModel, linearDepthTarget, lightClusters).asVarying();
         task.addJob<DebugLightClusters>("DebugLightClusters", debugLightClustersInputs);
@@ -229,7 +229,7 @@ void RenderDeferredTask::build(JobModel& task, const render::Varying& input, ren
     const auto overlaysInFrontOpaque = filteredOverlaysOpaque.getN<FilterLayeredItems::Outputs>(0);
     const auto overlaysInFrontTransparent = filteredOverlaysTransparent.getN<FilterLayeredItems::Outputs>(0);
 
-    // We don't want the overlay to clear the deferred frame buffer depth because we would like to keep it for debugging visualisation
+    // We don't want the overlay to clear the deferred frame buffer depth because we would like to keep it for debugging visualization
    // task.addJob<SetSeparateDeferredDepthBuffer>("SeparateDepthForOverlay", deferredFramebuffer);
 
     const auto overlayInFrontOpaquesInputs = DrawOverlay3D::Inputs(overlaysInFrontOpaque, lightingModel, jitter).asVarying();

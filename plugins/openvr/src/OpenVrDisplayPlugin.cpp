@@ -516,7 +516,7 @@ void OpenVrDisplayPlugin::customizeContext() {
                                                                               _renderTargetSize.y, gpu::Texture::SINGLE_MIP,
                                                                               gpu::Sampler(gpu::Sampler::FILTER_MIN_MAG_POINT));
             }
-            _compositeInfos[i].textureID = getGLBackend()->getTextureID(_compositeInfos[i].texture);
+            _compositeInfos[i].textureID = getBackend()->getTextureID(_compositeInfos[i].texture);
         }
         _submitThread->_canvas = _submitCanvas;
         _submitThread->start(QThread::HighPriority);
@@ -637,7 +637,7 @@ void OpenVrDisplayPlugin::compositeLayers() {
         glFlush();
 
         if (!newComposite.textureID) {
-            newComposite.textureID = getGLBackend()->getTextureID(newComposite.texture);
+            newComposite.textureID = getBackend()->getTextureID(newComposite.texture);
         }
         withPresentThreadLock([&] { _submitThread->update(newComposite); });
     }
@@ -649,7 +649,7 @@ void OpenVrDisplayPlugin::hmdPresent() {
     if (_threadedSubmit) {
         _submitThread->waitForPresent();
     } else {
-        GLuint glTexId = getGLBackend()->getTextureID(_compositeFramebuffer->getRenderBuffer(0));
+        GLuint glTexId = getBackend()->getTextureID(_compositeFramebuffer->getRenderBuffer(0));
         vr::Texture_t vrTexture{ (void*)(uintptr_t)glTexId, vr::TextureType_OpenGL, vr::ColorSpace_Auto };
         vr::VRCompositor()->Submit(vr::Eye_Left, &vrTexture, &OPENVR_TEXTURE_BOUNDS_LEFT);
         vr::VRCompositor()->Submit(vr::Eye_Right, &vrTexture, &OPENVR_TEXTURE_BOUNDS_RIGHT);

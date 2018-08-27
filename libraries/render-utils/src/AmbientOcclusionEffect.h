@@ -104,6 +104,26 @@ signals:
     void dirty();
 };
 
+#if 0
+namespace gpu {
+template <class T> class UniformBuffer : public gpu::BufferView {
+public:
+    static BufferPointer makeBuffer() {
+        T t;
+        return std::make_shared<gpu::Buffer>(gpu::Buffer::UniformBuffer, sizeof(T), (const gpu::Byte*) &t);
+    }
+    ~UniformBuffer<T>() {};
+    UniformBuffer<T>() : gpu::BufferView(makeBuffer()) {}
+
+    const T* operator ->() const { return &get<T>(); }  
+    T* operator ->() {
+        return &edit<T>(0);
+    }
+
+};
+}
+#endif
+
 class AmbientOcclusionEffect {
 public:
     using Inputs = render::VaryingSet3<DeferredFrameTransformPointer, DeferredFramebufferPointer, LinearDepthFramebufferPointer>;

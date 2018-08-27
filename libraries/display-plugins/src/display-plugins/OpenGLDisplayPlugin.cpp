@@ -336,7 +336,7 @@ void OpenGLDisplayPlugin::customizeContext() {
     auto presentThread = DependencyManager::get<PresentThread>();
     Q_ASSERT(thread() == presentThread->thread());
 
-    getGLBackend()->setCameraCorrection(mat4(), mat4(), true);
+    getBackend()->setCameraCorrection(mat4(), mat4(), true);
 
     for (auto& cursorValue : _cursorsData) {
         auto& cursorData = cursorValue.second;
@@ -642,7 +642,7 @@ void OpenGLDisplayPlugin::present() {
 
     if (_currentFrame) {
         auto correction = getViewCorrection();
-        getGLBackend()->setCameraCorrection(correction, _prevRenderView);
+        getBackend()->setCameraCorrection(correction, _prevRenderView);
         _prevRenderView = correction * _currentFrame->view;
         {
             withPresentThreadLock([&] {
@@ -741,10 +741,9 @@ QImage OpenGLDisplayPlugin::getScreenshot(float aspectRatio) const {
         corner.x = round((size.x - bestSize.x) / 2.0f);
         corner.y = round((size.y - bestSize.y) / 2.0f);
     }
-    auto glBackend = const_cast<OpenGLDisplayPlugin&>(*this).getGLBackend();
     QImage screenshot(bestSize.x, bestSize.y, QImage::Format_ARGB32);
     withOtherThreadContext([&] {
-        glBackend->downloadFramebuffer(_compositeFramebuffer, ivec4(corner, bestSize), screenshot);
+        getBackend()->downloadFramebuffer(_compositeFramebuffer, ivec4(corner, bestSize), screenshot);
     });
     return screenshot.mirrored(false, true);
 }
@@ -754,10 +753,9 @@ QImage OpenGLDisplayPlugin::getSecondaryCameraScreenshot() const {
     auto secondaryCameraFramebuffer = textureCache->getSpectatorCameraFramebuffer();
     gpu::Vec4i region(0, 0, secondaryCameraFramebuffer->getWidth(), secondaryCameraFramebuffer->getHeight());
 
-    auto glBackend = const_cast<OpenGLDisplayPlugin&>(*this).getGLBackend();
     QImage screenshot(region.z, region.w, QImage::Format_ARGB32);
     withOtherThreadContext([&] {
-        glBackend->downloadFramebuffer(secondaryCameraFramebuffer, region, screenshot);
+        getBackend()->downloadFramebuffer(secondaryCameraFramebuffer, region, screenshot);
     });
     return screenshot.mirrored(false, true);
 }
@@ -805,19 +803,13 @@ ivec4 OpenGLDisplayPlugin::eyeViewport(Eye eye) const {
     return ivec4(vpPos, vpSize);
 }
 
-gpu::gl::GLBackend* OpenGLDisplayPlugin::getGLBackend() {
-    if (!_gpuContext || !_gpuContext->getBackend()) {
-        return nullptr;
+const gpu::BackendPointer& OpenGLDisplayPlugin::getBackend() const {
+    static const gpu::BackendPointer EMPTY;
+    
+    if (!_gpuContext) {
+        return EMPTY;
     }
-    auto backend = _gpuContext->getBackend().get();
-#if defined(Q_OS_MAC)
-    // Should be dynamic_cast, but that doesn't work in plugins on OSX
-    auto glbackend = static_cast<gpu::gl::GLBackend*>(backend);
-#else
-    auto glbackend = dynamic_cast<gpu::gl::GLBackend*>(backend);
-#endif
-
-    return glbackend;
+    return _gpuContext->getBackend();
 }
 
 void OpenGLDisplayPlugin::render(std::function<void(gpu::Batch& batch)> f) {
@@ -838,6 +830,8 @@ void OpenGLDisplayPlugin::updateCompositeFramebuffer() {
 }
 
 void OpenGLDisplayPlugin::copyTextureToQuickFramebuffer(NetworkTexturePointer networkTexture, QOpenGLFramebufferObject* target, GLsync* fenceSync) {
+
+#if 0
 #if !defined(USE_GLES)
     auto glBackend = const_cast<OpenGLDisplayPlugin&>(*this).getGLBackend();
     withOtherThreadContext([&] {
@@ -886,6 +880,7 @@ void OpenGLDisplayPlugin::copyTextureToQuickFramebuffer(NetworkTexturePointer ne
         glDeleteFramebuffers(2, fbo);
         *fenceSync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
     });
+#endif
 #endif
 }
 

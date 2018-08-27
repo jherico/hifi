@@ -206,13 +206,17 @@ endif()
 
 # link required hifi libraries
 link_hifi_libraries(
-  shared workload task octree ktx gpu gl procedural graphics graphics-scripting render
+  shared workload task octree 
+  ktx gpu 
+  gl vk gpu-vk
+  procedural graphics graphics-scripting render
   pointers
   recording fbx networking model-networking entities avatars trackers
   audio audio-client animation script-engine physics
   render-utils entities-renderer avatars-renderer ui qml auto-updater midi
   controllers plugins image trackers
   ui-plugins display-plugins input-plugins
+  vk gpu-vk
   ${PLATFORM_GL_BACKEND}
   shaders
 )
@@ -225,6 +229,7 @@ target_openssl()
 
 target_bullet()
 target_opengl()
+target_vulkan()
 add_crashpad()
 target_breakpad()
 

@@ -257,8 +257,8 @@ void Font::setupGPU() {
 }
 
 void Font::buildVertices(Font::DrawInfo& drawInfo, const QString& str, const glm::vec2& origin, const glm::vec2& bounds) {
-    drawInfo.verticesBuffer = std::make_shared<gpu::Buffer>();
-    drawInfo.indicesBuffer = std::make_shared<gpu::Buffer>();
+    drawInfo.verticesBuffer = std::make_shared<gpu::Buffer>(gpu::Buffer::VertexBuffer);
+    drawInfo.indicesBuffer = std::make_shared<gpu::Buffer>(gpu::Buffer::IndexBuffer);
     drawInfo.indexCount = 0;
     int numVertices = 0;
 
@@ -365,7 +365,7 @@ void Font::drawString(gpu::Batch& batch, Font::DrawInfo& drawInfo, const QString
         GpuDrawParams gpuDrawParams;
         gpuDrawParams.color = ColorUtils::sRGBToLinearVec4(drawInfo.params.color);
         gpuDrawParams.outline.x = (drawInfo.params.effect == OUTLINE_EFFECT) ? 1 : 0;
-        drawInfo.paramsBuffer = std::make_shared<gpu::Buffer>(sizeof(GpuDrawParams), nullptr);
+        drawInfo.paramsBuffer = std::make_shared<gpu::Buffer>(gpu::Buffer::UniformBuffer, sizeof(GpuDrawParams), nullptr);
         drawInfo.paramsBuffer->setSubData(0, sizeof(GpuDrawParams), (const gpu::Byte*)&gpuDrawParams);
     }
     // need the gamma corrected color here
