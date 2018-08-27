@@ -27,6 +27,10 @@ namespace hifi { namespace properties {
         extern const char* PRIMARY_CONTEXT;
     }
 
+    namespace vk {
+        extern const char* CONTEXT;
+    }
+
 } }
 
 

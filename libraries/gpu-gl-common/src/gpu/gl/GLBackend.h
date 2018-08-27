@@ -54,28 +54,6 @@
 #define GPU_STEREO_CAMERA_BUFFER
 #endif
 
-//
-// GL Backend pointer storage mechanism
-// One of the following three defines must be defined.
-// GPU_POINTER_STORAGE_SHARED
-
-// The platonic ideal, use references to smart pointers.
-// However, this produces artifacts because there are too many places in the code right now that
-// create temporary values (undesirable smart pointer duplications) and then those temp variables
-// get passed on and have their reference taken, and then invalidated
-// GPU_POINTER_STORAGE_REF
-
-// Raw pointer manipulation.  Seems more dangerous than the reference wrappers,
-// but in practice, the danger of grabbing a reference to a temporary variable
-// is causing issues
-// GPU_POINTER_STORAGE_RAW
-
-#if defined(USE_GLES)
-#define GPU_POINTER_STORAGE_SHARED
-#else
-#define GPU_POINTER_STORAGE_RAW
-#endif
-
 namespace gpu { namespace gl {
 
 class GLBackend : public Backend, public std::enable_shared_from_this<GLBackend> {
@@ -117,8 +95,11 @@ public:
     // Shutdown rendering and persist any required resources
     void shutdown() override;
 
-    void setCameraCorrection(const Mat4& correction, const Mat4& prevRenderView, bool reset = false);
-    void render(const Batch& batch) final override;
+    void setCameraCorrection(const Mat4& correction, const Mat4& prevRenderView, bool reset = false) override;
+
+    void executeFrame(const FramePointer& frame) override;
+
+    void render(const Batch& batch);
 
     // This call synchronize the Full Backend cache with the current GLState
     // THis is only intended to be used when mixing raw gl calls with the gpu api usage in order to sync
@@ -224,17 +205,10 @@ public:
     // TODO: As long as we have gl calls explicitely issued from interface
     // code, we need to be able to record and batch these calls. THe long
     // term strategy is to get rid of any GL calls in favor of the HIFI GPU API
-    virtual void do_glUniform1i(const Batch& batch, size_t paramOffset) final;
     virtual void do_glUniform1f(const Batch& batch, size_t paramOffset) final;
     virtual void do_glUniform2f(const Batch& batch, size_t paramOffset) final;
     virtual void do_glUniform3f(const Batch& batch, size_t paramOffset) final;
     virtual void do_glUniform4f(const Batch& batch, size_t paramOffset) final;
-    virtual void do_glUniform3fv(const Batch& batch, size_t paramOffset) final;
-    virtual void do_glUniform4fv(const Batch& batch, size_t paramOffset) final;
-    virtual void do_glUniform4iv(const Batch& batch, size_t paramOffset) final;
-    virtual void do_glUniformMatrix3fv(const Batch& batch, size_t paramOffset) final;
-    virtual void do_glUniformMatrix4fv(const Batch& batch, size_t paramOffset) final;
-
     virtual void do_glColor4f(const Batch& batch, size_t paramOffset) final;
 
     // The State setters called by the GLState::Commands when a new state is assigned
@@ -521,9 +495,8 @@ protected:
         GLShader* _programShader{ nullptr };
         bool _invalidProgram{ false };
 
-        BufferView _cameraCorrectionBuffer{ gpu::BufferView(std::make_shared<gpu::Buffer>(sizeof(CameraCorrection), nullptr)) };
-        BufferView _cameraCorrectionBufferIdentity{ gpu::BufferView(
-            std::make_shared<gpu::Buffer>(sizeof(CameraCorrection), nullptr)) };
+        BufferView _cameraCorrectionBuffer { gpu::BufferView(std::make_shared<gpu::Buffer>(gpu::Buffer::UniformBuffer, sizeof(CameraCorrection), nullptr )) };
+        BufferView _cameraCorrectionBufferIdentity { gpu::BufferView(std::make_shared<gpu::Buffer>(gpu::Buffer::UniformBuffer, sizeof(CameraCorrection), nullptr )) };
 
         State::Data _stateCache{ State::DEFAULT };
         State::Signature _stateSignatureCache{ 0 };

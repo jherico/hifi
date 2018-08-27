@@ -228,7 +228,7 @@ void Deserializer::readBuffers(const json& buffersNode) {
         if (offset + size > mappedSize) {
             throw std::runtime_error("read buffer error");
         }
-        buffers.push_back(std::make_shared<Buffer>(size, mapped + offset));
+        buffers.push_back(std::make_shared<Buffer>(Buffer::Usage::AllFlags, size, mapped + offset));
         offset += size;
     }
 }

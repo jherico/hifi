@@ -83,7 +83,10 @@ public:
 
     void copyTextureToQuickFramebuffer(NetworkTexturePointer source, QOpenGLFramebufferObject* target, GLsync* fenceSync) override;
 
+
 protected:
+
+
     friend class PresentThread;
 
     glm::uvec2 getSurfaceSize() const;
@@ -174,7 +177,7 @@ protected:
         f();
     }
 
-    gpu::gl::GLBackend* getGLBackend();
+    const gpu::BackendPointer& getBackend() const;
 
     // Any resource shared by the main thread and the presentation thread must
     // be serialized through this mutex

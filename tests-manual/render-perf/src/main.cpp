@@ -49,6 +49,7 @@
 #include <gpu/gl/GLBackend.h>
 #include <gpu/gl/GLFramebuffer.h>
 #include <gpu/gl/GLTexture.h>
+#include <gpu/vk/VKBackend.h>
 
 #include <ui/OffscreenQmlSurface.h>
 
@@ -225,7 +226,8 @@ public:
         _context.makeCurrent(_context.qglContext(), window);
         gl::setSwapInterval(0);
         // GPU library init
-        gpu::Context::init<gpu::gl::GLBackend>();
+        //gpu::Context::init<gpu::gl::GLBackend>();
+        gpu::Context::init<gpu::vulkan::VKBackend>();
         _gpuContext = std::make_shared<gpu::Context>();
         _backend = _gpuContext->getBackend();
         _context.makeCurrent();

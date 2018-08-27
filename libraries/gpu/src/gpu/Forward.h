@@ -13,6 +13,8 @@
 #include <memory>
 #include <mutex>
 #include <vector>
+#include <functional>
+#include <list>
 
 #include <glm/glm.hpp>
 
@@ -94,6 +96,8 @@ namespace gpu {
     using TextureViews = std::vector<TextureView>;
     class TextureTable;
     using TextureTablePointer = std::shared_ptr<TextureTable>;
+    using VoidLambda = std::function<void()>;
+    using VoidLambdaList = std::list<VoidLambda>;
 
     struct StereoState {
         bool isStereo() const {
@@ -147,6 +151,10 @@ namespace gpu {
     namespace gles {
         class GLESBackend;
         class GLESBuffer;
+    }
+
+    namespace vulkan {
+        class VKBuffer;
     }
 }
 

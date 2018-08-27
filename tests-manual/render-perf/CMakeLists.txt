@@ -15,7 +15,7 @@ set_target_properties(${TARGET_NAME} PROPERTIES FOLDER "Tests/manual-tests/")
 link_hifi_libraries(
     shared task workload networking animation 
     ktx image octree 
-    shaders gl gpu ${PLATFORM_GL_BACKEND}
+    shaders gl vk gpu 
     render render-utils 
     graphics fbx model-networking graphics-scripting
     entities entities-renderer audio avatars script-engine 

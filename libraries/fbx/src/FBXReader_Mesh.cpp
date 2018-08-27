@@ -650,7 +650,7 @@ void FBXReader::buildModelMesh(FBXMesh& extractedMesh, const QString& url) {
     const int totalVertsSize = clusterWeightsOffset + clusterWeightsSize;
 
     // Copy all vertex data in a single buffer
-    auto vertBuffer = std::make_shared<gpu::Buffer>();
+    auto vertBuffer = std::make_shared<gpu::Buffer>(gpu::Buffer::VertexBuffer);
     vertBuffer->resize(totalVertsSize);
 
     // First positions
@@ -846,7 +846,7 @@ void FBXReader::buildModelMesh(FBXMesh& extractedMesh, const QString& url) {
             vDest += vStride;
         }
 
-        auto attribBuffer = std::make_shared<gpu::Buffer>();
+        auto attribBuffer = std::make_shared<gpu::Buffer>(gpu::Buffer::VertexBuffer);
         attribBuffer->setData(totalAttribBufferSize, dest.data());
         vertexBufferStream->addBuffer(attribBuffer, 0, vStride);
     }
@@ -865,7 +865,7 @@ void FBXReader::buildModelMesh(FBXMesh& extractedMesh, const QString& url) {
         return;
     }
 
-    auto indexBuffer = std::make_shared<gpu::Buffer>();
+    auto indexBuffer = std::make_shared<gpu::Buffer>(gpu::Buffer::IndexBuffer);
     indexBuffer->resize(totalIndices * sizeof(int));
 
     int indexNum = 0;
@@ -903,7 +903,7 @@ void FBXReader::buildModelMesh(FBXMesh& extractedMesh, const QString& url) {
     mesh->setIndexBuffer(indexBufferView);
 
     if (parts.size()) {
-        auto pb = std::make_shared<gpu::Buffer>();
+        auto pb = std::make_shared<gpu::Buffer>(gpu::Buffer::IndirectBuffer);
         pb->setData(parts.size() * sizeof(graphics::Mesh::Part), (const gpu::Byte*) parts.data());
         gpu::BufferView pbv(pb, gpu::Element(gpu::VEC4, gpu::UINT32, gpu::XYZW));
         mesh->setPartBuffer(pbv);

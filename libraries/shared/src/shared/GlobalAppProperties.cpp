@@ -24,4 +24,8 @@ namespace hifi { namespace properties {
         const char* PRIMARY_CONTEXT = "com.highfidelity.gl.primaryContext";
     }
 
+    namespace vk {
+        const char* CONTEXT = "com.highfidelity.vk.context";
+    }
+
 } }

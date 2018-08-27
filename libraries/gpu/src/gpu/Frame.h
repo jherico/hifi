@@ -18,6 +18,7 @@ namespace gpu {
 
     class Frame {
         friend class Context;
+        friend class Backend;
 
     public:
         Frame();
@@ -41,12 +42,12 @@ namespace gpu {
         /// How to process the framebuffer when the frame dies.  MUST BE THREAD SAFE
         FramebufferRecycler framebufferRecycler;
 
+        void preRender();
     protected:
         friend class Deserializer;
 
         // Should be called once per frame, on the recording thred
         void finish();
-        void preRender();
     };
 
 };

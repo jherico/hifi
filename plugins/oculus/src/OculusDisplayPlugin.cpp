@@ -65,7 +65,6 @@ void OculusDisplayPlugin::cycleDebugOutput() {
 
 void OculusDisplayPlugin::customizeContext() {
     Parent::customizeContext();
-    _outputFramebuffer.reset(gpu::Framebuffer::create("OculusOutput", gpu::Element::COLOR_SRGBA_32, _renderTargetSize.x, _renderTargetSize.y));
     ovrTextureSwapChainDesc desc = { };
     desc.Type = ovrTexture_2D;
     desc.ArraySize = 1;
@@ -119,7 +118,6 @@ void OculusDisplayPlugin::uncustomizeContext() {
 
     ovr_DestroyTextureSwapChain(_session, _textureSwapChain);
     _textureSwapChain = nullptr;
-    _outputFramebuffer.reset();
     _customized = false;
     Parent::uncustomizeContext();
 }
@@ -143,23 +141,9 @@ void OculusDisplayPlugin::hmdPresent() {
         GLuint curTexId;
         ovr_GetTextureSwapChainBufferGL(_session, _textureSwapChain, curIndex, &curTexId);
 
-        // Manually bind the texture to the FBO
-        // FIXME we should have a way of wrapping raw GL ids in GPU objects without 
-        // taking ownership of the object
-        auto fbo = getGLBackend()->getFramebufferID(_outputFramebuffer);
-        glNamedFramebufferTexture(fbo, GL_COLOR_ATTACHMENT0, curTexId, 0);
-        render([&](gpu::Batch& batch) {
-            batch.enableStereo(false);
-            batch.setFramebuffer(_outputFramebuffer);
-            batch.setViewportTransform(ivec4(uvec2(), _outputFramebuffer->getSize()));
-            batch.setStateScissorRect(ivec4(uvec2(), _outputFramebuffer->getSize()));
-            batch.resetViewTransform();
-            batch.setProjectionTransform(mat4());
-            batch.setPipeline(_presentPipeline);
-            batch.setResourceTexture(0, _compositeFramebuffer->getRenderBuffer(0));
-            batch.draw(gpu::TRIANGLE_STRIP, 4);
-        });
-        glNamedFramebufferTexture(fbo, GL_COLOR_ATTACHMENT0, 0, 0);
+        auto size = _compositeFramebuffer->getSize();
+        auto sourceTexture = getBackend()->getTextureID(_compositeFramebuffer->getRenderBuffer(0));
+        glCopyImageSubData(sourceTexture, GL_TEXTURE_2D, 0, 0, 0, 0, curTexId, GL_TEXTURE_2D, 0, 0, 0, 0, size.x, size.y, 1);
     }
 
     {
