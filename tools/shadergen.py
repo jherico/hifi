@@ -6,7 +6,7 @@ import os
 import json
 import argparse
 import concurrent
-
+from os.path import expanduser
 from concurrent.futures import ThreadPoolExecutor
 from argparse import ArgumentParser
 from pathlib import Path
@@ -203,18 +203,19 @@ parser.add_argument('--spirv-binaries', type=str, help='location of the SPIRV bi
 parser.add_argument('--build-dir', type=str, help='The build directory base path')
 parser.add_argument('--source-dir', type=str, help='The root directory of the git repository')
 parser.add_argument('--scribe', type=str, help='The scribe executable path')
-parser.add_argument('-d', '--debug', action='store_true')
+parser.add_argument('--debug', action='store_true')
 
 args = None
 if len(sys.argv) == 1:
     # for debugging
-    spirvPath = '/home/bdavis/VulkanSDK/1.1.82.1/x86_64/bin'
-    sourceDir = '/home/bdavis/git/hifi'
+    spirvPath = os.environ['VULKAN_SDK'] + '/bin'
+    #spirvPath = expanduser('~//VulkanSDK/1.1.82.1/x86_64/bin')
+    sourceDir = expanduser('~/git/hifi')
     buildPath = sourceDir + '/build'
-    scribePath = buildPath + '/tools/scribe/scribe'
+    scribePath = buildPath + '/tools/scribe/Release/scribe'
     commandsPath = buildPath + '/libraries/shaders/shadergen.txt'
     shaderDir = buildPath + '/libraries/shaders'
-    testArgs = '--commands {} --spirv-binaries {} --scribe {} --build-dir {} --source-dir {}'.format(
+    testArgs = '--debug --commands {} --spirv-binaries {} --scribe {} --build-dir {} --source-dir {}'.format(
         commandsPath, spirvPath, scribePath, shaderDir, sourceDir
     ).split()
     args = parser.parse_args(testArgs)
