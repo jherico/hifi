@@ -32,6 +32,8 @@ TexMapArray getTexMapArray() {
     return _texMapArray;
 }
 
+<@endfunc@>
+
 <@func evalTexMapArrayTexcoord0(texMapArray, inTexcoord0, outTexcoord0)@>
 {
     <$outTexcoord0$> = (<$texMapArray$>._texcoordTransforms0 * vec4(<$inTexcoord0$>.st, 0.0, 1.0)).st;
@@ -43,9 +45,6 @@ TexMapArray getTexMapArray() {
     <$outTexcoord1$> = (<$texMapArray$>._texcoordTransforms1 * vec4(<$inTexcoord1$>.st, 0.0, 1.0)).st;
 }
 <@endfunc@>
-
-<@endfunc@>
-
 
 <@func declareMaterialTextures(withAlbedo, withRoughness, withNormal, withMetallic, withEmissive, withOcclusion, withScattering)@>
 
