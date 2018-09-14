@@ -293,12 +293,14 @@ macro(AUTOSCRIBE_SHADER_LIBS)
     configure_file(shaders.qrc.in ${CMAKE_CURRENT_BINARY_DIR}/shaders.qrc)
     list(APPEND QT_RESOURCES_FILE ${CMAKE_CURRENT_BINARY_DIR}/shaders.qrc)
 
-    file(GLOB_RECURSE SHADER_DIALECT_HEADER_FILES ${AUTOSCRIBE_HEADER_DIR}/*.glsl)
+    list(APPEND AUTOSCRIBE_SHADER_HEADERS ${AUTOSCRIBE_HEADER_DIR}/mono.glsl ${AUTOSCRIBE_HEADER_DIR}/stereo.glsl)
+    list(APPEND AUTOSCRIBE_SHADER_HEADERS ${AUTOSCRIBE_HEADER_DIR}/450/header.glsl ${AUTOSCRIBE_HEADER_DIR}/410/header.glsl ${AUTOSCRIBE_HEADER_DIR}/310es/header.glsl)
     source_group("Shader Headers" FILES ${AUTOSCRIBE_HEADER_DIR}/mono.glsl ${AUTOSCRIBE_HEADER_DIR}/stereo.glsl)
     source_group("Shader Headers\\450" FILES ${AUTOSCRIBE_HEADER_DIR}/450/header.glsl)
     source_group("Shader Headers\\410" FILES ${AUTOSCRIBE_HEADER_DIR}/410/header.glsl)
     source_group("Shader Headers\\310es" FILES ${AUTOSCRIBE_HEADER_DIR}/310es/header.glsl)
-    list(APPEND AUTOSCRIBE_SHADER_LIB_SRC ${SHADER_DIALECT_HEADER_FILES})
+
+    list(APPEND AUTOSCRIBE_SHADER_LIB_SRC ${AUTOSCRIBE_SHADER_HEADERS})
     list(APPEND AUTOSCRIBE_SHADER_LIB_SRC ${CMAKE_CURRENT_BINARY_DIR}/ShaderEnums.h ${CMAKE_CURRENT_BINARY_DIR}/ShaderEnums.cpp)
     
     # Write the shadergen command list
@@ -323,14 +325,14 @@ macro(AUTOSCRIBE_SHADER_LIBS)
             --scribe $<TARGET_FILE:scribe>
             --build-dir ${CMAKE_CURRENT_BINARY_DIR}
             --source-dir ${CMAKE_SOURCE_DIR}
-        DEPENDS scribe spirv_binaries ${CMAKE_SOURCE_DIR}/tools/shadergen.py ${ALL_SCRIBE_SHADERS}
+        DEPENDS ${AUTOSCRIBE_SHADER_HEADERS} scribe spirv_binaries ${CMAKE_SOURCE_DIR}/tools/shadergen.py ${ALL_SCRIBE_SHADERS}
     )
 
     add_custom_target(shadergen DEPENDS ${SCRIBED_SHADERS} ${SPIRV_SHADERS} ${REFLECTED_SHADERS})
     set_target_properties(shadergen PROPERTIES FOLDER "Shaders")
 
     # Custom targets required to force generation of the shaders via scribe
-    add_custom_target(scribe_shaders SOURCES ${ALL_SCRIBE_SHADERS} ${AUTOSCRIBE_SCRIBE_HEADERS})
+    add_custom_target(scribe_shaders SOURCES ${ALL_SCRIBE_SHADERS} ${AUTOSCRIBE_SHADER_HEADERS})
     set_target_properties(scribe_shaders PROPERTIES FOLDER "Shaders")
 
     add_custom_target(scribed_shaders SOURCES ${SCRIBED_SHADERS})

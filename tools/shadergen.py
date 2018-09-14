@@ -35,7 +35,7 @@ def getTypeForScribeFile(scribefilename):
         '.slc': 'comp',
     }
     if not extension in switcher:
-        sys.exit("Unknown scribe file type for " + scribefilename)
+        raise ValueError("Unknown scribe file type for " + scribefilename)
     return switcher.get(extension)
 
 def getCommonScribeArgs(scribefile, includeLibs):
@@ -74,17 +74,21 @@ class ScribeDependenciesCache:
         with open(self.filename, "w") as f:
             f.write(json.dumps(self.cache))
 
-    def get(self, scribefile):
+    def get(self, scribefile, dialect, variant):
         self.lock.acquire()
+        key = self.key(scribefile, dialect, variant)
         try:
             if scribefile in self.cache:
-                return self.cache[scribefile].copy()
+                return self.cache[key].copy()
         finally:
             self.lock.release()
         return None
 
+    def key(self, scribeFile, dialect, variant):
+        return ':'.join([scribeFile, dialect, variant])
+
     def getOrGen(self, scribefile, includeLibs, dialect, variant):
-        result = self.get(scribefile)
+        result = self.get(scribefile, dialect, variant)
         if (None == result):
             result = self.gen(scribefile, includeLibs, dialect, variant)
         return result
@@ -94,17 +98,15 @@ class ScribeDependenciesCache:
         scribeArgs.extend(['-M'])
         processResult = subprocess.run(scribeArgs, stdout=subprocess.PIPE)
         if (0 != processResult.returncode):
-            sys.exit("Unable to parse scribe dependencies")
+            raise RuntimeError("Unable to parse scribe dependencies")
         result = processResult.stdout.decode("utf-8").splitlines(False)
         result.append(scribefile)
         result.extend(getDialectAndVariantHeaders(dialect, variant))
+        key = self.key(scribefile, dialect, variant)
         self.lock.acquire()
-        self.cache[scribefile] = result.copy()
+        self.cache[key] = result.copy()
         self.lock.release()
         return result
-
-
-scribeDepCache = None
 
 def getFileTimes(files):
     if isinstance(files, str):
@@ -112,13 +114,23 @@ def getFileTimes(files):
     return list(map(lambda f: os.path.getmtime(f) if os.path.isfile(f) else -1, files))
 
 def outOfDate(inputs, output):
-    latestInput = max(getFileTimes(inputs))
-    earliestOutput = min(getFileTimes(output))
-    return latestInput >= earliestOutput
+    oldestInput = max(getFileTimes(inputs))
+    youngestOutput = min(getFileTimes(output))
+    diff = youngestOutput - oldestInput
+    return oldestInput >= youngestOutput
 
+def executeSubprocess(processArgs):
+    processResult = subprocess.run(processArgs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if (0 != processResult.returncode):
+        raise RuntimeError('Call to "{}" failed.\n\narguments:\n{}\n\nstdout:\n{}\n\nstderr:\n{}'.format(
+            processArgs[0],
+            ' '.join(processArgs[1:]), 
+            processResult.stdout.decode('utf-8'),
+            processResult.stderr.decode('utf-8')))
 
 def processCommand(line):
     global args
+    global scribeDepCache
     glslangExec = args.spirv_binaries + '/glslangValidator'
     spirvCrossExec = args.spirv_binaries + '/spirv-cross'
     spirvOptExec = args.spirv_binaries + '/spirv-opt'
@@ -143,46 +155,40 @@ def processCommand(line):
 
     # if the scribe sources (slv, slf, slh, etc), or the dialect/ variant headers are out of date
     # regenerate the scribe GLSL output
-    if outOfDate(scribeDeps, outputFiles):
+    if args.force or outOfDate(scribeDeps, outputFiles):
         print('Processing file {} dialect {} variant {}'.format(scribeFile, dialect, variant))
+        if args.dry_run:
+            return True
+
         scribeDepCache.gen(scribeFile, libs, dialect, variant)
         scribeArgs = getCommonScribeArgs(scribeFile, libs)
         for header in getDialectAndVariantHeaders(dialect, variant):
             scribeArgs.extend(['-h', header])
         scribeArgs.extend(['-o', unoptGlslFile])
-        processResult = subprocess.run(scribeArgs, stdout=subprocess.PIPE)
-        if (0 != processResult.returncode):
-            sys.exit("Unable to generate scribe output " + unoptGlslFile)
+        executeSubprocess(scribeArgs)
+
         # Generate the un-optimized output
-        glslangArgs = [glslangExec, '-V110', '-o', upoptSpirvFile, unoptGlslFile]
-        processResult = subprocess.run(glslangArgs, stdout=subprocess.PIPE)
-        if (0 != processResult.returncode):
-            sys.exit("Unable to generate spirv output " + upoptSpirvFile)
+        executeSubprocess([glslangExec, '-V110', '-o', upoptSpirvFile, unoptGlslFile])
 
         # Optimize the SPIRV
-        spirvOptArgs = [spirvOptExec, '-O', '-o', spirvFile, upoptSpirvFile]
-        processResult = subprocess.run(spirvOptArgs, stdout=subprocess.PIPE)
-        if (0 != processResult.returncode):
-            sys.exit("Unable to generate optimized spirv output " + spirvFile)
+        executeSubprocess([spirvOptExec, '-O', '-o', spirvFile, upoptSpirvFile])
 
         # Generation JSON reflection
-        processResult = subprocess.run(
-            [spirvCrossExec, '--reflect', 'json', '--output', reflectionFile, spirvFile], 
-            stdout=subprocess.PIPE)
-        if (0 != processResult.returncode):
-            sys.exit("Unable to generate spirv reflection " + reflectionFile)
+        executeSubprocess([spirvCrossExec, '--reflect', 'json', '--output', reflectionFile, spirvFile])
 
+        # Generate the optimized GLSL output
         spirvCrossArgs = [spirvCrossExec, '--output', glslFile, spirvFile, '--version', dialect]
         if (dialect == '410'): spirvCrossArgs.append('--no-420pack-extension')
-        processResult = subprocess.run(spirvCrossArgs, stdout=subprocess.PIPE)
-        if (0 != processResult.returncode):
-            sys.exit("Unable to generate spirv reflection " + glslFile)
+        executeSubprocess(spirvCrossArgs)
     else:
+        # This logic is necessary because cmake will agressively keep re-executing the shadergen 
+        # code otherwise
         Path(unoptGlslFile).touch()
         Path(upoptSpirvFile).touch()
         Path(spirvFile).touch()
         Path(glslFile).touch()
         Path(reflectionFile).touch()
+    return True
 
 
 
@@ -194,8 +200,11 @@ def main():
     else:
         workers = max(1, os.cpu_count() - 2)
         with ThreadPoolExecutor(max_workers=workers) as executor:
-            executor.map(processCommand, commands)
+            for result in executor.map(processCommand, commands):
+                if not result:
+                    raise RuntimeError("Failed to execute all subprocesses")
             executor.shutdown()
+
 
 parser = ArgumentParser(description='Generate shader artifacts.')
 parser.add_argument('--commands', type=argparse.FileType('r'), help='list of commands to execute')
@@ -204,6 +213,8 @@ parser.add_argument('--build-dir', type=str, help='The build directory base path
 parser.add_argument('--source-dir', type=str, help='The root directory of the git repository')
 parser.add_argument('--scribe', type=str, help='The scribe executable path')
 parser.add_argument('--debug', action='store_true')
+parser.add_argument('--force', action='store_true', help='Ignore timestamps and force regeneration of all files')
+parser.add_argument('--dry-run', action='store_true', help='Report the files that would be process, but do not output')
 
 args = None
 if len(sys.argv) == 1:
@@ -215,9 +226,12 @@ if len(sys.argv) == 1:
     scribePath = buildPath + '/tools/scribe/Release/scribe'
     commandsPath = buildPath + '/libraries/shaders/shadergen.txt'
     shaderDir = buildPath + '/libraries/shaders'
-    testArgs = '--debug --commands {} --spirv-binaries {} --scribe {} --build-dir {} --source-dir {}'.format(
+    testArgs = '--commands {} --spirv-binaries {} --scribe {} --build-dir {} --source-dir {}'.format(
         commandsPath, spirvPath, scribePath, shaderDir, sourceDir
     ).split()
+    #testArgs.append('--debug')
+    #testArgs.append('--force')
+    #testArgs.append('--dry-run')
     args = parser.parse_args(testArgs)
 else:
     args = parser.parse_args()
