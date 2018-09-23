@@ -6,6 +6,7 @@ import os
 import json
 import argparse
 import concurrent
+from scribe import Scribe
 from os.path import expanduser
 from concurrent.futures import ThreadPoolExecutor
 from argparse import ArgumentParser
@@ -38,16 +39,16 @@ def getTypeForScribeFile(scribefilename):
         raise ValueError("Unknown scribe file type for " + scribefilename)
     return switcher.get(extension)
 
-def getCommonScribeArgs(scribefile, includeLibs):
-    scribeArgs = [args.scribe]
-    # FIXME use the sys.platform to set the correct value
-    scribeArgs.extend(['-D', 'GLPROFILE', 'PC_GL'])
-    scribeArgs.extend(['-T', getTypeForScribeFile(scribefile)])
-    for lib in includeLibs:
-        scribeArgs.extend(['-I', args.source_dir + '/libraries/' + lib + '/src/' + lib + '/'])
-        scribeArgs.extend(['-I', args.source_dir + '/libraries/' + lib + '/src/'])
-    scribeArgs.append(scribefile)
-    return scribeArgs
+def getScribeIncludeDirs(includeLibs):
+        result = []
+        for lib in includeLibs:
+           result.append('{}/libraries/{}/src/{}/'.format(args.source_dir, lib, lib))
+           result.append('{}/libraries/{}/src/'.format(args.source_dir, lib))
+        return result
+
+def getScribeDefines():
+    # FIXME adjust per platform?
+    return [ ['GLPROFILE', 'PC_GL'] ]
 
 def getDialectAndVariantHeaders(dialect, variant):
     headerPath = args.source_dir + '/libraries/shaders/headers/'
@@ -94,12 +95,16 @@ class ScribeDependenciesCache:
         return result
 
     def gen(self, scribefile, includeLibs, dialect, variant):
-        scribeArgs = getCommonScribeArgs(scribefile, includeLibs)
-        scribeArgs.extend(['-M'])
-        processResult = subprocess.run(scribeArgs, stdout=subprocess.PIPE)
-        if (0 != processResult.returncode):
-            raise RuntimeError("Unable to parse scribe dependencies")
-        result = processResult.stdout.decode("utf-8").splitlines(False)
+        scribeOut = ''
+        with open(scribefile) as scribeInput:
+            scribe = Scribe(
+                makefile=True,
+                input=scribeInput, 
+                shaderType=getTypeForScribeFile(scribefile), 
+                includeDirs=getScribeIncludeDirs(includeLibs), 
+                defines=getScribeDefines())
+            scribeOut = scribe.process()
+        result = scribeOut.splitlines(False)
         result.append(scribefile)
         result.extend(getDialectAndVariantHeaders(dialect, variant))
         key = self.key(scribefile, dialect, variant)
@@ -161,11 +166,17 @@ def processCommand(line):
             return True
 
         scribeDepCache.gen(scribeFile, libs, dialect, variant)
-        scribeArgs = getCommonScribeArgs(scribeFile, libs)
-        for header in getDialectAndVariantHeaders(dialect, variant):
-            scribeArgs.extend(['-h', header])
-        scribeArgs.extend(['-o', unoptGlslFile])
-        executeSubprocess(scribeArgs)
+
+        with open(scribeFile) as scribeInput:
+            scribe = Scribe(
+                shaderType=getTypeForScribeFile(scribeFile), 
+                input=scribeInput, 
+                includeDirs=getScribeIncludeDirs(libs), 
+                headers=getDialectAndVariantHeaders(dialect, variant),
+                defines=getScribeDefines())
+            scribeResults = scribe.process()
+            with open(unoptGlslFile, 'w') as scribeOutput:
+                scribeOutput.write(scribeResults)
 
         # Generate the un-optimized output
         executeSubprocess([glslangExec, '-V110', '-o', upoptSpirvFile, unoptGlslFile])
@@ -223,14 +234,15 @@ if len(sys.argv) == 1:
     #spirvPath = expanduser('~//VulkanSDK/1.1.82.1/x86_64/bin')
     sourceDir = expanduser('~/git/hifi')
     buildPath = sourceDir + '/build'
-    scribePath = buildPath + '/tools/scribe/Release/scribe'
+    #scribePath = buildPath + '/tools/scribe/Release/scribe'
+    scribePath = sourceDir + '/tools/scribe.py'
     commandsPath = buildPath + '/libraries/shaders/shadergen.txt'
     shaderDir = buildPath + '/libraries/shaders'
     testArgs = '--commands {} --spirv-binaries {} --scribe {} --build-dir {} --source-dir {}'.format(
         commandsPath, spirvPath, scribePath, shaderDir, sourceDir
     ).split()
     #testArgs.append('--debug')
-    #testArgs.append('--force')
+    testArgs.append('--force')
     #testArgs.append('--dry-run')
     args = parser.parse_args(testArgs)
 else:

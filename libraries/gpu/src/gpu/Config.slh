@@ -21,3 +21,5 @@
     <@def GPU_FEATURE_PROFILE GPU_CORE@>
     <@def VERSION_HEADER //410 core@>
 <@endif@>
+
+<@endif@>
