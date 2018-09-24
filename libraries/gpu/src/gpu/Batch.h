@@ -25,6 +25,8 @@
 #include "Texture.h"
 #include "Transform.h"
 #include "ShaderConstants.h"
+#include "managers/Manager.h"
+#include "managers/TransformManager.h"
 
 class QDebug;
 #define BATCH_PREALLOCATE_MIN 128
@@ -157,15 +159,23 @@ public:
         uint  _baseInstance{ 0 };
     };
 
+    using CameraTransformManager = gpu::manager::TransformManager;
+    using CameraTransformHandle = CameraTransformManager::Handle;
+    using ObjectTransformManager = gpu::manager::TransformManager;
+    using ObjectTransformHandle = ObjectTransformManager::Handle;
+
+    static CameraTransformManager& getCameraTransformManager();
+    static ObjectTransformManager& getObjectTransformManager();
+
     // Transform Stage
     // Vertex position is transformed by ModelTransform from object space to world space
     // Then by the inverse of the ViewTransform from world space to eye space
     // finaly projected into the clip space by the projection transform
     // WARNING: ViewTransform transform from eye space to world space, its inverse is composed
     // with the ModelTransform to create the equivalent of the gl ModelViewMatrix
-    void setModelTransform(const Transform& model);
-    void resetViewTransform() { setViewTransform(Transform(), false); }
-    void setViewTransform(const Transform& view, bool camera = true);
+    void setModelTransform(const ObjectTransformHandle& model);
+    void resetViewTransform() { setViewTransform({}, false); }
+    void setViewTransform(const CameraTransformHandle& handle, bool camera = true);
     void setProjectionTransform(const Mat4& proj);
     void setProjectionJitter(float jx = 0.0f, float jy = 0.0f);
     // Very simple 1 level stack management of jitter.

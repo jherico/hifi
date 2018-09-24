@@ -67,10 +67,19 @@ void MeshPartPayload::updateMeshPart(const std::shared_ptr<const graphics::Mesh>
 }
 
 void MeshPartPayload::updateTransform(const Transform& transform, const Transform& offsetTransform) {
-    _transform = transform;
-    Transform::mult(_drawTransform, _transform, offsetTransform);
+    auto& xfmManager = gpu::Batch::getObjectTransformManager();
+    if (!_transform){
+        _transform = xfmManager.acquire();
+    }
+    xfmManager.update(_transform, transform);
+    if (!_drawTransform) {
+        _drawTransform = xfmManager.acquire();
+    }
+    Transform drawTransform;
+    Transform::mult(drawTransform, transform, offsetTransform);
+    xfmManager.update(_drawTransform, drawTransform);
     _worldBound = _localBound;
-    _worldBound.transform(_drawTransform);
+    _worldBound.transform(drawTransform);
 }
 
 void MeshPartPayload::addMaterial(graphics::MaterialLayer material) {
@@ -136,10 +145,9 @@ void MeshPartPayload::bindMesh(gpu::Batch& batch) {
     batch.setInputStream(0, _drawMesh->getVertexStream());
 }
 
- void MeshPartPayload::bindTransform(gpu::Batch& batch, RenderArgs::RenderMode renderMode) const {
+void MeshPartPayload::bindTransform(gpu::Batch& batch, RenderArgs::RenderMode renderMode) const {
     batch.setModelTransform(_drawTransform);
 }
-
 
 void MeshPartPayload::render(RenderArgs* args) {
     PerformanceTimer perfTimer("MeshPartPayload::render");
@@ -308,7 +316,11 @@ void ModelMeshPartPayload::updateClusterBuffer(const std::vector<Model::Transfor
 }
 
 void ModelMeshPartPayload::updateTransformForSkinnedMesh(const Transform& renderTransform, const Transform& boundTransform) {
-    _transform = renderTransform;
+    auto& xfmManager = gpu::Batch::getObjectTransformManager();
+    if (!_transform) {
+        _transform = xfmManager.acquire();
+    }
+    xfmManager.update(_transform, renderTransform);
     _worldBound = _adjustedLocalBound;
     _worldBound.transform(boundTransform);
 }

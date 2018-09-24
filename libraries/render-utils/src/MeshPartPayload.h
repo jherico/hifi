@@ -51,8 +51,9 @@ public:
     virtual void bindTransform(gpu::Batch& batch, RenderArgs::RenderMode renderMode) const;
 
     // Payload resource cached values
-    Transform _drawTransform;
-    Transform _transform;
+    //Transform _drawTransform;
+    gpu::Batch::ObjectTransformHandle _drawTransform;
+    gpu::Batch::ObjectTransformHandle _transform;
     int _partIndex = 0;
     bool _hasColorAttrib { false };
 
