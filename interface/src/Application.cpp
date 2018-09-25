@@ -318,6 +318,12 @@ static const QString DISABLE_WATCHDOG_FLAG{ "HIFI_DISABLE_WATCHDOG" };
 static bool DISABLE_WATCHDOG = nsightActive() || QProcessEnvironment::systemEnvironment().contains(DISABLE_WATCHDOG_FLAG);
 #endif
 
+static const QString SAVE_SETTINGS_INTERVAL_VAR{ "HIFI_SAVE_SETTINGS_INTERVAL_MS" };
+static const uint32_t DEFAULT_SAVE_SETTINGS_INTERVAL_MS = 10 * MSECS_PER_SECOND;
+static uint32_t SAVE_SETTINGS_INTERVAL_MS = QProcessEnvironment::systemEnvironment().contains(SAVE_SETTINGS_INTERVAL_VAR) 
+    ? QProcessEnvironment::systemEnvironment().value(SAVE_SETTINGS_INTERVAL_VAR).toInt()
+    : DEFAULT_SAVE_SETTINGS_INTERVAL_MS;
+
 #if defined(USE_GLES)
 static bool DISABLE_DEFERRED = true;
 #else
@@ -1774,9 +1780,8 @@ Application::Application(int& argc, char** argv, QElapsedTimer& startupTimer, bo
             _settingsGuard.trigger();
         });
 
-        int SAVE_SETTINGS_INTERVAL = 10 * MSECS_PER_SECOND; // Let's save every seconds for now
         settingsTimer->setSingleShot(false);
-        settingsTimer->setInterval(SAVE_SETTINGS_INTERVAL); // 10s, Qt::CoarseTimer acceptable
+        settingsTimer->setInterval(SAVE_SETTINGS_INTERVAL_MS); // 10s, Qt::CoarseTimer acceptable
         QObject::connect(settingsTimer, &QTimer::timeout, this, &Application::saveSettings);
         settingsTimer->start();
     }, QThread::LowestPriority);
