@@ -71,8 +71,8 @@ const std::vector<Variant>& allVariants() {
 
 const std::string& dialectPath(Dialect dialect) {
     static const std::string e310esPath { "/310es/" };
-    static const std::string e410Path { "/310es/" };
-    static const std::string e450Path { "/310es/" };
+    static const std::string e410Path { "/410/" };
+    static const std::string e450Path { "/450/" };
     switch (dialect) {
 #if defined(USE_GLES) 
         case Dialect::e310es: return e310esPath;
