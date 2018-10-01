@@ -78,7 +78,7 @@ class ScribeDependenciesCache:
         self.lock.acquire()
         key = self.key(scribefile, dialect, variant)
         try:
-            if scribefile in self.cache:
+            if key in self.cache:
                 return self.cache[key].copy()
         finally:
             self.lock.release()
@@ -230,7 +230,7 @@ if len(sys.argv) == 1:
     spirvPath = os.environ['VULKAN_SDK'] + '/bin'
     #spirvPath = expanduser('~//VulkanSDK/1.1.82.1/x86_64/bin')
     sourceDir = expanduser('~/git/hifi')
-    buildPath = sourceDir + '/build'
+    buildPath = sourceDir + '/build_noui'
     scribePath = buildPath + '/tools/scribe/Release/scribe'
     commandsPath = buildPath + '/libraries/shaders/shadergen.txt'
     shaderDir = buildPath + '/libraries/shaders'
