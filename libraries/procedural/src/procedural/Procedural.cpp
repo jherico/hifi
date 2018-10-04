@@ -101,7 +101,6 @@ void ProceduralData::parse(const QJsonObject& proceduralData) {
 //    }
 //}
 
-
 Procedural::Procedural() {
     _transparentState->setCullMode(gpu::State::CULL_NONE);
     _transparentState->setDepthTest(true, true, gpu::LESS_EQUAL);
@@ -144,7 +143,6 @@ void Procedural::setProceduralData(const ProceduralData& proceduralData) {
                 _channels[channel] = textureCache->getTexture(QUrl());
             }
         }
-        _channelsDirty = true;
     }
 
     if (proceduralData.shaderUrl != _data.shaderUrl) {
@@ -248,9 +246,6 @@ void Procedural::prepare(gpu::Batch& batch,
         _opaqueFragmentSource.replacements[PROCEDURAL_BLOCK] = _shaderSource.toStdString();
         _transparentFragmentSource.replacements = _opaqueFragmentSource.replacements;
 
-        // auto& opaqueUniforms = opaqueReflection[gpu::Shader::BindingType::UNIFORM];
-        // auto& transparentUniforms = transparentReflection[gpu::Shader::BindingType::UNIFORM];
-
         // Set any userdata specified uniforms
         int customSlot = procedural::slot::uniform::Custom;
         for (const auto& key : _data.uniforms.keys()) {
@@ -266,10 +261,16 @@ void Procedural::prepare(gpu::Batch& batch,
         // TODO: THis is a simple fix, we need a cleaner way to provide the "hosting" program for procedural custom shaders to be defined together with the required bindings.
         _opaqueFragmentShader = gpu::Shader::createPixel(_opaqueFragmentSource);
         _opaqueShader = gpu::Shader::createProgram(_vertexShader, _opaqueFragmentShader);
-        _transparentFragmentShader = gpu::Shader::createPixel(_transparentFragmentSource);
-        _transparentShader = gpu::Shader::createProgram(_vertexShader, _transparentFragmentShader);
         _opaquePipeline = gpu::Pipeline::create(_opaqueShader, _opaqueState);
-        _transparentPipeline = gpu::Pipeline::create(_transparentShader, _transparentState);
+        if (_transparentFragmentSource.valid()) {
+            _transparentFragmentShader = gpu::Shader::createPixel(_transparentFragmentSource);
+            _transparentShader = gpu::Shader::createProgram(_vertexShader, _transparentFragmentShader);
+            _transparentPipeline = gpu::Pipeline::create(_transparentShader, _transparentState);
+        } else {
+            _transparentFragmentShader = _opaqueFragmentShader;
+            _transparentShader = _opaqueShader;
+            _transparentPipeline = _opaquePipeline;
+        }
         _start = usecTimestampNow();
         _frameCount = 0;
     }
@@ -281,12 +282,8 @@ void Procedural::prepare(gpu::Batch& batch,
         setupUniforms(transparent);
     }
 
-    if (_shaderDirty || _uniformsDirty || _channelsDirty || _prevTransparent != transparent) {
-        setupChannels(_shaderDirty || _uniformsDirty, transparent);
-    }
-
     _prevTransparent = transparent;
-    _shaderDirty = _uniformsDirty = _channelsDirty = false;
+    _shaderDirty = _uniformsDirty = false;
 
     for (auto lambda : _uniforms) {
         lambda(batch);
@@ -366,18 +363,16 @@ void Procedural::setupUniforms(bool transparent) {
         }
     }
 
-
     _uniforms.push_back([=](gpu::Batch& batch) {
         // Time and position
         {
             // Minimize floating point error by doing an integer division to milliseconds, before the floating point division to seconds
-                float time = (float)((usecTimestampNow() - _start) / USECS_PER_MSEC) / MSECS_PER_SECOND;
+            float time = (float)((usecTimestampNow() - _start) / USECS_PER_MSEC) / MSECS_PER_SECOND;
             _standardInputs.posAndTime = vec4(_entityPosition, time);
         }
 
-        // Date 
+        // Date
         {
-
             QDateTime now = QDateTime::currentDateTimeUtc();
             QDate date = now.date();
             QTime time = now.time();

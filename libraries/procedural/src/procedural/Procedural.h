@@ -96,7 +96,6 @@ protected:
     bool _dirty { false };
     bool _shaderDirty { true };
     bool _uniformsDirty { true };
-    bool _channelsDirty { true };
 
     // Rendering objects
     UniformLambdas _uniforms;
@@ -120,8 +119,6 @@ private:
     // This should only be called from the render thread, as it shares data with Procedural::prepare
     void setupUniforms(bool transparent);
     void setupChannels(bool shouldCreate, bool transparent);
-
-    //std::string replaceProceduralBlock(const std::string& fragmentSource);
 
     mutable quint64 _fadeStartTime { 0 };
     mutable bool _hasStartedFade { false };
