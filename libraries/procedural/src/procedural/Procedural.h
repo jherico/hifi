@@ -118,7 +118,6 @@ protected:
 private:
     // This should only be called from the render thread, as it shares data with Procedural::prepare
     void setupUniforms(bool transparent);
-    void setupChannels(bool shouldCreate, bool transparent);
 
     mutable quint64 _fadeStartTime { 0 };
     mutable bool _hasStartedFade { false };
