@@ -28,7 +28,7 @@ layout(location=0) out vec4 _fragColor;
 
 struct SSSDebugParams {
     vec4 cursorTexCoordSpare2;
-}
+};
 
 // Deferred frame transform uses slot 0
 LAYOUT_STD140(binding=1) uniform sssDebugParamsBuffer {
