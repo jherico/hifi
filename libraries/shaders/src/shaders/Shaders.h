@@ -147,6 +147,7 @@ struct Source {
 
     String getSource(Dialect dialect, Variant variant) const;
     const Reflection& getReflection(Dialect dialect, Variant variant) const;
+    bool valid() const { return !dialectSources.empty(); }
     static Source generate(const std::string& glsl) { throw std::runtime_error("Implement me"); }
     static const Source& get(uint32_t shaderId);
 

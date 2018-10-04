@@ -26,12 +26,6 @@
 
 static void initShadersResources() {
     Q_INIT_RESOURCE(shaders);
-    //Q_INIT_RESOURCE(shaders_450);
-    //Q_INIT_RESOURCE(shaders_450_stereo);
-    //Q_INIT_RESOURCE(shaders_410);
-    //Q_INIT_RESOURCE(shaders_410_stereo);
-    //Q_INIT_RESOURCE(shaders_310es);
-    //Q_INIT_RESOURCE(shaders_310es_stereo);
 }
 
 namespace shader {
