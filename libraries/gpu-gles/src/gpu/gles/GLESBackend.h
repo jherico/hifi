@@ -160,7 +160,7 @@ protected:
     // Output stage
     void do_blit(const Batch& batch, size_t paramOffset) override;
     
-    shader::Dialect getShaderDialect() const override { return shader::Dialect::e310es; }
+    shader::Dialect getShaderDialect() const override { return shader::Dialect::glsl310es; }
 };
 
 } }

@@ -29,12 +29,15 @@ const std::vector<uint32_t>& allShaders();
 enum class Dialect
 {
 #if defined(USE_GLES)
-    e310es,
+    // GLES only support 3.1 es
+    glsl310es,
 #elif defined(Q_OS_MAC)
-    e410,
+    // Mac only supports 4.1
+    glsl410,
 #else
-    e450,
-    e410,
+    // Everything else supports 4.1 and 4.5
+    glsl450,
+    glsl410,
 #endif
 };
 
