@@ -17,6 +17,6 @@ shader::Dialect GL45Backend::getShaderDialect() const {
     // We build, but don't actually use GL 4.5 on OSX
     throw std::runtime_error("GL 4.5 unavailable on OSX");
 #else
-    return shader::Dialect::e450;
+    return shader::Dialect::glsl450;
 #endif
 }
