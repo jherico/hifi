@@ -171,7 +171,7 @@ def processCommand(line):
         scribeDepCache.gen(scribeFile, libs, dialect, variant)
         scribeArgs = getCommonScribeArgs(scribeFile, libs)
         for header in getDialectAndVariantHeaders(dialect, variant):
-            scribeArgs.extend(['-h', header])
+            scribeArgs.extend(['-H', header])
         scribeArgs.extend(['-o', unoptGlslFile])
         executeSubprocess(scribeArgs)
 

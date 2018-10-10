@@ -31,7 +31,9 @@
 #include <gpu/gl/GLShader.h>
 #include <gl/QOpenGLContextWrapper.h>
 
-#if 0
+#define RUNTIME_SHADER_COMPILE_TEST 0
+
+#if RUNTIME_SHADER_COMPILE_TEST
 #include <glslang/Public/ShaderLang.h>
 #include <SPIRV/GlslangToSpv.h>
 #include <spirv-tools/libspirv.hpp>
@@ -62,7 +64,7 @@ void ShaderTests::cleanupTestCase() {
     qDebug() << "Done";
 }
 
-#if 0
+#if RUNTIME_SHADER_COMPILE_TEST
 
 template <typename C>
 QStringList toQStringList(const C& c) {
@@ -174,7 +176,7 @@ static void verifyInterface(const gpu::Shader::Source& vertexSource, const gpu::
     }
 }
 
-#if 0
+#if RUNTIME_SHADER_COMPILE_TEST
 template <typename C>
 bool compareBindings(const C& actual, const gpu::Shader::LocationMap& expected) {
     if (actual.size() != expected.size()) {
@@ -389,7 +391,6 @@ bool compileSpirv(uint32_t shaderId, bool stereo) {
         return false;
     }
 
-#if 0
     std::string baseOutName = "d:/shaders/" + shaderName;
     if (stereo) {
         baseOutName += ".stereo";
@@ -429,7 +430,6 @@ bool compileSpirv(uint32_t shaderId, bool stereo) {
     }
 
     write(baseOutName + ".spv.txt", disassembly);
-#endif
 
     return true;
 }
@@ -524,7 +524,7 @@ void ShaderTests::testShaderLoad() {
                            << fragmentSource.name.c_str();
                 QFAIL("Program link error");
             }
-#if 0
+#if RUNTIME_SHADER_COMPILE_TEST
             auto expectedBindings = mergeReflection({ vertexSource, fragmentSource });
             QVERIFY(glshader != nullptr);
             for (const auto& shaderObject : glshader->_shaderObjects) {
@@ -595,7 +595,7 @@ void ShaderTests::testShaderLoad() {
         QFAIL(error.what());
     }
 
-#if 0
+#if RUNTIME_SHADER_COMPILE_TEST
     for (uint32_t i = 1; i <= maxShader; ++i) {
         auto used = usedShaders.count(i);
         if (0 != usedShaders.count(i)) {

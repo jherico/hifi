@@ -68,7 +68,7 @@ int main (int argc, char** argv) {
             case READY: {
                 if (inputs.back() == "-o") {
                     mode = GRAB_OUTPUT;
-                } else if (inputs.back() == "-h") {
+                } else if (inputs.back() == "-H") {
                     mode = GRAB_HEADER;
                 } else if (inputs.back() == "-t") {
                     mode = GRAB_TARGET_NAME;
@@ -169,6 +169,9 @@ int main (int argc, char** argv) {
         cerr << "  -I include_directory: Declare a directory to be added to the includes search pool." << endl;
         cerr << "  -D varname varvalue: Declare a var used to generate the output file." << endl;
         cerr << "       varname and varvalue must be made of alpha numerical characters with no spaces." << endl;
+        cerr << "  -H : Prepend the contents of header file to the scribe output " << endl;
+        cerr << "       This can be specified multiple times and the headers will be applied in the specified order" << endl;
+        cerr << "  -M : Emit a list of files that the scribe output depends on, for make and similar build tools " << endl;
         cerr << "  -listVars : Will list the vars name and value in the standard output." << endl;
         cerr << "  -showParseTree : Draw the tree obtained while parsing the source" << endl;
         cerr << "  -c++ : Generate a c++ source file containing the output file stream stored as a char[] variable" << endl;
