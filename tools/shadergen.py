@@ -170,12 +170,16 @@ def processCommand(line):
 
         scribeDepCache.gen(scribeFile, libs, dialect, variant)
         scribeArgs = getCommonScribeArgs(scribeFile, libs)
+        headerFlag = '-H'
+        # using the old flag on Android builds for now
+        if (dialect == '310es'): headerFlag = '-h'
         for header in getDialectAndVariantHeaders(dialect, variant):
-            scribeArgs.extend(['-H', header])
+            scribeArgs.extend([headerFlag, header])
         scribeArgs.extend(['-o', unoptGlslFile])
         executeSubprocess(scribeArgs)
 
         # Generate the un-optimized output
+        print([glslangExec, '-V110', '-o', upoptSpirvFile, unoptGlslFile])
         executeSubprocess([glslangExec, '-V110', '-o', upoptSpirvFile, unoptGlslFile])
 
         # Optimize the SPIRV
@@ -202,7 +206,7 @@ def processCommand(line):
 
 def main():
     commands = args.commands.read().splitlines(False)
-    if args.debug:
+    if args.debug or True:
         for command in commands:
             processCommand(command)
     else:
