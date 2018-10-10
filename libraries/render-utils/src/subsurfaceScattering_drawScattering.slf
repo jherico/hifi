@@ -107,7 +107,7 @@ vec3 drawScatteringTableUV(vec2 cursor, vec2 texcoord) {
 
 void main(void) {
     vec2 cursorTexcoord = sssDebugParams.cursorTexCoordSpare2.xy;
-    _fragColor = vec4(drawScatteringTableUV(uniformCursorTexcoord, varTexCoord0), 1.0);
+    _fragColor = vec4(drawScatteringTableUV(cursorTexcoord, varTexCoord0), 1.0);
 }
 
 
