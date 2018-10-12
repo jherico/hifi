@@ -307,6 +307,7 @@ private:
     }
 };
 
+
 Q_LOGGING_CATEGORY(trace_app_input_mouse, "trace.app.input.mouse")
 
 using namespace std;
