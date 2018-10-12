@@ -16,7 +16,6 @@
 #include <gpu/gl/GLBackend.h>
 #include <gpu/gl/GLTexture.h>
 
-#define GPU_SSBO_TRANSFORM_OBJECT 1
 
 namespace gpu { namespace gles {
 
