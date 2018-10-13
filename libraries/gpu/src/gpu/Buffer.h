@@ -30,6 +30,23 @@ class Buffer : public Resource {
 public:
     using Flag = PageManager::Flag;
 
+    // Flags match VkBufferUsageFlagBits for convenience... do not modify
+    enum class UsageFlagBits
+    {
+        // These values are unused in our API
+        //TransferSrc = 0x0001,
+        //TransferDst = 0x0002,
+        //UniformTexelBuffer = 0x0004,
+        //StorageTexelBuffer = 0x0008,
+        UniformBuffer = 0x0010,
+        ResourceBuffer = 0x0020,
+        IndexBuffer = 0x0040,
+        VertexBuffer = 0x0080,
+        IndirectBuffer = 0x0100
+    };
+
+    using UsageFlags = Flags<UsageFlagBits>;
+
     class Update {
     public:
         Update(const Buffer& buffer);
@@ -48,8 +65,13 @@ public:
     static uint32_t getBufferCPUCount();
     static Size getBufferCPUMemSize();
 
-    Buffer(Size pageSize = PageManager::DEFAULT_PAGE_SIZE);
-    Buffer(Size size, const Byte* bytes, Size pageSize = PageManager::DEFAULT_PAGE_SIZE);
+    template <typename T>
+    static Buffer* createBuffer(const UsageFlags& usage, const std::vector<T>& v) {
+        return new Buffer(usage, sizeof(T) * v.size(), (const gpu::Byte*)v.data());
+    }
+
+    Buffer(const UsageFlags& usage, Size pageSize = PageManager::DEFAULT_PAGE_SIZE);
+    Buffer(const UsageFlags& usage, Size size, const Byte* bytes, Size pageSize = PageManager::DEFAULT_PAGE_SIZE);
     Buffer(const Buffer& buf); // deep copy of the sysmem buffer
     Buffer& operator=(const Buffer& buf); // deep copy of the sysmem buffer
     ~Buffer();
@@ -61,6 +83,8 @@ public:
 
     const Byte* getData() const { return getSysmem().readData(); }
     
+    const UsageFlags& getUsage() const { return _usage; }
+
     // Resize the buffer
     // Keep previous data [0 to min(pSize, mSize)]
     Size resize(Size pSize);
@@ -148,6 +172,7 @@ protected:
     mutable PageManager _pages;
     Size _end{ 0 };
     Sysmem _sysmem;
+    UsageFlags _usage;
 
 
     friend class BufferView;
@@ -182,7 +207,7 @@ public:
     Size _size { 0 };
     Element _element { DEFAULT_ELEMENT };
     uint16 _stride { 0 };
-
+    
     BufferView(const BufferView& view) = default;
     BufferView& operator=(const BufferView& view) = default;
 
@@ -382,9 +407,9 @@ public:
     template <class T> class StructBuffer : public gpu::BufferView {
     public:
 
-        template <class U> static BufferPointer makeBuffer() {
+        template <class U> static BufferPointer makeBuffer(const gpu::Buffer::UsageFlags& usageFlags = gpu::Buffer::UsageFlagBits::UniformBuffer) {
             U t;
-            return std::make_shared<gpu::Buffer>(sizeof(U), (const gpu::Byte*) &t, sizeof(U));
+            return std::make_shared<gpu::Buffer>(usageFlags, sizeof(U), (const gpu::Byte*) &t, sizeof(U));
         }
         ~StructBuffer<T>() {};
         StructBuffer<T>() : gpu::BufferView(makeBuffer<T>()) {}

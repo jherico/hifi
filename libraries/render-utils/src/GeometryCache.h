@@ -402,8 +402,8 @@ private:
     gpu::PipelinePointer _standardDrawPipeline;
     gpu::PipelinePointer _standardDrawPipelineNoBlend;
 
-    gpu::BufferPointer _shapeVertices{ std::make_shared<gpu::Buffer>() };
-    gpu::BufferPointer _shapeIndices{ std::make_shared<gpu::Buffer>() };
+    gpu::BufferPointer _shapeVertices { std::make_shared<gpu::Buffer>(gpu::Buffer::UsageFlagBits::VertexBuffer) };
+    gpu::BufferPointer _shapeIndices { std::make_shared<gpu::Buffer>(gpu::Buffer::UsageFlagBits::IndexBuffer) };
 
     class GridSchema {
     public:
@@ -413,7 +413,7 @@ private:
         glm::vec4 edge;
     };
     using GridBuffer = gpu::BufferView;
-    void useGridPipeline(gpu::Batch& batch, GridBuffer gridBuffer, bool isLayered);
+    void useGridPipeline(gpu::Batch& batch, const GridBuffer& gridBuffer, bool isLayered);
     gpu::PipelinePointer _gridPipeline;
     gpu::PipelinePointer _gridPipelineLayered;
     int _gridSlot;

@@ -124,7 +124,7 @@ LightStage::Shadow::Shadow(graphics::LightPointer light, float maxDistance, unsi
     cascadeCount = std::min(cascadeCount, (unsigned int)SHADOW_CASCADE_MAX_COUNT);
     Schema schema;
     schema.cascadeCount = cascadeCount;
-    _schemaBuffer = std::make_shared<gpu::Buffer>(sizeof(Schema), (const gpu::Byte*) &schema);
+    _schemaBuffer = std::make_shared<gpu::Buffer>(gpu::Buffer::UsageFlagBits::UniformBuffer, sizeof(Schema), (const gpu::Byte*) &schema);
 
     // Create shadow cascade texture array
     auto depthFormat = gpu::Element(gpu::SCALAR, gpu::FLOAT, gpu::DEPTH);  // Depth32 texel format
@@ -420,7 +420,7 @@ LightStage::Index LightStage::getShadowId(Index lightId) const {
 void LightStage::updateLightArrayBuffer(Index lightId) {
     auto lightSize = sizeof(graphics::Light::LightSchema);
     if (!_lightArrayBuffer) {
-        _lightArrayBuffer = std::make_shared<gpu::Buffer>(lightSize);
+        _lightArrayBuffer = std::make_shared<gpu::Buffer>(gpu::Buffer::UsageFlagBits::UniformBuffer, lightSize);
     }
 
     assert(checkLightId(lightId));

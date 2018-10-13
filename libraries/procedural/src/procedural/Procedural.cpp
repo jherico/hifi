@@ -107,7 +107,7 @@ Procedural::Procedural() {
     _transparentState->setBlendFunction(true, gpu::State::SRC_ALPHA, gpu::State::BLEND_OP_ADD, gpu::State::INV_SRC_ALPHA,
                                         gpu::State::FACTOR_ALPHA, gpu::State::BLEND_OP_ADD, gpu::State::ONE);
 
-    _standardInputsBuffer = std::make_shared<gpu::Buffer>(sizeof(StandardInputs), nullptr);
+    _standardInputsBuffer = std::make_shared<gpu::Buffer>(gpu::Buffer::UsageFlagBits::UniformBuffer, sizeof(StandardInputs), nullptr);
 }
 
 void Procedural::setProceduralData(const ProceduralData& proceduralData) {

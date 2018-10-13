@@ -1758,7 +1758,7 @@ void Model::initializeBlendshapes(const FBXMesh& mesh, int index) {
         QVector<BlendshapeOffset> blendshapeOffset;
         blendshapeOffset.fill(BlendshapeOffset(), mesh.vertices.size());
         const auto blendshapeOffsetsSize = blendshapeOffset.size() * sizeof(BlendshapeOffset);
-        _blendshapeBuffers[index] = std::make_shared<gpu::Buffer>(blendshapeOffsetsSize, (const gpu::Byte*) blendshapeOffset.constData(), blendshapeOffsetsSize);
+        _blendshapeBuffers[index] = std::make_shared<gpu::Buffer>(gpu::Buffer::UsageFlagBits::ResourceBuffer, blendshapeOffsetsSize, (const gpu::Byte*) blendshapeOffset.constData(), blendshapeOffsetsSize);
         _blendshapeOffsets[index] = blendshapeOffset;
     }
 }

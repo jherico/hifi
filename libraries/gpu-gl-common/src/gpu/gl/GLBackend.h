@@ -623,9 +623,9 @@ protected:
         GLShader* _programShader{ nullptr };
         bool _invalidProgram{ false };
 
-        BufferView _cameraCorrectionBuffer{ gpu::BufferView(std::make_shared<gpu::Buffer>(sizeof(CameraCorrection), nullptr)) };
+        BufferView _cameraCorrectionBuffer{ gpu::BufferView(std::make_shared<gpu::Buffer>(gpu::Buffer::UsageFlagBits::UniformBuffer, sizeof(CameraCorrection), nullptr)) };
         BufferView _cameraCorrectionBufferIdentity{ gpu::BufferView(
-            std::make_shared<gpu::Buffer>(sizeof(CameraCorrection), nullptr)) };
+            std::make_shared<gpu::Buffer>(gpu::Buffer::UsageFlagBits::UniformBuffer, sizeof(CameraCorrection), nullptr)) };
 
         State::Data _stateCache{ State::DEFAULT };
         State::Signature _stateSignatureCache{ 0 };

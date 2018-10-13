@@ -126,7 +126,7 @@ void GameWorkloadRenderItem::setAllProxies(const workload::Proxy::Vector& proxie
     _myOwnProxies = proxies;
     static const uint32_t sizeOfProxy = sizeof(workload::Proxy);
     if (!_allProxiesBuffer) {
-        _allProxiesBuffer = std::make_shared<gpu::Buffer>(sizeOfProxy);
+        _allProxiesBuffer = std::make_shared<gpu::Buffer>(gpu::Buffer::UsageFlagBits::ResourceBuffer, sizeOfProxy);
     }
 
     _allProxiesBuffer->setData(proxies.size() * sizeOfProxy, (const gpu::Byte*) proxies.data());
@@ -137,7 +137,7 @@ void GameWorkloadRenderItem::setAllViews(const workload::Views& views) {
     _myOwnViews = views;
     static const uint32_t sizeOfView = sizeof(workload::View);
     if (!_allViewsBuffer) {
-        _allViewsBuffer = std::make_shared<gpu::Buffer>(sizeOfView);
+        _allViewsBuffer = std::make_shared<gpu::Buffer>(gpu::Buffer::UsageFlagBits::ResourceBuffer, sizeOfView);
     }
 
     _allViewsBuffer->setData(views.size() * sizeOfView, (const gpu::Byte*) views.data());
@@ -197,7 +197,7 @@ const gpu::BufferPointer GameWorkloadRenderItem::getDrawViewBuffer() {
         verts[numSegments] = verts[0];
         verts[numSegments].p.w = 0.0f;
 
-        _drawViewBuffer = std::make_shared<gpu::Buffer>(verts.size() * sizeof(Vert), (const gpu::Byte*) verts.data());
+        _drawViewBuffer = std::make_shared<gpu::Buffer>(gpu::Buffer::UsageFlagBits::UniformBuffer, verts.size() * sizeof(Vert), (const gpu::Byte*) verts.data());
         _numDrawViewVerts = numSegments + 1;
     }
     return _drawViewBuffer;

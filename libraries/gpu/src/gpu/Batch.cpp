@@ -188,6 +188,11 @@ void Batch::setInputFormat(const Stream::FormatPointer& format) {
 }
 
 void Batch::setInputBuffer(Slot channel, const BufferPointer& buffer, Offset offset, Offset stride) {
+    if (buffer && !(buffer->getUsage() & Buffer::UsageFlagBits::VertexBuffer)) {
+        qCWarning(gpulogging) << "Invalid Buffer Flags";
+    }
+
+
     ADD_COMMAND(setInputBuffer);
 
     _params.emplace_back(stride);
@@ -212,6 +217,10 @@ void Batch::setInputStream(Slot startChannel, const BufferStream& stream) {
 }
 
 void Batch::setIndexBuffer(Type type, const BufferPointer& buffer, Offset offset) {
+    if (buffer && !(buffer->getUsage() & Buffer::UsageFlagBits::IndexBuffer)) {
+        qCWarning(gpulogging) << "Invalid Buffer Flags";
+    }
+
     ADD_COMMAND(setIndexBuffer);
 
     _params.emplace_back(offset);
@@ -224,6 +233,10 @@ void Batch::setIndexBuffer(const BufferView& buffer) {
 }
 
 void Batch::setIndirectBuffer(const BufferPointer& buffer, Offset offset, Offset stride) {
+    if (!(buffer->getUsage() & Buffer::UsageFlagBits::IndirectBuffer)) {
+        qCWarning(gpulogging) << "Invalid Buffer Flags";
+    }
+
     ADD_COMMAND(setIndirectBuffer);
 
     _params.emplace_back(_buffers.cache(buffer));
@@ -302,6 +315,10 @@ void Batch::setStateScissorRect(const Vec4i& rect) {
 }
 
 void Batch::setUniformBuffer(uint32 slot, const BufferPointer& buffer, Offset offset, Offset size) {
+    if (buffer && !(buffer->getUsage() & Buffer::UsageFlagBits::UniformBuffer)) {
+        qCWarning(gpulogging) << "Invalid Buffer Flags";
+    }
+
     ADD_COMMAND(setUniformBuffer);
     if (slot >= MAX_NUM_UNIFORM_BUFFERS) {
         qCWarning(gpulogging) << "Slot" << slot << "exceeds max uniform buffer count of" << MAX_NUM_UNIFORM_BUFFERS;
@@ -317,6 +334,10 @@ void Batch::setUniformBuffer(uint32 slot, const BufferView& view) {
 }
 
 void Batch::setResourceBuffer(uint32 slot, const BufferPointer& buffer) {
+    if (!(buffer->getUsage() & Buffer::UsageFlagBits::ResourceBuffer)) {
+        qCWarning(gpulogging) << "Invalid Buffer Flags";
+    }
+
     ADD_COMMAND(setResourceBuffer);
     if (slot >= MAX_NUM_RESOURCE_BUFFERS) {
         qCWarning(gpulogging) << "Slot" << slot << "exceeds max resources buffer count of" << MAX_NUM_RESOURCE_BUFFERS;
@@ -513,7 +534,7 @@ const BufferPointer& Batch::getNamedBuffer(const std::string& instanceName, uint
         instance.buffers.resize(index + 1);
     }
     if (!instance.buffers[index]) {
-        instance.buffers[index] = std::make_shared<Buffer>();
+        instance.buffers[index] = std::make_shared<Buffer>(gpu::Buffer::UsageFlagBits::VertexBuffer);
     }
     return instance.buffers[index];
 }

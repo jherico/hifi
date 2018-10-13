@@ -78,7 +78,7 @@ PolyLineEntityRenderer::PolyLineEntityRenderer(const EntityItemPointer& entity) 
         polylineFormat->setAttribute(gpu::Stream::COLOR, 0, gpu::Element(gpu::VEC3, gpu::FLOAT, gpu::RGB), offsetof(Vertex, color));
     });
 
-    _verticesBuffer = std::make_shared<gpu::Buffer>();
+    _verticesBuffer = std::make_shared<gpu::Buffer>(gpu::Buffer::UsageFlagBits::VertexBuffer);
 }
 
 ItemKey PolyLineEntityRenderer::getKey() {

@@ -167,7 +167,7 @@ graphics::MeshPointer DeferredLightingEffect::getPointLightMesh() {
         int verticesSize = (int) (solid.vertices.size() * 3 * sizeof(float));
         float* vertexData = (float*) solid.vertices.data();
 
-        _pointLightMesh->setVertexBuffer(gpu::BufferView(new gpu::Buffer(verticesSize, (gpu::Byte*) vertexData), gpu::Element::VEC3F_XYZ));
+        _pointLightMesh->setVertexBuffer(gpu::BufferView(new gpu::Buffer(gpu::Buffer::UsageFlagBits::VertexBuffer, verticesSize, (gpu::Byte*) vertexData), gpu::Element::VEC3F_XYZ));
 
         int nbIndices = (int) solid.faces.size() * 3;
 
@@ -179,7 +179,7 @@ graphics::MeshPointer DeferredLightingEffect::getPointLightMesh() {
             *(index++) = face[2];
         }
 
-        _pointLightMesh->setIndexBuffer(gpu::BufferView(new gpu::Buffer(sizeof(unsigned short) * nbIndices, (gpu::Byte*) indexData), gpu::Element::INDEX_UINT16));
+        _pointLightMesh->setIndexBuffer(gpu::BufferView(new gpu::Buffer(gpu::Buffer::UsageFlagBits::IndexBuffer, sizeof(unsigned short) * nbIndices, (gpu::Byte*) indexData), gpu::Element::INDEX_UINT16));
         delete[] indexData;
 
 
@@ -188,7 +188,7 @@ graphics::MeshPointer DeferredLightingEffect::getPointLightMesh() {
         parts.push_back(graphics::Mesh::Part(0, nbIndices, 0, graphics::Mesh::LINE_STRIP)); // outline version
 
 
-        _pointLightMesh->setPartBuffer(gpu::BufferView(new gpu::Buffer(parts.size() * sizeof(graphics::Mesh::Part), (gpu::Byte*) parts.data()), gpu::Element::PART_DRAWCALL));
+        _pointLightMesh->setPartBuffer(gpu::BufferView(gpu::Buffer::createBuffer(gpu::Buffer::UsageFlagBits::IndirectBuffer, parts), gpu::Element::PART_DRAWCALL));
     }
     return _pointLightMesh;
 }
@@ -237,7 +237,7 @@ graphics::MeshPointer DeferredLightingEffect::getSpotLightMesh() {
         *(vertexRing2++) = 0.0f;
         *(vertexRing2++) = 1.0f;
         
-        _spotLightMesh->setVertexBuffer(gpu::BufferView(new gpu::Buffer(verticesSize, (gpu::Byte*) vertexData), gpu::Element::VEC3F_XYZ));
+        _spotLightMesh->setVertexBuffer(gpu::BufferView(new gpu::Buffer(gpu::Buffer::UsageFlagBits::VertexBuffer, verticesSize, (gpu::Byte*) vertexData), gpu::Element::VEC3F_XYZ));
         delete[] vertexData;
 
         gpu::uint16* indexData = new gpu::uint16[indices];
@@ -276,7 +276,7 @@ graphics::MeshPointer DeferredLightingEffect::getSpotLightMesh() {
             *(index++) = capVertex;
         }
 
-        _spotLightMesh->setIndexBuffer(gpu::BufferView(new gpu::Buffer(sizeof(unsigned short) * indices, (gpu::Byte*) indexData), gpu::Element::INDEX_UINT16));
+        _spotLightMesh->setIndexBuffer(gpu::BufferView(new gpu::Buffer(gpu::Buffer::UsageFlagBits::IndexBuffer, sizeof(unsigned short) * indices, (gpu::Byte*) indexData), gpu::Element::INDEX_UINT16));
         delete[] indexData;
 
         
@@ -285,7 +285,7 @@ graphics::MeshPointer DeferredLightingEffect::getSpotLightMesh() {
         parts.push_back(graphics::Mesh::Part(0, indices, 0, graphics::Mesh::LINE_STRIP)); // outline version
 
         
-        _spotLightMesh->setPartBuffer(gpu::BufferView(new gpu::Buffer(parts.size() * sizeof(graphics::Mesh::Part), (gpu::Byte*) parts.data()), gpu::Element::PART_DRAWCALL));
+        _spotLightMesh->setPartBuffer(gpu::BufferView(new gpu::Buffer(gpu::Buffer::UsageFlagBits::VertexBuffer, parts.size() * sizeof(graphics::Mesh::Part), (gpu::Byte*) parts.data()), gpu::Element::PART_DRAWCALL));
     }
     return _spotLightMesh;
 }
@@ -514,7 +514,7 @@ void RenderDeferredSetup::run(const render::RenderContextPointer& renderContext,
 }
 
 RenderDeferredLocals::RenderDeferredLocals() :
-    _localLightsBuffer(std::make_shared<gpu::Buffer>()) {
+    _localLightsBuffer(std::make_shared<gpu::Buffer>(gpu::Buffer::UsageFlagBits::UniformBuffer)) {
 
 }
 
