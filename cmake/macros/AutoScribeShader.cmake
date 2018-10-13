@@ -340,7 +340,7 @@ macro(AUTOSCRIBE_SHADER_LIBS)
             DEPENDS ${AUTOSCRIBE_SHADER_HEADERS} scribe spirv_binaries ${CMAKE_SOURCE_DIR}/tools/shadergen.py ${ALL_SCRIBE_SHADERS})
     endif()
 
-    add_custom_target(shadergen DEPENDS ${SCRIBED_SHADERS} ${SPIRV_SHADERS} ${REFLECTED_SHADERS})
+    add_custom_target(shadergen SOURCES ${CMAKE_SOURCE_DIR}/tools/shadergen.py DEPENDS ${SCRIBED_SHADERS} ${SPIRV_SHADERS} ${REFLECTED_SHADERS})
     set_target_properties(shadergen PROPERTIES FOLDER "Shaders")
 
     # Custom targets required to force generation of the shaders via scribe
