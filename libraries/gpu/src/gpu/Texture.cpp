@@ -163,7 +163,7 @@ void Texture::MemoryStorage::assignMipFaceData(uint16 level, uint8 face, const s
 }
 
 TexturePointer Texture::createExternal(const ExternalRecycler& recycler, const Sampler& sampler) {
-    TexturePointer tex = std::make_shared<Texture>(TextureUsageType::EXTERNAL);
+    TexturePointer tex = std::make_shared<Texture>(UsageFlagBits::Sampled | UsageFlagBits::External);
     tex->_type = TEX_2D;
     tex->_texelFormat = Element::COLOR_RGBA_32;
     tex->_maxMipLevel = 0;
@@ -173,40 +173,40 @@ TexturePointer Texture::createExternal(const ExternalRecycler& recycler, const S
 }
 
 TexturePointer Texture::createRenderBuffer(const Element& texelFormat, uint16 width, uint16 height, uint16 numMips, const Sampler& sampler) {
-    return create(TextureUsageType::RENDERBUFFER, TEX_2D, texelFormat, width, height, 1, 1, 0, numMips, sampler);
+    return create(UsageFlagBits::ColorAttachment, TEX_2D, texelFormat, width, height, 1, 1, 0, numMips, sampler);
 }
 
 TexturePointer Texture::createRenderBufferArray(const Element& texelFormat, uint16 width, uint16 height, uint16 numSlices, uint16 numMips, const Sampler& sampler) {
-    return create(TextureUsageType::RENDERBUFFER, TEX_2D, texelFormat, width, height, 1, 1, numSlices, numMips, sampler);
+    return create(UsageFlagBits::ColorAttachment, TEX_2D, texelFormat, width, height, 1, 1, numSlices, numMips, sampler);
 }
 
 TexturePointer Texture::create1D(const Element& texelFormat, uint16 width, uint16 numMips, const Sampler& sampler) {
-    return create(TextureUsageType::RESOURCE, TEX_1D, texelFormat, width, 1, 1, 1, 0, numMips, sampler);
+    return create(UsageFlagBits::Sampled, TEX_1D, texelFormat, width, 1, 1, 1, 0, numMips, sampler);
 }
 
 TexturePointer Texture::create2D(const Element& texelFormat, uint16 width, uint16 height, uint16 numMips, const Sampler& sampler) {
-    return create(TextureUsageType::RESOURCE, TEX_2D, texelFormat, width, height, 1, 1, 0, numMips, sampler);
+    return create(UsageFlagBits::Sampled, TEX_2D, texelFormat, width, height, 1, 1, 0, numMips, sampler);
 }
 
 TexturePointer Texture::create2DArray(const Element& texelFormat, uint16 width, uint16 height, uint16 numSlices, uint16 numMips, const Sampler& sampler) {
-    return create(TextureUsageType::STRICT_RESOURCE, TEX_2D, texelFormat, width, height, 1, 1, numSlices, numMips, sampler);
+    return create(UsageFlagBits::Sampled, TEX_2D, texelFormat, width, height, 1, 1, numSlices, numMips, sampler);
 }
 
 TexturePointer Texture::createStrict(const Element& texelFormat, uint16 width, uint16 height, uint16 numMips, const Sampler& sampler) {
-    return create(TextureUsageType::STRICT_RESOURCE, TEX_2D, texelFormat, width, height, 1, 1, 0, numMips, sampler);
+    return create(UsageFlagBits::Strict | UsageFlagBits::Sampled, TEX_2D, texelFormat, width, height, 1, 1, 0, numMips, sampler);
 }
 
 TexturePointer Texture::create3D(const Element& texelFormat, uint16 width, uint16 height, uint16 depth, uint16 numMips, const Sampler& sampler) {
-    return create(TextureUsageType::RESOURCE, TEX_3D, texelFormat, width, height, depth, 1, 0, numMips, sampler);
+    return create(UsageFlagBits::Sampled, TEX_3D, texelFormat, width, height, depth, 1, 0, numMips, sampler);
 }
 
 TexturePointer Texture::createCube(const Element& texelFormat, uint16 width, uint16 numMips, const Sampler& sampler) {
-    return create(TextureUsageType::RESOURCE, TEX_CUBE, texelFormat, width, width, 1, 1, 0, numMips, sampler);
+    return create(UsageFlagBits::Sampled, TEX_CUBE, texelFormat, width, width, 1, 1, 0, numMips, sampler);
 }
 
-TexturePointer Texture::create(TextureUsageType usageType, Type type, const Element& texelFormat, uint16 width, uint16 height, uint16 depth, uint16 numSamples, uint16 numSlices, uint16 numMips, const Sampler& sampler)
+TexturePointer Texture::create(const UsageFlags& usageflags, Type type, const Element& texelFormat, uint16 width, uint16 height, uint16 depth, uint16 numSamples, uint16 numSlices, uint16 numMips, const Sampler& sampler)
 {
-    TexturePointer tex = std::make_shared<Texture>(usageType);
+    TexturePointer tex = std::make_shared<Texture>(usageflags);
     tex->_storage.reset(new MemoryStorage());
     tex->_type = type;
     tex->_storage->assignTexture(tex.get());
@@ -217,14 +217,14 @@ TexturePointer Texture::create(TextureUsageType usageType, Type type, const Elem
     return tex;
 }
 
-Texture::Texture(TextureUsageType usageType) :
-    Resource(), _usageType(usageType) {
+Texture::Texture(const UsageFlags& usageflags) :
+    Resource(), _usageFlags(usageflags) {
     _textureCPUCount.increment();
 }
 
 Texture::~Texture() {
     _textureCPUCount.decrement();
-    if (_usageType == TextureUsageType::EXTERNAL) {
+    if (_usageFlags & UsageFlagBits::External) {
         Texture::ExternalUpdates externalUpdates;
         {
             Lock lock(_externalMutex);

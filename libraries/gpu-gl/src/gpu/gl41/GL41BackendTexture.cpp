@@ -47,7 +47,7 @@ GLTexture* GL41Backend::syncGPUObject(const TexturePointer& texturePointer) {
     }
 
     const Texture& texture = *texturePointer;
-    if (TextureUsageType::EXTERNAL == texture.getUsageType()) {
+    if (TextureUsageFlagBits::External & texture.getUsageFlags()) {
         return Parent::syncGPUObject(texturePointer);
     }
 
@@ -63,29 +63,21 @@ GLTexture* GL41Backend::syncGPUObject(const TexturePointer& texturePointer) {
 
     GL41Texture* object = Backend::getGPUObject<GL41Texture>(texture);
     if (!object) {
-        switch (texture.getUsageType()) {
-            case TextureUsageType::RENDERBUFFER:
-                object = new GL41AttachmentTexture(shared_from_this(), texture);
-                break;
-
-            case TextureUsageType::STRICT_RESOURCE:
-                qCDebug(gpugllogging) << "Strict texture " << texture.source().c_str();
-                object = new GL41StrictResourceTexture(shared_from_this(), texture);
-                break;
-
-            case TextureUsageType::RESOURCE:
-                qCDebug(gpugllogging) << "variable / Strict texture " << texture.source().c_str();
-                object = new GL41ResourceTexture(shared_from_this(), texture);
-                _textureManagement._transferEngine->addMemoryManagedTexture(texturePointer);
-                break;
-
-            default:
-                Q_UNREACHABLE();
+        const auto& usageFlags = texture.getUsageFlags();
+        const auto& attachmentUsageFlags = TextureUsageFlagBits::ColorAttachment | TextureUsageFlagBits::ColorAttachment;
+        if (usageFlags & attachmentUsageFlags) {
+            object = new GL41AttachmentTexture(shared_from_this(), texture);
+        } else if (usageFlags & TextureUsageFlagBits::Strict) {
+            qCDebug(gpugllogging) << "Strict texture " << texture.source().c_str();
+            object = new GL41StrictResourceTexture(shared_from_this(), texture);
+        } else {
+            qCDebug(gpugllogging) << "variable / Strict texture " << texture.source().c_str();
+            object = new GL41ResourceTexture(shared_from_this(), texture);
+            _textureManagement._transferEngine->addMemoryManagedTexture(texturePointer);
         }
     } else {
-        if (texture.getUsageType() == TextureUsageType::RESOURCE) {
+        if (texture.getUsageFlags() & TextureUsageFlagBits::Sampled) {
             auto varTex = static_cast<GL41VariableAllocationTexture*> (object);
-
             if (varTex->_minAllocatedMip > 0) {
                 auto minAvailableMip = texture.minAvailableMipLevel();
                 if (minAvailableMip < varTex->_minAllocatedMip) {

@@ -191,12 +191,41 @@ protected:
     Desc _desc;
 };
 
-enum class TextureUsageType : uint8 {
-    RENDERBUFFER,       // Used as attachments to a framebuffer
-    RESOURCE,           // Resource textures, like materials... subject to memory manipulation
-    STRICT_RESOURCE,    // Resource textures not subject to manipulation, like the normal fitting texture
-    EXTERNAL,
+
+//enum class TextureUsageType : uint8 {
+//    RENDERBUFFER,       // Used as attachments to a framebuffer
+//    RESOURCE,           // Resource textures, like materials... subject to memory manipulation
+//    STRICT_RESOURCE,    // Resource textures not subject to manipulation, like the normal fitting texture
+//    EXTERNAL,
+//};
+
+
+enum class TextureUsageFlagBits {
+    // Match Vulkan usage flags
+    //TransferSrc = 0x00000001,
+    //TransferDst = 0x00000002,
+    Sampled = 0x00000004,
+    //Storage = 0x00000008,
+    ColorAttachment = 0x00000010,
+    DepthStencilAttachment = 0x00000020,
+    //TransientAttachment = 0x00000040,
+    InputAttachment = 0x00000080,
+
+    // Additional custom flags
+    External = 0x00010000,
+    Strict = 0x00020000,
 };
+
+using TextureUsageFlags = Flags<TextureUsageFlagBits>;
+
+inline TextureUsageFlags operator|(TextureUsageFlagBits bit0, TextureUsageFlagBits bit1) {
+    return TextureUsageFlags(bit0) | bit1;
+}
+
+inline TextureUsageFlags operator~(TextureUsageFlagBits bits) {
+    return ~(TextureUsageFlags(bits));
+}
+
 
 class Texture : public Resource {
     static ContextMetricCount _textureCPUCount;
@@ -220,6 +249,10 @@ public:
     using ExternalRecycler = std::function<void(uint32, void*)>;
     using ExternalIdAndFence = std::pair<uint32, void*>;
     using ExternalUpdates = std::list<ExternalIdAndFence>;
+
+    using UsageFlagBits = TextureUsageFlagBits;
+    using UsageFlags = TextureUsageFlags;
+
 
     class Usage {
     public:
@@ -390,7 +423,7 @@ public:
     // After the texture has been created, it should be defined
     bool isDefined() const { return _defined; }
 
-    Texture(TextureUsageType usageType);
+    Texture(const UsageFlags& usage);
     Texture(const Texture& buf); // deep copy of the sysmem texture
     Texture& operator=(const Texture& buf); // deep copy of the sysmem texture
     ~Texture();
@@ -404,7 +437,7 @@ public:
 
     // Size and format
     Type getType() const { return _type; }
-    TextureUsageType getUsageType() const { return _usageType; }
+    const UsageFlags& getUsageFlags() const { return _usageFlags; }
 
     bool isColorRenderTarget() const;
     bool isDepthStencilRenderTarget() const;
@@ -579,7 +612,7 @@ public:
     static bool getCompressedFormat(khronos::gl::texture::InternalFormat format, Element& elFormat);
 
 protected:
-    const TextureUsageType _usageType;
+    const UsageFlags _usageFlags;
 
     // Should only be accessed internally or by the backend sync function
     mutable Mutex _externalMutex;
@@ -625,7 +658,7 @@ protected:
     bool _isIrradianceValid = false;
     bool _defined = false;
    
-    static TexturePointer create(TextureUsageType usageType, Type type, const Element& texelFormat, uint16 width, uint16 height, uint16 depth, uint16 numSamples, uint16 numSlices, uint16 numMips, const Sampler& sampler);
+    static TexturePointer create(const UsageFlags& usageFlags, Type type, const Element& texelFormat, uint16 width, uint16 height, uint16 depth, uint16 numSamples, uint16 numSlices, uint16 numMips, const Sampler& sampler);
 
     Size resize(Type type, const Element& texelFormat, uint16 width, uint16 height, uint16 depth, uint16 numSamples, uint16 numSlices, uint16 numMips);
 };

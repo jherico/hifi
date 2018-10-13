@@ -53,7 +53,7 @@ public:
                 for (auto& b : _gpuObject.getRenderBuffers()) {
                     surface = b._texture;
                     if (surface) {
-                        Q_ASSERT(TextureUsageType::RENDERBUFFER == surface->getUsageType());
+                        Q_ASSERT(surface->getUsageFlags() & TextureUsageFlagBits::ColorAttachment);
                         gltexture = backend->syncGPUObject(surface);
                     } else {
                         gltexture = nullptr;
@@ -86,7 +86,7 @@ public:
             auto surface = _gpuObject.getDepthStencilBuffer();
             auto backend = _backend.lock();
             if (_gpuObject.hasDepthStencil() && surface) {
-                Q_ASSERT(TextureUsageType::RENDERBUFFER == surface->getUsageType());
+                Q_ASSERT(surface->getUsageFlags() & TextureUsageFlagBits::DepthStencilAttachment);
                 gltexture = backend->syncGPUObject(surface);
             }
 

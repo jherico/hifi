@@ -126,9 +126,15 @@ namespace gpu {
         friend class Texture;
     };
 
+    // FlagTraits & Flags duplicated from the vulkan.hpp header, licensed under Apache 2.0
+    template <typename FlagBitsType> struct FlagTraits {
+        enum { allFlags = 0 };
+    };
+
     template <typename BitType, typename MaskType = uint32>
     class Flags {
     public:
+        using Type = MaskType;
         Flags()
             : m_mask(0) {}
 

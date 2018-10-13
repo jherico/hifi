@@ -144,7 +144,9 @@ int Framebuffer::setRenderBuffer(uint32 slot, const TexturePointer& texture, uin
         return -1;
     }
 
-    Q_ASSERT(!texture || TextureUsageType::RENDERBUFFER == texture->getUsageType());
+    if (texture && !(Texture::UsageFlagBits::ColorAttachment & texture->getUsageFlags())) {
+        qWarning("Invalid texture flags set");
+    }
 
     // Check for the slot
     if (slot >= getMaxNumRenderBuffers()) {
@@ -226,7 +228,9 @@ bool Framebuffer::assignDepthStencilBuffer(const TexturePointer& texture, const 
         return false;
     }
 
-    Q_ASSERT(!texture || TextureUsageType::RENDERBUFFER == texture->getUsageType());
+    if (texture && !(Texture::UsageFlagBits::DepthStencilAttachment & texture->getUsageFlags())) {
+        qWarning("Invalid texture flags set");
+    }
 
     // Check for the compatibility of size
     if (texture) {

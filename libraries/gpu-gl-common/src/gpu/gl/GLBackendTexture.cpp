@@ -28,7 +28,7 @@ GLuint GLBackend::getTextureID(const TexturePointer& texture) {
 GLTexture* GLBackend::syncGPUObject(const TexturePointer& texturePointer) {
     const Texture& texture = *texturePointer;
     // Special case external textures
-    if (TextureUsageType::EXTERNAL == texture.getUsageType()) {
+    if (TextureUsageFlagBits::External & texture.getUsageFlags()) {
         Texture::ExternalUpdates updates = texture.getUpdates();
         if (!updates.empty()) {
             Texture::ExternalRecycler recycler = texture.getExternalRecycler();

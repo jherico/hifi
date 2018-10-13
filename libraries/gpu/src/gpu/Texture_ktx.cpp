@@ -18,6 +18,7 @@
 
 #include "GPULogging.h"
 
+#pragma optimize("": off)
 using namespace gpu;
 
 using PixelsPointer = Texture::PixelsPointer;
@@ -30,15 +31,15 @@ struct GPUKTXPayload {
     using Version = uint8;
 
     static const std::string KEY;
-    static const Version CURRENT_VERSION { 1 };
-    static const size_t PADDING { 2 };
-    static const size_t SIZE { sizeof(Version) + sizeof(Sampler::Desc) + sizeof(uint32) + sizeof(TextureUsageType) + PADDING };
-    static_assert(GPUKTXPayload::SIZE == 36, "Packing size may differ between platforms");
+    static const Version CURRENT_VERSION { 2 };
+    static const size_t PADDING { 3 };
+    static const size_t SIZE { sizeof(Version) + sizeof(Sampler::Desc) + sizeof(uint32) + sizeof(TextureUsageFlags::Type) + PADDING };
+    static_assert(GPUKTXPayload::SIZE == 40, "Packing size may differ between platforms");
     static_assert(GPUKTXPayload::SIZE % 4 == 0, "GPUKTXPayload is not 4 bytes aligned");
 
     Sampler::Desc _samplerDesc;
     Texture::Usage _usage;
-    TextureUsageType _usageType;
+    Texture::UsageFlags _usageFlags;
 
     Byte* serialize(Byte* data) const {
         *(Version*)data = CURRENT_VERSION;
@@ -53,8 +54,8 @@ struct GPUKTXPayload {
         memcpy(data, &usageData, sizeof(uint32));
         data += sizeof(uint32);
 
-        memcpy(data, &_usageType, sizeof(TextureUsageType));
-        data += sizeof(TextureUsageType);
+        memcpy(data, &_usageFlags, sizeof(TextureUsageFlags::Type));
+        data += sizeof(TextureUsageFlags::Type);
 
         return data + PADDING;
     }
@@ -65,7 +66,7 @@ struct GPUKTXPayload {
         }
 
         Version version = *(const Version*)data;
-        if (version != CURRENT_VERSION) {
+        if (version == 0) {
             glm::vec4 borderColor(1.0f);
             if (memcmp(&borderColor, data, sizeof(glm::vec4)) == 0) {
                 memcpy(this, data, sizeof(GPUKTXPayload));
@@ -73,7 +74,8 @@ struct GPUKTXPayload {
             } else {
                 return false;
             }
-        }
+        } 
+        
         data += sizeof(Version);
 
         memcpy(&_samplerDesc, data, sizeof(Sampler::Desc));
@@ -86,7 +88,15 @@ struct GPUKTXPayload {
         _usage = Texture::Usage(usageData);
         data += sizeof(uint32);
 
-        memcpy(&_usageType, data, sizeof(TextureUsageType));
+        if (version == 1) {
+            // FIXME determine the right usage type from legacy entries
+            //memcpy(&_usageType, data, sizeof(TextureUsageType));
+            qWarning("Need to interpret the old usage flags and translate");
+            _usageFlags = TextureUsageFlagBits::Sampled;
+        } else if (version == 2) {
+            memcpy(&_usageFlags, data, sizeof(TextureUsageFlags::Type));
+        }
+
         return true;
     }
 
@@ -417,7 +427,7 @@ ktx::KTXUniquePointer Texture::serialize(const Texture& texture) {
     GPUKTXPayload gpuKeyval;
     gpuKeyval._samplerDesc = texture.getSampler().getDesc();
     gpuKeyval._usage = texture.getUsage();
-    gpuKeyval._usageType = texture.getUsageType();
+    gpuKeyval._usageFlags = texture.getUsageFlags();
 
     Byte keyvalPayload[GPUKTXPayload::SIZE];
     gpuKeyval.serialize(keyvalPayload);
@@ -502,13 +512,13 @@ TexturePointer Texture::build(const ktx::KTXDescriptor& descriptor) {
     if (!GPUKTXPayload::findInKeyValues(descriptor.keyValues, gpuktxKeyValue)) {
         qCWarning(gpulogging) << "Could not find GPUKTX key values.";
         // FIXME use sensible defaults based on the texture type and format
-        gpuktxKeyValue._usageType = TextureUsageType::RESOURCE;
+        gpuktxKeyValue._usageFlags = TextureUsageFlagBits::Sampled;
         gpuktxKeyValue._usage = Texture::Usage::Builder().withColor().withAlpha().build();
     }
 
     auto samplerDesc = gpuktxKeyValue._samplerDesc;
     samplerDesc._maxMip = gpu::Sampler::MAX_MIP_LEVEL;
-    auto texture = create(gpuktxKeyValue._usageType,
+    auto texture = create(gpuktxKeyValue._usageFlags,
         type,
         texelFormat,
         header.getPixelWidth(),

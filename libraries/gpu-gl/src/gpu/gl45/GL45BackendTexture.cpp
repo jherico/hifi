@@ -57,7 +57,7 @@ GLTexture* GL45Backend::syncGPUObject(const TexturePointer& texturePointer) {
     }
 
     const Texture& texture = *texturePointer;
-    if (TextureUsageType::EXTERNAL == texture.getUsageType()) {
+    if (TextureUsageFlagBits::External & texture.getUsageFlags()) {
         return Parent::syncGPUObject(texturePointer);
     }
 
@@ -68,48 +68,37 @@ GLTexture* GL45Backend::syncGPUObject(const TexturePointer& texturePointer) {
 
     GL45Texture* object = Backend::getGPUObject<GL45Texture>(texture);
     if (!object) {
-        switch (texture.getUsageType()) {
-            case TextureUsageType::RENDERBUFFER:
-                object = new GL45AttachmentTexture(shared_from_this(), texture);
-                break;
 
-#if FORCE_STRICT_TEXTURE
-            case TextureUsageType::RESOURCE:
-#endif
-            case TextureUsageType::STRICT_RESOURCE:
-                qCDebug(gpugllogging) << "Strict texture " << texture.source().c_str();
-                object = new GL45StrictResourceTexture(shared_from_this(), texture);
-                break;
-
-#if !FORCE_STRICT_TEXTURE
-            case TextureUsageType::RESOURCE: {
-                auto& transferEngine  = _textureManagement._transferEngine;
-                if (transferEngine->allowCreate()) {
+        const auto& usageFlags = texture.getUsageFlags();
+        const auto& attachmentUsageFlags = TextureUsageFlagBits::ColorAttachment | TextureUsageFlagBits::ColorAttachment;
+        if (usageFlags & attachmentUsageFlags) {
+            object = new GL45AttachmentTexture(shared_from_this(), texture);
+        } else if (usageFlags & TextureUsageFlagBits::Strict) {
+            qCDebug(gpugllogging) << "Strict texture " << texture.source().c_str();
+            object = new GL45StrictResourceTexture(shared_from_this(), texture);
+        } else {
+            auto& transferEngine = _textureManagement._transferEngine;
+            if (transferEngine->allowCreate()) {
 #if ENABLE_SPARSE_TEXTURE
-                    if (isTextureManagementSparseEnabled() && GL45Texture::isSparseEligible(texture)) {
-                        object = new GL45SparseResourceTexture(shared_from_this(), texture);
-                    } else {
-                        object = new GL45ResourceTexture(shared_from_this(), texture);
-                    }
-#else 
-                    object = new GL45ResourceTexture(shared_from_this(), texture);
-#endif
-                    transferEngine->addMemoryManagedTexture(texturePointer);
+                if (isTextureManagementSparseEnabled() && GL45Texture::isSparseEligible(texture)) {
+                    object = new GL45SparseResourceTexture(shared_from_this(), texture);
                 } else {
-                    auto fallback = texturePointer->getFallbackTexture();
-                    if (fallback) {
-                        object = static_cast<GL45Texture*>(syncGPUObject(fallback));
-                    }
+                    object = new GL45ResourceTexture(shared_from_this(), texture);
                 }
-                break;
-            }
+#else 
+                object = new GL45ResourceTexture(shared_from_this(), texture);
 #endif
-            default:
-                Q_UNREACHABLE();
+                transferEngine->addMemoryManagedTexture(texturePointer);
+            } else {
+                auto fallback = texturePointer->getFallbackTexture();
+                if (fallback) {
+                    object = static_cast<GL45Texture*>(syncGPUObject(fallback));
+                }
+            }
         }
     } else {
 
-        if (texture.getUsageType() == TextureUsageType::RESOURCE) {
+        if (texture.getUsageFlags() & TextureUsageFlagBits::Sampled) {
             auto varTex = static_cast<GL45VariableAllocationTexture*> (object);
 
             if (varTex->_minAllocatedMip > 0) {
