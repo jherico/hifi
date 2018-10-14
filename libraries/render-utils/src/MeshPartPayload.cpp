@@ -131,8 +131,6 @@ void MeshPartPayload::drawCall(gpu::Batch& batch) const {
 void MeshPartPayload::bindMesh(gpu::Batch& batch) {
     batch.setIndexBuffer(gpu::UINT32, (_drawMesh->getIndexBuffer()._buffer), 0);
 
-    batch.setInputFormat((_drawMesh->getVertexFormat()));
-
     batch.setInputStream(0, _drawMesh->getVertexStream());
 }
 
@@ -403,7 +401,6 @@ ShapeKey ModelMeshPartPayload::getShapeKey() const {
 
 void ModelMeshPartPayload::bindMesh(gpu::Batch& batch) {
     batch.setIndexBuffer(gpu::UINT32, (_drawMesh->getIndexBuffer()._buffer), 0);
-    batch.setInputFormat((_drawMesh->getVertexFormat()));
     if (_blendshapeBuffer) {
         batch.setResourceBuffer(0, _blendshapeBuffer);
     }

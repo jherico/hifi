@@ -1555,7 +1555,6 @@ using namespace render::entities;
 static uint8_t CUSTOM_PIPELINE_NUMBER;
 static gpu::PipelinePointer _pipelines[2];
 static gpu::PipelinePointer _wireframePipelines[2];
-static gpu::Stream::FormatPointer _vertexFormat;
 
 ShapePipelinePointer shapePipelineFactory(const ShapePlumber& plumber, const ShapeKey& key, gpu::Batch& batch) {
     if (!_pipelines[0]) {
@@ -1572,12 +1571,16 @@ ShapePipelinePointer shapePipelineFactory(const ShapePlumber& plumber, const Sha
         wireframeState->setDepthTest(true, true, gpu::LESS_EQUAL);
         wireframeState->setFillMode(gpu::State::FILL_LINE);
         PrepareStencil::testMaskDrawShape(*wireframeState);
+        
+        auto vertexFormat = std::make_shared<gpu::Stream::Format>();
+        vertexFormat->setAttribute(gpu::Stream::POSITION, 0, gpu::Element(gpu::VEC3, gpu::FLOAT, gpu::XYZ), 0);
+        vertexFormat->setAttribute(gpu::Stream::NORMAL, 0, gpu::Element(gpu::VEC3, gpu::FLOAT, gpu::XYZ), 12);
 
         // Two sets of pipelines: normal and fading
         for (auto i = 0; i < 2; i++) {
             gpu::ShaderPointer program = gpu::Shader::createProgram(programsIds[i]);
-            _pipelines[i] = gpu::Pipeline::create(program, state);
-            _wireframePipelines[i] = gpu::Pipeline::create(program, wireframeState);
+            _pipelines[i] = gpu::Pipeline::create(program, state, vertexFormat);
+            _wireframePipelines[i] = gpu::Pipeline::create(program, wireframeState, vertexFormat);
         }
     }
 
@@ -1605,9 +1608,6 @@ PolyVoxEntityRenderer::PolyVoxEntityRenderer(const EntityItemPointer& entity) : 
     static std::once_flag once;
     std::call_once(once, [&] {
         CUSTOM_PIPELINE_NUMBER = render::ShapePipeline::registerCustomShapePipelineFactory(shapePipelineFactory);
-        _vertexFormat = std::make_shared<gpu::Stream::Format>();
-        _vertexFormat->setAttribute(gpu::Stream::POSITION, 0, gpu::Element(gpu::VEC3, gpu::FLOAT, gpu::XYZ), 0);
-        _vertexFormat->setAttribute(gpu::Stream::NORMAL, 0, gpu::Element(gpu::VEC3, gpu::FLOAT, gpu::XYZ), 12);
     });
     _params = std::make_shared<gpu::Buffer>(gpu::Buffer::UsageFlagBits::UniformBuffer, sizeof(glm::vec4), nullptr);
 }
@@ -1696,7 +1696,6 @@ void PolyVoxEntityRenderer::doRender(RenderArgs* args) {
 
     Transform transform(_lastVoxelToWorldMatrix);
     batch.setModelTransform(transform);
-    batch.setInputFormat(_vertexFormat);
     batch.setInputBuffer(gpu::Stream::POSITION, _mesh->getVertexBuffer()._buffer, 0,
         sizeof(PolyVox::PositionMaterialNormal));
 

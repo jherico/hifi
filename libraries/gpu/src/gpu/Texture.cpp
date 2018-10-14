@@ -172,12 +172,25 @@ TexturePointer Texture::createExternal(const ExternalRecycler& recycler, const S
     return tex;
 }
 
+
+bool isDepthStencil(const Element& format) {
+    switch (format.getSemantic()) {
+    case Semantic::DEPTH:
+    case Semantic::STENCIL:
+    case Semantic::DEPTH_STENCIL:
+        return true;
+    }
+    return false;
+}
+
 TexturePointer Texture::createRenderBuffer(const Element& texelFormat, uint16 width, uint16 height, uint16 numMips, const Sampler& sampler) {
-    return create(UsageFlagBits::ColorAttachment, TEX_2D, texelFormat, width, height, 1, 1, 0, numMips, sampler);
+    auto usageFlagBits = isDepthStencil(texelFormat) ? UsageFlagBits::DepthStencilAttachment : UsageFlagBits::ColorAttachment;
+    return create(usageFlagBits, TEX_2D, texelFormat, width, height, 1, 1, 0, numMips, sampler);
 }
 
 TexturePointer Texture::createRenderBufferArray(const Element& texelFormat, uint16 width, uint16 height, uint16 numSlices, uint16 numMips, const Sampler& sampler) {
-    return create(UsageFlagBits::ColorAttachment, TEX_2D, texelFormat, width, height, 1, 1, numSlices, numMips, sampler);
+    auto usageFlagBits = isDepthStencil(texelFormat) ? UsageFlagBits::DepthStencilAttachment : UsageFlagBits::ColorAttachment;
+    return create(usageFlagBits, TEX_2D, texelFormat, width, height, 1, 1, numSlices, numMips, sampler);
 }
 
 TexturePointer Texture::create1D(const Element& texelFormat, uint16 width, uint16 numMips, const Sampler& sampler) {

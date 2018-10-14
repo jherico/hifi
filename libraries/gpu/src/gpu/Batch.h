@@ -135,7 +135,7 @@ public:
     // InputFormat
     // InputBuffers
     // IndexBuffer
-    void setInputFormat(const Stream::FormatPointer& format);
+    //void setInputFormat(const Stream::FormatPointer& format);
 
     void setInputBuffer(Slot channel, const BufferPointer& buffer, Offset offset, Offset stride);
     void setInputBuffer(Slot channel, const BufferView& buffer); // not a command, just a shortcut from a BufferView
@@ -299,7 +299,7 @@ public:
         COMMAND_multiDrawIndirect,
         COMMAND_multiDrawIndexedIndirect,
 
-        COMMAND_setInputFormat,
+        //COMMAND_setInputFormat,
         COMMAND_setInputBuffer,
         COMMAND_setIndexBuffer,
         COMMAND_setIndirectBuffer,

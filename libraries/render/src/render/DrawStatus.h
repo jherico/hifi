@@ -64,7 +64,6 @@ namespace render {
 
         gpu::BufferPointer _boundsBuffer;
         gpu::BufferPointer _instanceBuffer;
-        gpu::Stream::FormatPointer _vertexFormat;
         gpu::TexturePointer _statusIconMap;
     };
 }

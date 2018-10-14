@@ -19,25 +19,22 @@
 #include "DebugDraw.h"
 #include "StencilMaskPass.h"
 
+struct Vertex {
+    glm::vec3 pos;
+    uint32_t rgba;
+};
+
 class AnimDebugDrawData {
 public:
 
-    struct Vertex {
-        glm::vec3 pos;
-        uint32_t rgba;
-    };
+    using Vertex = Vertex;
 
     typedef render::Payload<AnimDebugDrawData> Payload;
     typedef Payload::DataPointer Pointer;
 
     AnimDebugDrawData() {
-
-        _vertexFormat = std::make_shared<gpu::Stream::Format>();
         _vertexBuffer = std::make_shared<gpu::Buffer>(gpu::Buffer::UsageFlagBits::VertexBuffer);
         _indexBuffer = std::make_shared<gpu::Buffer>(gpu::Buffer::UsageFlagBits::IndexBuffer);
-
-        _vertexFormat->setAttribute(gpu::Stream::POSITION, 0, gpu::Element::VEC3F_XYZ, 0);
-        _vertexFormat->setAttribute(gpu::Stream::COLOR, 0, gpu::Element::COLOR_RGBA_32, offsetof(Vertex, rgba));
     }
 
     void render(RenderArgs* args) {
@@ -45,8 +42,6 @@ public:
         batch.setPipeline(_pipeline);
         auto transform = Transform{};
         batch.setModelTransform(transform);
-
-        batch.setInputFormat(_vertexFormat);
         batch.setInputBuffer(0, _vertexBuffer, 0, sizeof(Vertex));
         batch.setIndexBuffer(gpu::UINT32, _indexBuffer, 0);
 
@@ -56,7 +51,6 @@ public:
 
     gpu::PipelinePointer _pipeline;
     render::ItemID _item;
-    gpu::Stream::FormatPointer _vertexFormat;
     gpu::BufferPointer _vertexBuffer;
     gpu::BufferPointer _indexBuffer;
 
@@ -101,9 +95,14 @@ AnimDebugDraw::AnimDebugDraw() :
     state->setBlendFunction(false, gpu::State::SRC_ALPHA, gpu::State::BLEND_OP_ADD,
                             gpu::State::INV_SRC_ALPHA, gpu::State::FACTOR_ALPHA,
                             gpu::State::BLEND_OP_ADD, gpu::State::ONE);
+
+    auto vertexFormat = std::make_shared<gpu::Stream::Format>();
+    vertexFormat->setAttribute(gpu::Stream::POSITION, 0, gpu::Element::VEC3F_XYZ, 0);
+    vertexFormat->setAttribute(gpu::Stream::COLOR, 0, gpu::Element::COLOR_RGBA_32, offsetof(Vertex, rgba));
+
     PrepareStencil::testMaskDrawShape(*state.get());
     auto program = gpu::Shader::createProgram(shader::render_utils::program::animdebugdraw);
-    _pipeline = gpu::Pipeline::create(program, state);
+    _pipeline = gpu::Pipeline::create(program, state, vertexFormat);
 
     _animDebugDrawData = std::make_shared<AnimDebugDrawData>();
     _animDebugDrawPayload = std::make_shared<AnimDebugDrawPayload>(_animDebugDrawData);

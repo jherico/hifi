@@ -181,11 +181,11 @@ void Batch::multiDrawIndexedIndirect(uint32 nbCommands, Primitive primitiveType)
     captureDrawCallInfo();
 }
 
-void Batch::setInputFormat(const Stream::FormatPointer& format) {
-    ADD_COMMAND(setInputFormat);
-
-    _params.emplace_back(_streamFormats.cache(format));
-}
+//void Batch::setInputFormat(const Stream::FormatPointer& format) {
+//    ADD_COMMAND(setInputFormat);
+//
+//    _params.emplace_back(_streamFormats.cache(format));
+//}
 
 void Batch::setInputBuffer(Slot channel, const BufferPointer& buffer, Offset offset, Offset stride) {
     if (buffer && !(buffer->getUsage() & Buffer::UsageFlagBits::VertexBuffer)) {

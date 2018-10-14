@@ -37,19 +37,20 @@ graphics::MeshPointer PrepareStencil::getMesh() {
     return _mesh;
 }
 
-gpu::PipelinePointer PrepareStencil::getMeshStencilPipeline() {
-    if (!_meshStencilPipeline) {
+const gpu::PipelinePointer& PrepareStencil::getMeshStencilPipeline(const gpu::Stream::FormatPointer& format) {
+    const auto& f = *format;
+    if (_meshStencilPipelines.count(f) == 0) {
         auto program = gpu::Shader::createProgram(shader::gpu::program::drawNothing);
         auto state = std::make_shared<gpu::State>();
         drawMask(*state);
         state->setColorWriteMask(0);
 
-        _meshStencilPipeline = gpu::Pipeline::create(program, state);
+        _meshStencilPipelines[f] = gpu::Pipeline::create(program, state, format);
     }
-    return _meshStencilPipeline;
+    return _meshStencilPipelines[f];
 }
 
-gpu::PipelinePointer PrepareStencil::getPaintStencilPipeline() {
+const gpu::PipelinePointer& PrepareStencil::getPaintStencilPipeline() {
     if (!_paintStencilPipeline) {
         auto program = gpu::Shader::createProgram(shader::render_utils::program::stencil_drawMask);
         auto state = std::make_shared<gpu::State>();
@@ -75,11 +76,9 @@ void PrepareStencil::run(const RenderContextPointer& renderContext, const gpu::F
         batch.setViewportTransform(args->_viewport);
 
         if (_maskMode < 0) {
-            batch.setPipeline(getMeshStencilPipeline());
-
             auto mesh = getMesh();
+            batch.setPipeline(getMeshStencilPipeline(mesh->getVertexFormat()));
             batch.setIndexBuffer(mesh->getIndexBuffer());
-            batch.setInputFormat((mesh->getVertexFormat()));
             batch.setInputStream(0, mesh->getVertexStream());
 
             // Draw

@@ -92,7 +92,7 @@ void Skybox::render(gpu::Batch& batch, const ViewFrustum& viewFrustum, const Sky
             skyState->setStencilTest(true, 0xFF, gpu::State::StencilTest(STENCIL_BACKGROUND, 0xFF, gpu::EQUAL,
                 gpu::State::STENCIL_OP_KEEP, gpu::State::STENCIL_OP_KEEP, gpu::State::STENCIL_OP_KEEP));
 
-            thePipeline = gpu::Pipeline::create(skyShader, skyState);
+            thePipeline = gpu::Pipeline::create(skyShader, skyState, nullptr);
         }
     });
 

@@ -398,9 +398,6 @@ void HmdDisplayPlugin::HUDRenderer::build() {
         }
     }
     this->indices->append(indices);
-    format = std::make_shared<gpu::Stream::Format>(); // 1 for everyone
-    format->setAttribute(gpu::Stream::POSITION, gpu::Stream::POSITION, gpu::Element(gpu::VEC3, gpu::FLOAT, gpu::XYZ), 0);
-    format->setAttribute(gpu::Stream::TEXCOORD, gpu::Stream::TEXCOORD, gpu::Element(gpu::VEC2, gpu::FLOAT, gpu::UV));
     uniformsBuffer = std::make_shared<gpu::Buffer>(gpu::Buffer::UsageFlagBits::UniformBuffer, sizeof(Uniforms), nullptr);
     updatePipeline();
 }
@@ -414,7 +411,11 @@ void HmdDisplayPlugin::HUDRenderer::updatePipeline() {
             gpu::State::SRC_ALPHA, gpu::State::BLEND_OP_ADD, gpu::State::INV_SRC_ALPHA,
             gpu::State::FACTOR_ALPHA, gpu::State::BLEND_OP_ADD, gpu::State::ONE);
 
-        pipeline = gpu::Pipeline::create(program, state);
+        format = std::make_shared<gpu::Stream::Format>(); // 1 for everyone
+        format->setAttribute(gpu::Stream::POSITION, gpu::Stream::POSITION, gpu::Element(gpu::VEC3, gpu::FLOAT, gpu::XYZ), 0);
+        format->setAttribute(gpu::Stream::TEXCOORD, gpu::Stream::TEXCOORD, gpu::Element(gpu::VEC2, gpu::FLOAT, gpu::UV));
+
+        pipeline = gpu::Pipeline::create(program, state, format);
     }
 }
 
@@ -423,8 +424,6 @@ std::function<void(gpu::Batch&, const gpu::TexturePointer&, bool mirror)> HmdDis
     return [this](gpu::Batch& batch, const gpu::TexturePointer& hudTexture, bool mirror) {
         if (pipeline && hudTexture) {
             batch.setPipeline(pipeline);
-
-            batch.setInputFormat(format);
             gpu::BufferView posView(vertices, VERTEX_OFFSET, vertices->getSize(), VERTEX_STRIDE, format->getAttributes().at(gpu::Stream::POSITION)._element);
             gpu::BufferView uvView(vertices, TEXTURE_OFFSET, vertices->getSize(), VERTEX_STRIDE, format->getAttributes().at(gpu::Stream::TEXCOORD)._element);
             batch.setInputBuffer(gpu::Stream::POSITION, posView);

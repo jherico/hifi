@@ -40,7 +40,7 @@ GLBackend::CommandCall GLBackend::_commandCalls[Batch::NUM_COMMANDS] =
     (&::gpu::gl::GLBackend::do_multiDrawIndirect),
     (&::gpu::gl::GLBackend::do_multiDrawIndexedIndirect),
 
-    (&::gpu::gl::GLBackend::do_setInputFormat),
+//    (&::gpu::gl::GLBackend::do_setInputFormat),
     (&::gpu::gl::GLBackend::do_setInputBuffer),
     (&::gpu::gl::GLBackend::do_setIndexBuffer),
     (&::gpu::gl::GLBackend::do_setIndirectBuffer),

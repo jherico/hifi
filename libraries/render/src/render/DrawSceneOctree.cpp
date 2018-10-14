@@ -34,10 +34,11 @@ const gpu::PipelinePointer DrawSceneOctree::getDrawCellBoundsPipeline() {
         // Blend on transparent
         state->setBlendFunction(true,  gpu::State::SRC_ALPHA, gpu::State::BLEND_OP_ADD, gpu::State::INV_SRC_ALPHA);
 
-        // Good to go add the brand new pipeline
-        _drawCellBoundsPipeline = gpu::Pipeline::create(program, state);
         _cellBoundsFormat = std::make_shared<gpu::Stream::Format>();
         _cellBoundsFormat->setAttribute(0, 0, gpu::Element(gpu::VEC4, gpu::INT32, gpu::XYZW), 0, gpu::Stream::PER_INSTANCE);
+
+        // Good to go add the brand new pipeline
+        _drawCellBoundsPipeline = gpu::Pipeline::create(program, state, _cellBoundsFormat);
         _cellBoundsBuffer = std::make_shared<gpu::Buffer>(gpu::Buffer::UsageFlagBits::VertexBuffer);
     }
     return _drawCellBoundsPipeline;
@@ -85,7 +86,6 @@ void DrawSceneOctree::run(const RenderContextPointer& renderContext, const ItemS
 
         // bind the one gpu::Pipeline we need
         batch.setPipeline(getDrawCellBoundsPipeline());
-        batch.setInputFormat(_cellBoundsFormat);
 
         std::vector<ivec4> cellBounds;
         auto drawCellBounds = [this, &cellBounds, &scene](const std::vector<gpu::Stamp>& cells) {

@@ -17,14 +17,17 @@
 
 #include "Shader.h"
 #include "State.h"
+#include "Stream.h"
  
 namespace gpu {
 
 class Pipeline {
 public:
     using Pointer = std::shared_ptr< Pipeline >;
+    using Format = Stream::Format;
+    using FormatPointer = Stream::FormatPointer;
 
-    static Pointer create(const ShaderPointer& program, const StatePointer& state);
+    static Pointer create(const ShaderPointer& program, const StatePointer& state, const FormatPointer& format = nullptr);
     ~Pipeline();
 
     const ShaderPointer& getProgram() const { return _program; }
@@ -34,12 +37,14 @@ public:
     const GPUObjectPointer gpuObject {};
     
 protected:
-    ShaderPointer _program;
-    StatePointer _state;
+    const ShaderPointer _program;
+    const StatePointer _state;
+    const FormatPointer _format;
+    
 
-    Pipeline();
-    Pipeline(const Pipeline& pipeline); // deep copy of the sysmem shader
-    Pipeline& operator=(const Pipeline& pipeline); // deep copy of the sysmem texture
+    Pipeline(const ShaderPointer& program, const StatePointer& state, const FormatPointer& format);
+    Pipeline(const Pipeline& pipeline) = delete; // deep copy of the sysmem shader
+    Pipeline& operator=(const Pipeline& pipeline) = delete; // deep copy of the sysmem texture
 };
 
 typedef Pipeline::Pointer PipelinePointer;

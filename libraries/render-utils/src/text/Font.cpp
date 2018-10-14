@@ -15,6 +15,8 @@
 
 static std::mutex fontMutex;
 
+static gpu::Stream::FormatPointer format;
+
 struct TextureVertex {
     glm::vec2 pos;
     glm::vec2 tex;
@@ -221,6 +223,11 @@ void Font::setupGPU() {
 
         // Setup render pipeline
         {
+            // Setup rendering structures
+            format = std::make_shared<gpu::Stream::Format>();
+            format->setAttribute(gpu::Stream::POSITION, 0, gpu::Element(gpu::VEC2, gpu::FLOAT, gpu::XYZ), 0);
+            format->setAttribute(gpu::Stream::TEXCOORD, 0, gpu::Element(gpu::VEC2, gpu::FLOAT, gpu::UV), offsetof(TextureVertex, tex));
+
             gpu::ShaderPointer program = gpu::Shader::createProgram(shader::render_utils::program::sdf_text3D);
             gpu::ShaderPointer programTransparent = gpu::Shader::createProgram(shader::render_utils::program::sdf_text3D_transparent);
             auto state = std::make_shared<gpu::State>();
@@ -230,7 +237,7 @@ void Font::setupGPU() {
                 gpu::State::SRC_ALPHA, gpu::State::BLEND_OP_ADD, gpu::State::INV_SRC_ALPHA,
                 gpu::State::FACTOR_ALPHA, gpu::State::BLEND_OP_ADD, gpu::State::ONE);
             PrepareStencil::testMaskDrawShape(*state);
-            _pipeline = gpu::Pipeline::create(program, state);
+            _pipeline = gpu::Pipeline::create(program, state, format);
 
             auto transparentState = std::make_shared<gpu::State>();
             transparentState->setCullMode(gpu::State::CULL_BACK);
@@ -239,20 +246,8 @@ void Font::setupGPU() {
                 gpu::State::SRC_ALPHA, gpu::State::BLEND_OP_ADD, gpu::State::INV_SRC_ALPHA,
                 gpu::State::FACTOR_ALPHA, gpu::State::BLEND_OP_ADD, gpu::State::ONE);
             PrepareStencil::testMaskDrawShape(*transparentState);
-            _transparentPipeline = gpu::Pipeline::create(programTransparent, transparentState);
+            _transparentPipeline = gpu::Pipeline::create(programTransparent, transparentState, format);
         }
-
-        // Sanity checks
-        static const int OFFSET = offsetof(TextureVertex, tex);
-        assert(OFFSET == sizeof(glm::vec2));
-        assert(sizeof(glm::vec2) == 2 * sizeof(float));
-        assert(sizeof(TextureVertex) == 2 * sizeof(glm::vec2));
-        assert(sizeof(QuadBuilder) == 4 * sizeof(TextureVertex));
-
-        // Setup rendering structures
-        _format = std::make_shared<gpu::Stream::Format>();
-        _format->setAttribute(gpu::Stream::POSITION, 0, gpu::Element(gpu::VEC2, gpu::FLOAT, gpu::XYZ), 0);
-        _format->setAttribute(gpu::Stream::TEXCOORD, 0, gpu::Element(gpu::VEC2, gpu::FLOAT, gpu::UV), OFFSET);
     }
 }
 
@@ -371,8 +366,7 @@ void Font::drawString(gpu::Batch& batch, Font::DrawInfo& drawInfo, const QString
     // need the gamma corrected color here
 
     batch.setPipeline((color.a < 1.0f || layered) ? _transparentPipeline : _pipeline);
-    batch.setInputFormat(_format);
-    batch.setInputBuffer(0, drawInfo.verticesBuffer, 0, _format->getChannels().at(0)._stride);
+    batch.setInputBuffer(0, drawInfo.verticesBuffer, 0, format->getChannels().at(0)._stride);
     batch.setResourceTexture(render_utils::slot::texture::TextFont, _texture);
     batch.setUniformBuffer(0, drawInfo.paramsBuffer, 0, sizeof(GpuDrawParams));
     batch.setIndexBuffer(gpu::UINT16, drawInfo.indicesBuffer, 0);

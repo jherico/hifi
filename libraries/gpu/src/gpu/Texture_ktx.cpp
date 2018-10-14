@@ -107,8 +107,9 @@ struct GPUKTXPayload {
     static bool findInKeyValues(const ktx::KeyValues& keyValues, GPUKTXPayload& payload) {
         auto found = std::find_if(keyValues.begin(), keyValues.end(), isGPUKTX);
         if (found != keyValues.end()) {
-            auto value = found->_value;
-            return payload.unserialize(value.data(), value.size());
+            const auto& value = found->_value;
+            auto result = payload.unserialize(value.data(), value.size());
+            return result;
         }
         return false;
     }

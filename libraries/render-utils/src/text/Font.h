@@ -83,7 +83,6 @@ private:
     gpu::PipelinePointer _pipeline;
     gpu::PipelinePointer _transparentPipeline;
     gpu::TexturePointer _texture;
-    gpu::Stream::FormatPointer _format;
     gpu::BufferStreamPointer _stream;
 };
 

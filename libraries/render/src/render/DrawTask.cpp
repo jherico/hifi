@@ -214,16 +214,10 @@ void DrawBounds::run(const RenderContextPointer& renderContext,
     });
 }
 
-gpu::Stream::FormatPointer DrawQuadVolume::_format;
-
 DrawQuadVolume::DrawQuadVolume(const glm::vec3& color) {
     _meshVertices = gpu::BufferView(std::make_shared<gpu::Buffer>(gpu::Buffer::UsageFlagBits::VertexBuffer, sizeof(glm::vec3) * 8, nullptr), gpu::Element::VEC3F_XYZ);
     _params = std::make_shared<gpu::Buffer>(gpu::Buffer::UsageFlagBits::UniformBuffer, sizeof(glm::vec4), nullptr);
     _params->setSubData(0, vec4(color, 1.0));
-    if (!_format) {
-        _format = std::make_shared<gpu::Stream::Format>();
-        _format->setAttribute(gpu::Stream::POSITION, gpu::Stream::POSITION, gpu::Element(gpu::VEC3, gpu::FLOAT, gpu::XYZ), 0);
-    }
 }
 
 void DrawQuadVolume::configure(const Config& configuration) {
@@ -254,7 +248,6 @@ void DrawQuadVolume::run(const render::RenderContextPointer& renderContext, cons
         batch.setViewTransform(viewMat);
         batch.setPipeline(getPipeline());
         batch.setUniformBuffer(0, _params);
-        batch.setInputFormat(_format);
         batch.setInputBuffer(gpu::Stream::POSITION, _meshVertices);
         batch.setIndexBuffer(indices);
         batch.drawIndexed(gpu::LINES, indexCount, 0U);
@@ -268,9 +261,13 @@ gpu::PipelinePointer DrawQuadVolume::getPipeline() {
 
     if (!pipeline) {
         gpu::ShaderPointer program = gpu::Shader::createProgram(shader::gpu::program::drawColor);
+
+        auto format = std::make_shared<gpu::Stream::Format>();
+        format->setAttribute(gpu::Stream::POSITION, gpu::Stream::POSITION, gpu::Element(gpu::VEC3, gpu::FLOAT, gpu::XYZ), 0);
+
         gpu::StatePointer state = gpu::StatePointer(new gpu::State());
         state->setDepthTest(gpu::State::DepthTest(true, false));
-        pipeline = gpu::Pipeline::create(program, state);
+        pipeline = gpu::Pipeline::create(program, state, format);
     }
     return pipeline;
 }

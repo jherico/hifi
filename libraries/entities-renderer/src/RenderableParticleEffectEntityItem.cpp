@@ -19,8 +19,13 @@
 using namespace render;
 using namespace render::entities;
 
+struct GpuParticle {
+    GpuParticle(const glm::vec3& xyzIn, const glm::vec2& uvIn) : xyz(xyzIn), uv(uvIn) {}
+    glm::vec3 xyz; // Position
+    glm::vec2 uv; // Lifetime + seed
+};
+
 static uint8_t CUSTOM_PIPELINE_NUMBER = 0;
-static gpu::Stream::FormatPointer _vertexFormat;
 static std::weak_ptr<gpu::Pipeline> _texturedPipeline;
 
 static ShapePipelinePointer shapePipelineFactory(const ShapePlumber& plumber, const ShapeKey& key, gpu::Batch& batch) {
@@ -33,18 +38,18 @@ static ShapePipelinePointer shapePipelineFactory(const ShapePlumber& plumber, co
             gpu::State::FACTOR_ALPHA, gpu::State::BLEND_OP_ADD, gpu::State::ONE);
         PrepareStencil::testMask(*state);
 
+        auto vertexFormat = std::make_shared<gpu::Stream::Format>();
+        vertexFormat->setAttribute(gpu::Stream::POSITION, 0, gpu::Element::VEC3F_XYZ,
+            offsetof(GpuParticle, xyz), gpu::Stream::PER_INSTANCE);
+        vertexFormat->setAttribute(gpu::Stream::COLOR, 0, gpu::Element::VEC2F_UV,
+            offsetof(GpuParticle, uv), gpu::Stream::PER_INSTANCE);
+
         auto program = gpu::Shader::createProgram(shader::entities_renderer::program::textured_particle);
-        _texturedPipeline = texturedPipeline = gpu::Pipeline::create(program, state);
+        _texturedPipeline = texturedPipeline = gpu::Pipeline::create(program, state, vertexFormat);
     }
 
     return std::make_shared<render::ShapePipeline>(texturedPipeline, nullptr, nullptr, nullptr);
 }
-
-struct GpuParticle {
-    GpuParticle(const glm::vec3& xyzIn, const glm::vec2& uvIn) : xyz(xyzIn), uv(uvIn) {}
-    glm::vec3 xyz; // Position
-    glm::vec2 uv; // Lifetime + seed
-};
 
 using GpuParticles = std::vector<GpuParticle>;
 
@@ -56,11 +61,6 @@ ParticleEffectEntityRenderer::ParticleEffectEntityRenderer(const EntityItemPoint
     std::call_once(once, [] {
         // As we create the first ParticuleSystem entity, let s register its special shapePIpeline factory:
         CUSTOM_PIPELINE_NUMBER = render::ShapePipeline::registerCustomShapePipelineFactory(shapePipelineFactory);
-        _vertexFormat = std::make_shared<Format>();
-        _vertexFormat->setAttribute(gpu::Stream::POSITION, 0, gpu::Element::VEC3F_XYZ,
-            offsetof(GpuParticle, xyz), gpu::Stream::PER_INSTANCE);
-        _vertexFormat->setAttribute(gpu::Stream::COLOR, 0, gpu::Element::VEC2F_UV,
-            offsetof(GpuParticle, uv), gpu::Stream::PER_INSTANCE);
     });
 }
 
@@ -342,9 +342,7 @@ void ParticleEffectEntityRenderer::doRender(RenderArgs* args) {
     });
     batch.setModelTransform(transform);
     batch.setUniformBuffer(0, _uniformBuffer);
-    batch.setInputFormat(_vertexFormat);
     batch.setInputBuffer(0, _particleBuffer, 0, sizeof(GpuParticle));
-
     auto numParticles = _particleBuffer->getSize() / sizeof(GpuParticle);
     batch.drawInstanced((gpu::uint32)numParticles, gpu::TRIANGLE_STRIP, (gpu::uint32)VERTEX_PER_PARTICLE);
 }

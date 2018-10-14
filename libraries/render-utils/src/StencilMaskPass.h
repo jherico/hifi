@@ -57,11 +57,11 @@ public:
     static void testMaskDrawShapeNoAA(gpu::State& state);
 
 private:
-    gpu::PipelinePointer _meshStencilPipeline;
-    gpu::PipelinePointer getMeshStencilPipeline();
+    std::unordered_map<gpu::Stream::Format, gpu::PipelinePointer> _meshStencilPipelines;
+    const gpu::PipelinePointer& getMeshStencilPipeline(const gpu::Stream::FormatPointer& format);
 
     gpu::PipelinePointer _paintStencilPipeline;
-    gpu::PipelinePointer getPaintStencilPipeline();
+    const gpu::PipelinePointer& getPaintStencilPipeline();
 
     graphics::MeshPointer _mesh;
     graphics::MeshPointer getMesh();

@@ -99,8 +99,6 @@ protected:
     gpu::BufferPointer _params;
     bool _isUpdateEnabled{ true };
 
-    static gpu::Stream::FormatPointer _format;
-
     static gpu::PipelinePointer getPipeline();
 };
 

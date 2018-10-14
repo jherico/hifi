@@ -845,24 +845,20 @@ render::ShapePipelinePointer GeometryCache::getTransparentShapePipeline(bool isF
 }
 
 void GeometryCache::renderShape(gpu::Batch& batch, Shape shape) {
-    batch.setInputFormat(getSolidStreamFormat());
     _shapes[shape].draw(batch);
 }
 
 void GeometryCache::renderWireShape(gpu::Batch& batch, Shape shape) {
-    batch.setInputFormat(getWireStreamFormat());
     _shapes[shape].drawWire(batch);
 }
 
 void GeometryCache::renderShape(gpu::Batch& batch, Shape shape, const glm::vec4& color) {
-    batch.setInputFormat(getSolidStreamFormat());
     // Color must be set after input format
     batch._glColor4f(color.r, color.g, color.b, color.a);
     _shapes[shape].draw(batch);
 }
 
 void GeometryCache::renderWireShape(gpu::Batch& batch, Shape shape, const glm::vec4& color) {
-    batch.setInputFormat(getWireStreamFormat());
     // Color must be set after input format
     batch._glColor4f(color.r, color.g, color.b, color.a);
     _shapes[shape].drawWire(batch);
@@ -874,13 +870,11 @@ void setupBatchInstance(gpu::Batch& batch, gpu::BufferPointer colorBuffer) {
 }
 
 void GeometryCache::renderShapeInstances(gpu::Batch& batch, Shape shape, size_t count, gpu::BufferPointer& colorBuffer) {
-    batch.setInputFormat(getInstancedSolidStreamFormat());
     setupBatchInstance(batch, colorBuffer);
     _shapes[shape].drawInstances(batch, count);
 }
 
 void GeometryCache::renderWireShapeInstances(gpu::Batch& batch, Shape shape, size_t count, gpu::BufferPointer& colorBuffer) {
-    batch.setInputFormat(getInstancedWireStreamFormat());
     setupBatchInstance(batch, colorBuffer);
     _shapes[shape].drawWireInstances(batch, count);
 }
@@ -899,14 +893,12 @@ void setupBatchFadeInstance(gpu::Batch& batch, gpu::BufferPointer colorBuffer,
 
 void GeometryCache::renderFadeShapeInstances(gpu::Batch& batch, Shape shape, size_t count, gpu::BufferPointer& colorBuffer,
     gpu::BufferPointer& fadeBuffer1, gpu::BufferPointer& fadeBuffer2, gpu::BufferPointer& fadeBuffer3) {
-    batch.setInputFormat(getInstancedSolidFadeStreamFormat());
     setupBatchFadeInstance(batch, colorBuffer, fadeBuffer1, fadeBuffer2, fadeBuffer3);
     _shapes[shape].drawInstances(batch, count);
 }
 
 void GeometryCache::renderWireFadeShapeInstances(gpu::Batch& batch, Shape shape, size_t count, gpu::BufferPointer& colorBuffer,
     gpu::BufferPointer& fadeBuffer1, gpu::BufferPointer& fadeBuffer2, gpu::BufferPointer& fadeBuffer3) {
-    batch.setInputFormat(getInstancedWireFadeStreamFormat());
     setupBatchFadeInstance(batch, colorBuffer, fadeBuffer1, fadeBuffer2, fadeBuffer3);
     _shapes[shape].drawWireInstances(batch, count);
 }

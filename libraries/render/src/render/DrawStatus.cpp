@@ -30,9 +30,24 @@ void DrawStatusConfig::dirtyHelper() {
     emit dirty();
 }
 
+struct InstanceData {
+    vec4 boundPos;
+    vec4 boundDim;
+    ivec4 status0;
+    ivec4 status1;
+};
+
 const gpu::PipelinePointer DrawStatus::getDrawItemBoundsPipeline() {
     if (!_drawItemBoundsPipeline) {
         gpu::ShaderPointer program = gpu::Shader::createProgram(shader::render::program::drawItemBounds);
+
+        auto vertexFormat = std::make_shared<gpu::Stream::Format>();
+        vertexFormat->setAttribute(0, 0, gpu::Element(gpu::VEC4, gpu::FLOAT, gpu::XYZW), offsetof(InstanceData, boundPos), gpu::Stream::PER_INSTANCE);
+        vertexFormat->setAttribute(1, 0, gpu::Element(gpu::VEC4, gpu::FLOAT, gpu::XYZW), offsetof(InstanceData, boundDim), gpu::Stream::PER_INSTANCE);
+        vertexFormat->setAttribute(2, 0, gpu::Element(gpu::VEC4, gpu::INT32, gpu::XYZW), offsetof(InstanceData, status0), gpu::Stream::PER_INSTANCE);
+        vertexFormat->setAttribute(3, 0, gpu::Element(gpu::VEC4, gpu::INT32, gpu::XYZW), offsetof(InstanceData, status1), gpu::Stream::PER_INSTANCE);
+
+
 
         auto state = std::make_shared<gpu::State>();
 
@@ -44,7 +59,7 @@ const gpu::PipelinePointer DrawStatus::getDrawItemBoundsPipeline() {
             gpu::State::DEST_ALPHA, gpu::State::BLEND_OP_ADD, gpu::State::ZERO);
 
         // Good to go add the brand new pipeline
-        _drawItemBoundsPipeline = gpu::Pipeline::create(program, state);
+        _drawItemBoundsPipeline = gpu::Pipeline::create(program, state, vertexFormat);
     }
     return _drawItemBoundsPipeline;
 }
@@ -174,22 +189,6 @@ void DrawStatus::run(const RenderContextPointer& renderContext, const Input& inp
                 _instanceBuffer = std::make_shared<gpu::Buffer>(gpu::Buffer::UsageFlagBits::VertexBuffer);
             }
 
-            struct InstanceData {
-                vec4 boundPos;
-                vec4 boundDim;
-                ivec4 status0;
-                ivec4 status1;
-            };
-
-            if (!_vertexFormat) {
-                _vertexFormat = std::make_shared<gpu::Stream::Format>();
-                _vertexFormat->setAttribute(0, 0, gpu::Element(gpu::VEC4, gpu::FLOAT, gpu::XYZW), offsetof(InstanceData, boundPos), gpu::Stream::PER_INSTANCE);
-                _vertexFormat->setAttribute(1, 0, gpu::Element(gpu::VEC4, gpu::FLOAT, gpu::XYZW), offsetof(InstanceData, boundDim), gpu::Stream::PER_INSTANCE);
-                _vertexFormat->setAttribute(2, 0, gpu::Element(gpu::VEC4, gpu::INT32, gpu::XYZW), offsetof(InstanceData, status0), gpu::Stream::PER_INSTANCE);
-                _vertexFormat->setAttribute(3, 0, gpu::Element(gpu::VEC4, gpu::INT32, gpu::XYZW), offsetof(InstanceData, status1), gpu::Stream::PER_INSTANCE);
-            }
-
-            batch.setInputFormat(_vertexFormat);
             std::vector<InstanceData> instanceData;
             instanceData.resize(itemBounds.size());
             for (size_t i = 0; i < itemBounds.size(); i++) {
