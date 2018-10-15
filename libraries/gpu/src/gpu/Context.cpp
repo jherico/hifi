@@ -348,7 +348,9 @@ BatchPointer Context::acquireBatch(const char* name) {
     if (!rawBatch) {
         rawBatch = new Batch();
     }
-    rawBatch->setName(name);
+    if (name) {
+        rawBatch->setName(name);
+    }
     return BatchPointer(rawBatch, [this](Batch* batch) { releaseBatch(batch); });
 }
 
