@@ -129,6 +129,8 @@ public:
         uint32 _elementTotalSize { 0 };
         std::string _key;
 
+        friend class Serializer;
+        friend class Deserializer;
         void evaluateCache();
     };
 
