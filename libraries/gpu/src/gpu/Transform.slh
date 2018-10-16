@@ -26,7 +26,7 @@ LAYOUT_STD140(binding=GPU_BUFFER_TRANSFORM_CAMERA) uniform transformCameraBuffer
 #else
     TransformCamera _camera;
 #endif
-};
+} _cameraBlock;
 
 #ifdef GPU_VERTEX_SHADER
 #ifdef GPU_TRANSFORM_IS_STEREO
@@ -76,12 +76,12 @@ TransformCamera getTransformCamera() {
                 _stereoSide = gl_InstanceID % 2;
             #endif
         #endif
-        return _camera[_stereoSide];
+        return _cameraBlock._camera[_stereoSide];
     #else
-        return _camera;
+        return _cameraBlock._camera;
     #endif
 #else
-    return _camera;
+    return _cameraBlock._camera;
 #endif
 }
 
@@ -93,7 +93,7 @@ bool cam_isStereo() {
 #ifdef GPU_TRANSFORM_IS_STEREO
     return getTransformCamera()._stereoInfo.x > 0.0;
 #else
-    return _camera._stereoInfo.x > 0.0;
+    return _cameraBlock._camera._stereoInfo.x > 0.0;
 #endif
 }
 
@@ -102,10 +102,10 @@ float cam_getStereoSide() {
 #ifdef GPU_TRANSFORM_STEREO_CAMERA
     return getTransformCamera()._stereoInfo.y;
 #else
-    return _camera._stereoInfo.y;
+    return _cameraBlock._camera._stereoInfo.y;
 #endif
 #else
-    return _camera._stereoInfo.y;
+    return _cameraBlock._camera._stereoInfo.y;
 #endif
 }
 
