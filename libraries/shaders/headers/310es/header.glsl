@@ -1,7 +1,6 @@
 #version 310 es
 #define GPU_GLES
 #define GPU_GLES_310
-#define GPU_SSBO_TRANSFORM_OBJECT
 #define BITFIELD highp int
 #define LAYOUT(X) layout(X)
 #define LAYOUT_STD140(X) layout(std140, X)
