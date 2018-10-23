@@ -10,7 +10,11 @@
 //  See the accompanying file LICENSE or http://www.apache.org/licenses/LICENSE-2.0.html
 //
 
-<@include gpu/Inputs.slh@>
+<@include gpu/ShaderConstants.h@>
+layout(location=GPU_ATTR_POSITION) in vec4 inPosition;
+layout(location=GPU_ATTR_SKIN_CLUSTER_INDEX) in ivec4 inSkinClusterIndex;
+layout(location=GPU_ATTR_SKIN_CLUSTER_WEIGHT) in vec4 inSkinClusterWeight;
+
 <@include gpu/Transform.slh@>
 <$declareStandardTransform()$>
 
