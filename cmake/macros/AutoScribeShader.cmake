@@ -307,11 +307,8 @@ macro(AUTOSCRIBE_SHADER_LIBS)
     set(AUTOSCRIBE_SHADERGEN_COMMANDS_FILE ${CMAKE_CURRENT_BINARY_DIR}/shadergen.txt)
     file(WRITE ${AUTOSCRIBE_SHADERGEN_COMMANDS_FILE} "${AUTOSCRIBE_SHADERGEN_COMMANDS}")
 
-    # grab the SPIRV binaries we require
-    # note we don't use the normal ADD_DEPENDENCY_EXTERNAL_PROJECTS macro because only a custom command 
-    # depends on these, not any of our build artifacts, so there's no valid target for the add_dependencies
-    # call in ADD_DEPENDENCY_EXTERNAL_PROJECTS to use
-    add_subdirectory(${EXTERNAL_PROJECT_DIR}/spirv_binaries ${EXTERNALS_BINARY_DIR}/spirv_binaries)
+    set(VCPKG_TOOLS_DIR "${VKPKG_INSTALL_ROOT}/tools")
+    set(SPIRV_BINARIES_DIR ${VCPKG_TOOLS_DIR})
 
     target_python()
 
@@ -326,7 +323,7 @@ macro(AUTOSCRIBE_SHADER_LIBS)
                 --scribe ${NATIVE_SCRIBE}
                 --build-dir ${CMAKE_CURRENT_BINARY_DIR}
                 --source-dir ${CMAKE_SOURCE_DIR}
-            DEPENDS ${AUTOSCRIBE_SHADER_HEADERS} spirv_binaries ${CMAKE_SOURCE_DIR}/tools/shadergen.py ${ALL_SCRIBE_SHADERS})
+            DEPENDS ${AUTOSCRIBE_SHADER_HEADERS} ${CMAKE_SOURCE_DIR}/tools/shadergen.py ${ALL_SCRIBE_SHADERS})
     else() 
         add_custom_command(
             OUTPUT ${SCRIBED_SHADERS} ${SPIRV_SHADERS} ${REFLECTED_SHADERS}
@@ -337,7 +334,7 @@ macro(AUTOSCRIBE_SHADER_LIBS)
                 --scribe $<TARGET_FILE:scribe>
                 --build-dir ${CMAKE_CURRENT_BINARY_DIR}
                 --source-dir ${CMAKE_SOURCE_DIR}
-            DEPENDS ${AUTOSCRIBE_SHADER_HEADERS} scribe spirv_binaries ${CMAKE_SOURCE_DIR}/tools/shadergen.py ${ALL_SCRIBE_SHADERS})
+            DEPENDS ${AUTOSCRIBE_SHADER_HEADERS} scribe ${CMAKE_SOURCE_DIR}/tools/shadergen.py ${ALL_SCRIBE_SHADERS})
     endif()
 
     add_custom_target(shadergen DEPENDS ${SCRIBED_SHADERS} ${SPIRV_SHADERS} ${REFLECTED_SHADERS})

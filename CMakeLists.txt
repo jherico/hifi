@@ -12,11 +12,21 @@ if ((${CMAKE_MAJOR_VERSION} EQUAL 3 AND ${CMAKE_MINOR_VERSION} GREATER 11) OR ${
    cmake_policy(SET CMP0074 NEW)
 endif()
 
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg.cmake")
+    message(FATAL_ERROR "vcpkg configuration missing.  Did you run prebuild.py?")
+endif()
+
+include("vcpkg.cmake")
+set(VCPKG_TOOLS_DIR "${VKPKG_INSTALL_ROOT}/tools")
+
 project(hifi)
 
 include("cmake/init.cmake")
 
 include("cmake/compiler.cmake")
+
+add_paths_to_fixup_libs(${VKPKG_INSTALL_ROOT}/bin)
+add_paths_to_fixup_libs(${VKPKG_INSTALL_ROOT}/debug/bin)
 
 if (BUILD_SCRIBE_ONLY)
   add_subdirectory(tools/scribe)
@@ -144,6 +154,8 @@ list(APPEND CMAKE_PREFIX_PATH "${QT_CMAKE_PREFIX_PATH}")
 find_package( Threads )
 
 add_definitions(-DGLM_FORCE_RADIANS)
+add_definitions(-DGLM_ENABLE_EXPERIMENTAL)
+add_definitions(-DGLM_FORCE_CTOR_INIT)
 set(HIFI_LIBRARY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries")
 
 set(EXTERNAL_PROJECT_PREFIX "project")
