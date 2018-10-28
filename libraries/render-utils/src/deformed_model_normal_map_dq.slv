@@ -16,7 +16,7 @@ INPUT(GPU_ATTR_NORMAL, vec4, inNormal);
 INPUT(GPU_ATTR_COLOR, vec4, inColor);
 INPUT(GPU_ATTR_TEXCOORD0, vec4, inTexCoord0);
 INPUT(GPU_ATTR_TANGENT, vec4, inTangent);
-INPUT(GPU_ATTR_SKIN_CLUSTER_INDEX, ivec4, inSkinClusterIndex);
+INPUT(GPU_ATTR_SKIN_CLUSTER_INDEX, uvec4, inSkinClusterIndex);
 INPUT(GPU_ATTR_SKIN_CLUSTER_WEIGHT, vec4, inSkinClusterWeight);
 INPUT(GPU_ATTR_TEXCOORD1, vec4, inTexCoord1);
 
@@ -34,7 +34,7 @@ INPUT(GPU_ATTR_TEXCOORD1, vec4, inTexCoord1);
 
 <@include render-utils/ShaderConstants.h@>
 
-OUTPUT(RENDER_UTILS_ATTR_POSITION_WS, vec4, _positionWS);
+//OUTPUT(RENDER_UTILS_ATTR_POSITION_WS, vec4, _positionWS);
 OUTPUT(RENDER_UTILS_ATTR_POSITION_ES, vec4, _positionES);
 OUTPUT(RENDER_UTILS_ATTR_TEXCOORD01, vec4, _texCoord01);
 OUTPUT(RENDER_UTILS_ATTR_NORMAL_WS, vec3, _normalWS);
@@ -58,6 +58,7 @@ void main(void) {
     <$evalTexMapArrayTexcoord1(texMapArray, inTexCoord1, _texCoord01.zw)$>
 
     // standard transform
+    vec4 _positionWS;
     TransformCamera cam = getTransformCamera();
     TransformObject obj = getTransformObject();
     <$transformModelToWorldAndEyeAndClipPos(cam, obj, deformedPosition, _positionWS, _positionES, gl_Position)$>

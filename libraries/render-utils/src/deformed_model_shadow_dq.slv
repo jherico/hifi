@@ -12,7 +12,7 @@
 
 <@include gpu/ShaderConstants.h@>
 INPUT(GPU_ATTR_POSITION, vec4, inPosition);
-INPUT(GPU_ATTR_SKIN_CLUSTER_INDEX, ivec4, inSkinClusterIndex);
+INPUT(GPU_ATTR_SKIN_CLUSTER_INDEX, uvec4, inSkinClusterIndex);
 INPUT(GPU_ATTR_SKIN_CLUSTER_WEIGHT, vec4, inSkinClusterWeight);
 
 <@include gpu/Transform.slh@>
