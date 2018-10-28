@@ -21,13 +21,13 @@ struct LineData {
     float width;
 };
 
-LAYOUT_STD140(binding=0) uniform LineDataBuffer {
+UNIFORM_BUFFER(0, LineDataBuffer) {
     LineData _lineData;
 };
 
-layout(location=RENDER_UTILS_ATTR_COLOR) out vec4 _color;
+OUTPUT(RENDER_UTILS_ATTR_COLOR, vec4, _color);
 // the distance from the center in 'quad space'
-layout(location=0) out float distanceFromCenter;
+OUTPUT(0, float, distanceFromCenter);
 
 void main(void) {
     _color = _lineData.color;

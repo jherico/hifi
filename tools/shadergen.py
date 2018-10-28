@@ -233,10 +233,9 @@ parser.add_argument('--dry-run', action='store_true', help='Report the files tha
 args = None
 if len(sys.argv) == 1:
     # for debugging
-    spirvPath = os.environ['VULKAN_SDK'] + '/bin'
-    #spirvPath = expanduser('~//VulkanSDK/1.1.82.1/x86_64/bin')
+    spirvPath = 'd:/hifi/vcpkg/hifi/installed/x64-windows/tools'
     sourceDir = expanduser('~/git/hifi')
-    buildPath = sourceDir + '/build_noui'
+    buildPath = sourceDir + '/build'
     scribePath = buildPath + '/tools/scribe/Release/scribe'
     commandsPath = buildPath + '/libraries/shaders/shadergen.txt'
     shaderDir = buildPath + '/libraries/shaders'

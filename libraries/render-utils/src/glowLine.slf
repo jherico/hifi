@@ -11,9 +11,9 @@
 
 <@include render-utils/ShaderConstants.h@>
 
-layout(location=RENDER_UTILS_ATTR_COLOR) in vec4 _color;
-layout(location=0) in float distanceFromCenter;
-layout(location=0) out vec4 _fragColor;
+INPUT(RENDER_UTILS_ATTR_COLOR, vec4, _color);
+INPUT(0, float, distanceFromCenter);
+OUTPUT(0, vec4, _fragColor);
 
 void main(void) {
     // The incoming value actually ranges from -1 to 1, so modify it 
