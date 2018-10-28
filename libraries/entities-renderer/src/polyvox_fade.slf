@@ -18,20 +18,20 @@
 
 <@include Fade.slh@>
 
-layout(location=RENDER_UTILS_ATTR_NORMAL_MS) in vec3 _normal;
-layout(location=RENDER_UTILS_ATTR_POSITION_MS) in vec4 _position;
-layout(location=RENDER_UTILS_ATTR_POSITION_WS) in vec4 _worldPosition;
-layout(location=RENDER_UTILS_ATTR_POSITION_ES) in vec4 _worldFadePosition;
+INPUT(RENDER_UTILS_ATTR_NORMAL_MS, vec3, _normal);
+INPUT(RENDER_UTILS_ATTR_POSITION_MS, vec4, _position);
+INPUT(RENDER_UTILS_ATTR_POSITION_WS, vec4, _worldPosition);
+INPUT(RENDER_UTILS_ATTR_POSITION_ES, vec4, _worldFadePosition);
 
-LAYOUT(binding=ENTITIES_TEXTURE_POLYVOX_XMAP) uniform sampler2D xMap;
-LAYOUT(binding=ENTITIES_TEXTURE_POLYVOX_YMAP) uniform sampler2D yMap;
-LAYOUT(binding=ENTITIES_TEXTURE_POLYVOX_ZMAP) uniform sampler2D zMap;
+TEXTURE(ENTITIES_TEXTURE_POLYVOX_XMAP, sampler2D, xMap);
+TEXTURE(ENTITIES_TEXTURE_POLYVOX_YMAP, sampler2D, yMap);
+TEXTURE(ENTITIES_TEXTURE_POLYVOX_ZMAP, sampler2D, zMap);
 
 struct PolyvoxParams {
     vec4 voxelVolumeSize;
 };
 
-LAYOUT(binding=0) uniform polyvoxParamsBuffer {
+UNIFORM_BUFFER(0, polyvoxParamsBuffer) {
     PolyvoxParams params;
 };
 

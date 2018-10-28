@@ -11,7 +11,7 @@
 
 <@include DeferredBufferWrite.slh@>
 
-layout(location=0) in vec4 _color;
+INPUT(0, vec4, _color);
 
 void main(void) {
     packDeferredFragmentUnlit(vec3(1.0, 0.0, 0.0), 1.0, _color.rgb);
