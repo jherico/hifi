@@ -15,6 +15,9 @@
 const ivec2 vertical = ivec2(0,1);
 <$declareBlurPass(vertical)$>
 
+// Unused, but needed to match the vertex shader
+INPUT(0, vec2, varTexCoord0);
+
 OUTPUT(0, vec4, outFragColor);
 
 void main(void) {
