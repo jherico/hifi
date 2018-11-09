@@ -149,6 +149,7 @@ struct Source {
     std::unordered_map<std::string, std::string> replacements;
 
     String getSource(Dialect dialect, Variant variant) const;
+    const Binary& getSpirv(Dialect dialect, Variant variant) const;
     const Reflection& getReflection(Dialect dialect, Variant variant) const;
     bool valid() const { return !dialectSources.empty(); }
     static Source generate(const std::string& glsl) { throw std::runtime_error("Implement me"); }

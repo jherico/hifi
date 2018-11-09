@@ -96,7 +96,7 @@ static Binary loadSpirvResource(const std::string& path) {
         if (file.open(QFile::ReadOnly)) {
             QByteArray bytes = file.readAll();
             result.resize(bytes.size());
-            memcpy(bytes.data(), result.data(), bytes.size());
+            memcpy(result.data(), bytes.data(), bytes.size());
         }
     }
     return result;
@@ -211,6 +211,11 @@ const DialectVariantSource& Source::getDialectVariantSource(Dialect dialect, Var
     }
 
     return variantEntry->second;
+}
+
+const Binary& Source::getSpirv(Dialect dialect, Variant variant) const {
+    const auto& variantSource = getDialectVariantSource(dialect, variant);
+    return variantSource.spirv;
 }
 
 

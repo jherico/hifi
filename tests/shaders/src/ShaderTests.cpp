@@ -31,7 +31,7 @@
 #include <gpu/gl/GLShader.h>
 #include <gl/QOpenGLContextWrapper.h>
 
-#define RUNTIME_SHADER_COMPILE_TEST 1
+#define RUNTIME_SHADER_COMPILE_TEST 0
 
 #if RUNTIME_SHADER_COMPILE_TEST
 #include <spirv_cross.hpp>
@@ -209,6 +209,8 @@ static void verifyInterface(const gpu::Shader::Source& vertexSource, const gpu::
 }
 
 #if RUNTIME_SHADER_COMPILE_TEST
+
+TBuiltInResource glslCompilerResources;
 
 void configureGLSLCompilerResources(TBuiltInResource* glslCompilerResources) {
     glslCompilerResources->maxLights = 32;

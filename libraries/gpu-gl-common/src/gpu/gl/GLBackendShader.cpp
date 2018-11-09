@@ -25,6 +25,11 @@ static const std::array<GLenum, NUM_SHADER_DOMAINS> SHADER_DOMAINS{ {
     GL_GEOMETRY_SHADER,
 } };
 
+
+const std::vector<uint8_t>& GLBackend::getShaderSpirv(const Shader& shader, shader::Variant variant) {
+    return shader.getSource().getSpirv(getShaderDialect(), variant);
+}
+
 std::string GLBackend::getShaderSource(const Shader& shader, shader::Variant variant) {
     if (shader.isProgram()) {
         std::string result;
@@ -67,7 +72,10 @@ GLShader* GLBackend::compileBackendShader(const Shader& shader, const Shader::Co
                 }
             }
         } else {
-            compilationLogs[index].compiled = ::gl::compileShader(shaderDomain, shaderSource, shaderObject.glshader, compilationLogs[index].message);
+            const auto& spirv = getShaderSpirv(shader, variant);
+            compilationLogs[index].compiled = 
+                //::gl::compileShader(shaderDomain, spirv, shaderObject.glshader, compilationLogs[index].message) || 
+                ::gl::compileShader(shaderDomain, shaderSource, shaderObject.glshader, compilationLogs[index].message);
         }
 
         if (!compilationLogs[index].compiled) {
@@ -106,10 +114,10 @@ GLShader* GLBackend::compileBackendProgram(const Shader& program, const Shader::
 
         CachedShader cachedBinary;
         {
-            Lock shaderCacheLock{ _shaderBinaryCache._mutex };
-            if (_shaderBinaryCache._binaries.count(hash) != 0) {
-                cachedBinary = _shaderBinaryCache._binaries[hash];
-            }
+            //Lock shaderCacheLock{ _shaderBinaryCache._mutex };
+            //if (_shaderBinaryCache._binaries.count(hash) != 0) {
+            //    cachedBinary = _shaderBinaryCache._binaries[hash];
+            //}
         }
 
         GLuint glprogram = 0;
@@ -397,7 +405,7 @@ void GLBackend::initShaderBinaryCache() {
         _shaderBinaryCache._formats.resize(numBinFormats);
         glGetIntegerv(GL_PROGRAM_BINARY_FORMATS, _shaderBinaryCache._formats.data());
     }
-    ::gl::loadShaderCache(_shaderBinaryCache._binaries);
+    //::gl::loadShaderCache(_shaderBinaryCache._binaries);
 }
 
 void GLBackend::killShaderBinaryCache() {

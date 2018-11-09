@@ -107,6 +107,7 @@ bool compileShader(GLenum shaderDomain,
                    GLuint& programObject,
                    std::string& message);
 #else
+bool compileShader(GLenum shaderDomain, const std::vector<uint8_t>& shaderSource, GLuint& shaderObject, std::string& message);
 bool compileShader(GLenum shaderDomain, const std::string& shaderSource, GLuint& shaderObject, std::string& message);
 bool compileShader(GLenum shaderDomain,
                    const std::vector<std::string>& shaderSources,

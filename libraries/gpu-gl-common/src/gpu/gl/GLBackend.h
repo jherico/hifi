@@ -673,6 +673,7 @@ protected:
     // The program string returned can be used as a key for a cache of shader binaries
     // The shader strings can be reliably sent to the low level `compileShader` functions
     virtual std::string getShaderSource(const Shader& shader, shader::Variant version) final;
+    virtual const std::vector<uint8_t>& getShaderSpirv(const Shader& shader, shader::Variant version) final;
     shader::Variant getShaderVariant() const { return isStereo() ? shader::Variant::Stereo : shader::Variant::Mono; }
     virtual shader::Dialect getShaderDialect() const = 0;
 

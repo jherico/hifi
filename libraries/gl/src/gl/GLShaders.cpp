@@ -7,7 +7,7 @@
 #include <QtCore/QJsonObject>
 #include <QtCore/QFileInfo>
 #include <QtCore/QCryptographicHash>
-
+#include <QtCore/QUuid>
 #include <shared/FileUtils.h>
 
 using namespace gl;
@@ -241,6 +241,8 @@ bool gl::compileShader(GLenum shaderDomain,
     for (const auto& str : shaderSources) {
         cstrs.push_back(str.c_str());
     }
+    std::string uniqueId = "\n// " + QUuid::createUuid().toString().toStdString();
+    cstrs.push_back(uniqueId.c_str());
     glShaderSource(glshader, static_cast<GLint>(cstrs.size()), cstrs.data(), NULL);
 
     // Compile !
@@ -325,6 +327,58 @@ bool gl::compileShader(GLenum shaderDomain,
     }
     programObject = glprogram;
 #endif
+    shaderObject = glshader;
+    return true;
+}
+
+bool gl::compileShader(GLenum shaderDomain,
+                       const std::vector<uint8_t>& spirv,
+                       GLuint& shaderObject,
+                       std::string& message) {
+    if (spirv.empty()) {
+        qCDebug(glLogging) << "GLShader::compileShader - no GLSL shader source code ? so failed to create";
+        return false;
+    }
+
+    if (glSpecializeShaderARB == nullptr) {
+        qCDebug(glLogging) << "GLShader::compileShader - no SPIRV support";
+        return false;
+    }
+
+    // Create the shader object
+    GLuint glshader = glCreateShader(shaderDomain);
+    if (!glshader) {
+        qCDebug(glLogging) << "GLShader::compileShader - failed to create the gl shader object";
+        return false;
+    }
+
+    glShaderBinary(1, &glshader, GL_SHADER_BINARY_FORMAT_SPIR_V_ARB, spirv.data(), spirv.size());
+
+    // This will now return FALSE
+    GLint compiled = 0;
+    glGetShaderiv(glshader, GL_COMPILE_STATUS, &compiled);
+
+    // Specialize the shader
+    glSpecializeShaderARB(glshader, "main", 0, nullptr, nullptr);
+
+    // check if shader compiled
+    glGetShaderiv(glshader, GL_COMPILE_STATUS, &compiled);
+
+    getShaderInfoLog(glshader, message);
+    // if compilation fails
+    if (!compiled) {
+        qCCritical(glLogging) << "GLShader::compileShader - failed to compile the gl shader object:";
+        qCCritical(glLogging) << "GLShader::compileShader - errors:";
+        qCCritical(glLogging) << message.c_str();
+        glDeleteShader(glshader);
+        return false;
+    }
+
+    if (!message.empty()) {
+        // Compilation success
+        qCWarning(glLogging) << "GLShader::compileShader - Success:";
+        qCWarning(glLogging) << message.c_str();
+    }
     shaderObject = glshader;
     return true;
 }

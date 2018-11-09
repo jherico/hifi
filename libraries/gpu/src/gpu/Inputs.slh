@@ -24,4 +24,5 @@ layout(location=GPU_ATTR_TEXCOORD1) in vec4 inTexCoord1;
 layout(location=GPU_ATTR_TEXCOORD2) in vec4 inTexCoord2;
 layout(location=GPU_ATTR_TEXCOORD3) in vec4 inTexCoord3;
 layout(location=GPU_ATTR_TEXCOORD4) in vec4 inTexCoord4;
+layout(location=18) in vec4 inTexCoord5;
 <@endif@>
