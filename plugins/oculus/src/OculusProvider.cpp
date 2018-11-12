@@ -17,7 +17,6 @@
 #include <plugins/InputPlugin.h>
 
 #include "OculusDisplayPlugin.h"
-#include "OculusDebugDisplayPlugin.h"
 #include "OculusControllerManager.h"
 
 class OculusProvider : public QObject, public DisplayProvider, InputProvider
@@ -36,14 +35,6 @@ public:
         static std::once_flag once;
         std::call_once(once, [&] {
             DisplayPluginPointer plugin(new OculusDisplayPlugin());
-            if (plugin->isSupported()) {
-                _displayPlugins.push_back(plugin);
-            }
-
-            // Windows Oculus Simulator... uses head tracking and the same rendering 
-            // as the connected hardware, but without using the SDK to display to the 
-            // Rift.  Useful for debugging Rift performance with nSight.
-            plugin = DisplayPluginPointer(new OculusDebugDisplayPlugin());
             if (plugin->isSupported()) {
                 _displayPlugins.push_back(plugin);
             }
