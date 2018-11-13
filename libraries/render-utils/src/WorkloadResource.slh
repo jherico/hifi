@@ -26,7 +26,7 @@ struct WorkloadProxy {
 };
 
 #if !defined(GPU_SSBO_TRANSFORM_OBJECT)
-RESOURCE_BUFFER(GPU_RESOURCE_BUFFER_SLOT0_TEXTURE, workloadProxiesBuffer)
+RESOURCE_BUFFER(GPU_RESOURCE_BUFFER_SLOT0_TEXTURE, workloadProxiesBuffer);
 WorkloadProxy getWorkloadProxy(int i) {
     int offset = 2 * i;
     WorkloadProxy proxy;

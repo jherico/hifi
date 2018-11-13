@@ -1,15 +1,13 @@
 macro(TARGET_SPIRV)
-    add_dependency_external_projects(spirv_cross)
-    target_link_libraries(${TARGET_NAME} ${SPIRV_CROSS_LIBRARIES})
-    target_include_directories(${TARGET_NAME} SYSTEM PRIVATE ${SPIRV_CROSS_INCLUDE_DIRS})
-    
-    # spirv-tools requires spirv-headers
-    add_dependency_external_projects(spirv_headers)
-    add_dependency_external_projects(spirv_tools)
-    target_link_libraries(${TARGET_NAME} ${SPIRV_TOOLS_LIBRARIES})
-    target_include_directories(${TARGET_NAME} SYSTEM PRIVATE ${SPIRV_TOOLS_INCLUDE_DIRS})
-    
-    add_dependency_external_projects(glslang)
-    target_link_libraries(${TARGET_NAME} ${GLSLANG_LIBRARIES})
-    target_include_directories(${TARGET_NAME} SYSTEM PRIVATE ${GLSLANG_INCLUDE_DIRS})
+    find_package(spirv_cross_core REQUIRED)
+    find_package(spirv_cross_reflect REQUIRED)
+    find_package(spirv_cross_glsl REQUIRED)
+    target_link_libraries(${TARGET_NAME} spirv-cross-core)
+    target_link_libraries(${TARGET_NAME} spirv-cross-reflect)
+    target_link_libraries(${TARGET_NAME} spirv-cross-glsl)
+
+    find_library(SHADERC_LIBRARY_DEBUG shaderc_combined PATHS ${VCPKG_INSTALL_ROOT}/debug/lib/ NO_DEFAULT_PATH)
+    find_library(SHADERC_LIBRARY_RELEASE shaderc_combined PATHS ${VCPKG_INSTALL_ROOT}/lib/ NO_DEFAULT_PATH)
+    select_library_configurations(SHADERC)
+    target_link_libraries(${TARGET_NAME} ${SHADERC_LIBRARY})
 endmacro()

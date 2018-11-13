@@ -38,6 +38,10 @@ static const Dialect DEFAULT_DIALECT = Dialect::glsl410;
 static const Dialect DEFAULT_DIALECT = Dialect::glsl450;
 #endif
 
+Dialect defaultDialect() {
+    return DEFAULT_DIALECT;
+}
+
 const std::vector<Dialect>& allDialects() {
     static const std::vector<Dialect> ALL_DIALECTS{ { DEFAULT_DIALECT } };
     return ALL_DIALECTS;
@@ -184,7 +188,7 @@ bool Source::doReplacement(String& source) const {
             replaced = true;
             continue;
         }
-    }
+    } 
 
     return replaced;
 }

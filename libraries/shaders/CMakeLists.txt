@@ -5,3 +5,4 @@ add_dependencies(${TARGET_NAME} scribed_shaders spirv_shaders reflected_shaders)
 
 link_hifi_libraries(shared gl)
 target_json()
+target_spirv()

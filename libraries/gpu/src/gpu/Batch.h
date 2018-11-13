@@ -415,6 +415,8 @@ public:
         }
     }
 
+#if 0 
+    // FIXME doesn't compile on Linux
     void forEachCommandFiltered(const std::unordered_set<Command>& commands, const CommandHandler& handler) const {
         forEachCommand([&](Command command, const Param* params) {
             if (commands.count(command) != 0) {
@@ -422,6 +424,7 @@ public:
             }
         });
     }
+#endif
 
 
     typedef Cache<BufferPointer>::Vector BufferCaches;

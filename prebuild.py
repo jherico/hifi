@@ -83,6 +83,8 @@ class VcpkgRepo:
         self.sourcePortsPath = os.path.join(scriptPath, 'cmake', 'ports')
         # FIXME Revert to ports hash before release
         self.id = hashFolder(self.sourcePortsPath)[:8]
+        if args.force_id is not None:
+            self.id = args.force_id
 
         if args.vcpkg_root is not None:
             print("override vcpkg path with " + args.vcpkg_root)
@@ -249,6 +251,7 @@ parser.add_argument('--android', action='store_true')
 parser.add_argument('--debug', action='store_true')
 parser.add_argument('--force-bootstrap', action='store_true')
 parser.add_argument('--force-build', action='store_true')
+parser.add_argument('--force-id', type=str)
 parser.add_argument('--vcpkg-root', type=str, help='The location of the vcpkg distribution')
 parser.add_argument('--build-root', required=True, type=str, help='The location of the cmake build')
 

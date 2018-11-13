@@ -43,10 +43,21 @@ enum class Dialect
 
 const std::vector<Dialect>& allDialects();
 const std::string& dialectPath(Dialect dialect);
+Dialect defaultDialect();
 
 enum class Variant {
     Mono,
     Stereo,
+};
+
+// Matches glslang/ShaderLang.h EShLanguage enum
+enum class Stage {
+    Vertex,
+    TessControl,
+    TessEvaluation,
+    Geometry,
+    Fragment,
+    Compute,
 };
 
 const std::vector<Variant>& allVariants();
@@ -151,8 +162,8 @@ struct Source {
     String getSource(Dialect dialect, Variant variant) const;
     const Reflection& getReflection(Dialect dialect, Variant variant) const;
     bool valid() const { return !dialectSources.empty(); }
-    static Source generate(const std::string& glsl) { throw std::runtime_error("Implement me"); }
     static const Source& get(uint32_t shaderId);
+    static Pointer generate(const std::string& glsl, Stage stage, const std::string& entryPoint = "main");
 
 private:
     // Disallow copy construction and assignment
