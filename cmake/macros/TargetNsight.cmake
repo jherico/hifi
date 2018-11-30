@@ -23,7 +23,7 @@ macro(TARGET_NSIGHT)
     
       # try to find the Nsight package and add it to the build if we find it
       if (NSIGHT_FOUND)
-        include_directories(${NSIGHT_INCLUDE_DIRS})
+        target_include_directories(${TARGET_NAME} PRIVATE ${NSIGHT_INCLUDE_DIRS})
         add_definitions(-DNSIGHT_FOUND)
         target_link_libraries(${TARGET_NAME} "${NSIGHT_LIBRARIES}")
       endif ()

@@ -14,9 +14,9 @@ if (Qt5_POSITION_INDEPENDENT_CODE)
 endif()
 
 # Qt includes
-include_directories (${CMAKE_CURRENT_SOURCE_DIR})
-include_directories (${Qt5Core_INCLUDE_DIRS})
-include_directories (${Qt5Widgets_INCLUDE_DIRS})
+target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${TARGET_NAME} PRIVATE ${Qt5Core_INCLUDE_DIRS})
+target_include_directories(${TARGET_NAME} PRIVATE ${Qt5Widgets_INCLUDE_DIRS})
 
 set (QT_LIBRARIES Qt5::Core Qt5::Widgets QT::Gui Qt5::Xml)
 

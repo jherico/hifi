@@ -15,6 +15,6 @@ macro(TARGET_OPENSSL)
         find_package(OpenSSL REQUIRED)
     endif()
 
-    include_directories(SYSTEM "${OPENSSL_INCLUDE_DIR}")
+    target_include_directories(${TARGET_NAME} PRIVATE "${OPENSSL_INCLUDE_DIR}")
     target_link_libraries(${TARGET_NAME} ${OPENSSL_LIBRARIES})
 endmacro()

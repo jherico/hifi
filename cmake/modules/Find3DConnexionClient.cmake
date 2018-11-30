@@ -21,7 +21,7 @@ if (APPLE)
   find_library(3DCONNEXIONCLIENT 3DconnexionClient)
   if(EXISTS ${3DCONNEXIONCLIENT})
     find_path(3DCONNEXIONCLIENT_INCLUDE_DIR2 ConnexionClient.h PATH_SUFFIXES include HINTS ${3DCONNEXIONCLIENT_SEARCH_DIRS})
-    include_directories(${3DCONNEXIONCLIENT_INCLUDE_DIR2})
+    target_include_directories(${TARGET_NAME} PRIVATE ${3DCONNEXIONCLIENT_INCLUDE_DIR2})
         
     get_filename_component( 3DCONNEXIONCLIENT_FRAMEWORK_DIR ${3DCONNEXIONCLIENT} PATH )
     set_target_properties(${TARGET_NAME} PROPERTIES LINK_FLAGS "-weak_framework 3DconnexionClient")

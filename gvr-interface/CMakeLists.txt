@@ -22,7 +22,7 @@ else ()
   setup_hifi_project(Gui)
 endif ()
 
-include_directories(${Qt5Gui_PRIVATE_INCLUDE_DIRS})
+target_include_directories(${TARGET_NAME} PRIVATE ${Qt5Gui_PRIVATE_INCLUDE_DIRS})
 
 link_hifi_libraries(shared networking audio-client avatars)
 
@@ -32,7 +32,7 @@ if (ANDROID)
   if (LIBOVR_FOUND)
     add_definitions(-DHAVE_LIBOVR)
     target_link_libraries(${TARGET_NAME} ${LIBOVR_LIBRARIES} ${LIBOVR_ANDROID_LIBRARIES} ${TURBOJPEG_LIBRARY})
-    include_directories(SYSTEM ${LIBOVR_INCLUDE_DIRS})
+    target_include_directories(${TARGET_NAME} PRIVATE ${LIBOVR_INCLUDE_DIRS})
 
     # we need VRLib, so add a project.properties to our apk build folder that says that
     file(RELATIVE_PATH RELATIVE_VRLIB_PATH ${ANDROID_APK_OUTPUT_DIR} "${LIBOVR_VRLIB_DIR}")

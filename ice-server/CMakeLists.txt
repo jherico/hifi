@@ -16,7 +16,7 @@ if (APPLE AND ${OPENSSL_INCLUDE_DIR} STREQUAL "/usr/include")
     "\nWe recommend you install a newer version (at least 1.0.1h) in a different directory and set OPENSSL_ROOT_DIR in your env so Cmake can find it.")
 endif ()
 
-include_directories(SYSTEM "${OPENSSL_INCLUDE_DIR}")
+target_include_directories(${TARGET_NAME} PRIVATE  "${OPENSSL_INCLUDE_DIR}")
 
 setup_memory_debugger()
 

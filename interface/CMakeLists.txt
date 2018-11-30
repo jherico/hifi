@@ -19,7 +19,7 @@ if (BUILD_TOOLS AND NPM_EXECUTABLE)
   add_custom_qrc_path(CUSTOM_INTERFACE_QRC_PATHS "${CMAKE_SOURCE_DIR}/tools/jsdoc/out/hifiJSDoc.json" "auto-complete/hifiJSDoc.json")
 endif ()
 
-set(RESOURCES_QRC ${CMAKE_CURRENT_BINARY_DIR}/resources.qrc)
+set(RESOURCES_QRC ${CMAKE_CURRENT_SOURCE_DIR}/compiledResources/resources.qrc)
 set(RESOURCES_RCC ${CMAKE_CURRENT_SOURCE_DIR}/compiledResources/resources.rcc)
 generate_qrc(OUTPUT ${RESOURCES_QRC} PATH ${CMAKE_CURRENT_SOURCE_DIR}/resources CUSTOM_PATHS ${CUSTOM_INTERFACE_QRC_PATHS} GLOBS *)
 
@@ -216,7 +216,7 @@ link_hifi_libraries(
 )
 
 # include the binary directory of render-utils for shader includes
-target_include_directories(${TARGET_NAME} PRIVATE "${CMAKE_BINARY_DIR}/libraries/render-utils")
+# target_include_directories(${TARGET_NAME} PRIVATE "${CMAKE_BINARY_DIR}/libraries/render-utils")
 
 # include OpenSSL
 target_openssl()
@@ -265,7 +265,7 @@ foreach(EXTERNAL ${OPTIONAL_EXTERNALS})
 endforeach()
 
 # include headers for interface and InterfaceConfig.
-include_directories("${PROJECT_SOURCE_DIR}/src")
+target_include_directories(${TARGET_NAME} PRIVATE "${PROJECT_SOURCE_DIR}/src")
 
 if (ANDROID)
   find_library(ANDROID_LOG_LIB log)

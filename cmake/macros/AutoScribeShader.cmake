@@ -253,6 +253,9 @@ macro(AUTOSCRIBE_SHADER_LIBS)
         ShaderEnums.h.in 
         ${CMAKE_CURRENT_BINARY_DIR}/ShaderEnums.h)
 
+    set_property(SOURCE ${CMAKE_CURRENT_BINARY_DIR}/ShaderEnums.h PROPERTY SKIP_AUTOGEN ON)
+    set_property(SOURCE ${CMAKE_CURRENT_BINARY_DIR}/ShaderEnums.cpp PROPERTY SKIP_AUTOGEN ON)
+
     configure_file(shaders.qrc.in ${CMAKE_CURRENT_BINARY_DIR}/shaders.qrc)
     list(APPEND QT_RESOURCES_FILE ${CMAKE_CURRENT_BINARY_DIR}/shaders.qrc)
 
