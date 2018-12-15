@@ -70,6 +70,38 @@ void gl::globalRelease(bool finish) {}
 
 #endif
 
+bool gl::enableDebugLogger() {
+#if defined(Q_OS_MAC)
+    // OSX does not support GL_KHR_debug or GL_ARB_debug_output
+    static const bool enableDebugLogger = false;
+#elif defined(Q_OS_ANDROID)
+#if defined(NDEBUG)
+    static const bool enableDebugLogger = false;
+#else
+    static const bool enableDebugLogger = true;
+#endif
+#else
+#if defined(DEBUG) || defined(USE_GLES)
+    static const bool enableDebugLogger = true;
+#else
+    static const QString DEBUG_FLAG("HIFI_DEBUG_OPENGL");
+    static bool enableDebugLogger = QProcessEnvironment::systemEnvironment().contains(DEBUG_FLAG);
+#endif
+#endif
+    return enableDebugLogger;
+}
+
+bool gl::enableNoError() {
+    if (enableDebugLogger()) {
+        return false;
+    }
+#if defined(NDEBUG)
+    static const bool enableNoError = false;
+#else
+    static const bool enableNoError = true;
+#endif
+    return enableNoError;
+}
 
 void gl::getTargetVersion(int& major, int& minor) {
 #if defined(USE_GLES)

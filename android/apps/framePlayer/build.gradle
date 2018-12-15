@@ -45,6 +45,6 @@ android {
 }
 
 dependencies {
-    implementation project(':oculus')
+    //implementation project(':oculus')
     implementation project(':qt')
 }

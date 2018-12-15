@@ -8,14 +8,11 @@
 
 #pragma once
 
-#define OCULUS_MOBILE 1
-
 #include <QtCore/QElapsedTimer>
-
+#include <QtGui/QWindow>
 #include <GenericThread.h>
 #include <shared/RateCounter.h>
-#include <gl/Config.h>
-#include <gl/Context.h>
+#include <egl/Context.h>
 #include <gpu/gl/GLBackend.h>
 
 #if OCULUS_MOBILE
@@ -29,9 +26,11 @@ class RenderThread : public GenericThread, ovr::VrHandler {
 class RenderThread : public GenericThread {
 #endif
     using Parent = GenericThread;
+    using Task = std::function<void()>;
 public:
-    QWindow* _window{ nullptr };
-    gl::Context _glContext;
+    ANativeWindow* _nativeWindow{nullptr};
+    QSize _size;
+    egl::Context _glContext;
     std::mutex _mutex;
     gpu::ContextPointer _gpuContext;  // initialized during window creation
     std::shared_ptr<gpu::Backend> _backend;
@@ -52,4 +51,6 @@ public:
     void submitFrame(const gpu::FramePointer& frame);
     void initialize(QWindow* window);
     void renderFrame(gpu::FramePointer& frame);
+    void ensureSurface(ANativeWindow* nativeWindow);
+    void withValidSurface(const Task& task);
 };

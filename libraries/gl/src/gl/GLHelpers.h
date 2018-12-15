@@ -44,6 +44,10 @@ namespace gl {
 
     bool checkGLErrorDebug(const char* name);
 
+    bool enableDebugLogger();
+
+    bool enableNoError();
+
     bool disableGl45();
 
     void getTargetVersion(int& major, int& minor);

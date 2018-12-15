@@ -12,8 +12,8 @@ import android.os.Bundle;
 
 import org.qtproject.qt5.android.bindings.QtActivity;
 
-import io.highfidelity.oculus.OculusMobileActivity;
-
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class FramePlayerActivity extends QtActivity {
     private native void nativeOnCreate();
@@ -23,10 +23,13 @@ public class FramePlayerActivity extends QtActivity {
         System.loadLibrary("framePlayer");
         super.onCreate(savedInstanceState);
         nativeOnCreate();
-    }
-
-    public void launchOculusActivity() {
-        startActivity(new Intent(this, OculusMobileActivity.class));
-
+        new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                runOnUiThread(()->{
+                    startActivity(new Intent(FramePlayerActivity.this, RenderActivity.class));
+                });
+            }
+        }, 1000);
     }
 }

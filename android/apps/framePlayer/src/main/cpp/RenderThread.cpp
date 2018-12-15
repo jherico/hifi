@@ -12,6 +12,7 @@
 
 #include <jni.h>
 #include <android/log.h>
+#include <android/native_window_jni.h>
 
 #include <QtCore/QFileInfo>
 #include <QtGui/QWindow>
@@ -64,10 +65,80 @@ JNIEXPORT void JNICALL Java_io_highfidelity_frameplayer_FramePlayerActivity_nati
 }
 
 #else
+
+static std::mutex windowLock;
+static ANativeWindow* window = nullptr;
+using NativeWindowTask = std::function<void(ANativeWindow*&)>;
+
+void withNativeWindow(const NativeWindowTask& task) {
+    std::unique_lock<std::mutex> lock(windowLock);
+    task(window);
+}
+
+static std::mutex touchLock;
+glm::vec2 touch{ 0 };
+int lastAction = 1;
+using TouchTask = std::function<void(int action, const glm::vec2&)>;
+
+void updateTouch(int action, float x, float y) {
+    std::unique_lock<std::mutex> lock(touchLock);
+    touch = { x , y };
+    lastAction = action;
+}
+
+void withTouch(const TouchTask& task) {
+    std::unique_lock<std::mutex> lock(touchLock);
+    task(lastAction, {touch.x, touch.y});
+}
+
 extern "C" {
+
 JNIEXPORT void JNICALL Java_io_highfidelity_frameplayer_FramePlayerActivity_nativeOnCreate(JNIEnv* env, jobject obj) {
 }
+
+JNIEXPORT jlong JNICALL Java_io_highfidelity_frameplayer_RenderActivity_nativeOnCreate(JNIEnv* env, jobject obj) {
+    __android_log_write(ANDROID_LOG_WARN, "QQQ_JNI", __FUNCTION__);
+    return 0;
 }
+
+JNIEXPORT void JNICALL Java_io_highfidelity_frameplayer_RenderActivity_nativeOnDestroy(JNIEnv* env, jobject obj, jlong handle) {
+    __android_log_write(ANDROID_LOG_WARN, "QQQ_JNI", __FUNCTION__);
+}
+
+JNIEXPORT void JNICALL Java_io_highfidelity_frameplayer_RenderActivity_nativeOnResume(JNIEnv* env, jobject obj, jlong handle) {
+    __android_log_write(ANDROID_LOG_WARN, "QQQ_JNI", __FUNCTION__);
+}
+
+JNIEXPORT void JNICALL Java_io_highfidelity_frameplayer_RenderActivity_nativeOnPause(JNIEnv* env, jobject obj, jlong handle) {
+    __android_log_write(ANDROID_LOG_WARN, "QQQ_JNI", __FUNCTION__);
+}
+
+JNIEXPORT void JNICALL Java_io_highfidelity_frameplayer_RenderActivity_nativeOnTouch(JNIEnv* env, jobject obj, jlong action, jfloat x, jfloat y) {
+    updateTouch(action, x, y);
+}
+
+JNIEXPORT void JNICALL Java_io_highfidelity_frameplayer_RenderActivity_nativeOnSurfaceCreated(JNIEnv* env, jobject obj, jlong handle, jobject surface) {
+    __android_log_write(ANDROID_LOG_WARN, "QQQ_JNI", __FUNCTION__);
+    withNativeWindow([&](ANativeWindow*& window){
+        window = ANativeWindow_fromSurface( env, surface );
+    });
+}
+
+JNIEXPORT void JNICALL Java_io_highfidelity_frameplayer_RenderActivity_nativeOnSurfaceChanged(JNIEnv* env, jobject obj, jlong handle, jobject surface) {
+    __android_log_write(ANDROID_LOG_WARN, "QQQ_JNI", __FUNCTION__);
+    withNativeWindow([&](ANativeWindow*& window){
+        window = ANativeWindow_fromSurface( env, surface );
+    });
+}
+
+JNIEXPORT void JNICALL Java_io_highfidelity_frameplayer_RenderActivity_nativeOnSurfaceDestroyed(JNIEnv* env, jobject obj, jlong handle) {
+    __android_log_write(ANDROID_LOG_WARN, "QQQ_JNI", __FUNCTION__);
+    withNativeWindow([&](ANativeWindow*& window){
+        window = nullptr;
+    });
+}
+
+} // extern "C"
 #endif
 
 static const char* FRAME_FILE = "assets:/frames/20181124_1047.json";
@@ -91,6 +162,23 @@ void RenderThread::move(const glm::vec3& v) {
     _correction = glm::inverse(glm::translate(mat4(), v)) * _correction;
 }
 
+void RenderThread::ensureSurface(ANativeWindow* nativeWindow) {
+    if (_nativeWindow != nativeWindow) {
+        if (nativeWindow) {
+            _glContext.createSurface(nativeWindow, _size);
+        } else {
+            _glContext.createSurface();
+        }
+        _nativeWindow = nativeWindow;
+        _glContext.makeCurrent();
+    }
+}
+
+static void* getGlProcessAddress(const char *namez) {
+    auto result = eglGetProcAddress(namez);
+    return (void*)result;
+}
+
 void RenderThread::initialize(QWindow* window) {
     if (QFileInfo(FRAME_FILE).exists()) {
         auto frame = gpu::readFrame(FRAME_FILE, _externalTexture, &textureLoader);
@@ -100,38 +188,50 @@ void RenderThread::initialize(QWindow* window) {
     std::unique_lock<std::mutex> lock(_frameLock);
     setObjectName("RenderThread");
     Parent::initialize();
-    _window = window;
-    _glContext.setWindow(window);
+    _size = window->size();
     _glContext.create();
-    _glContext.makeCurrent();
+    _glContext.createSurface();
+    //move({ 0, 0, -100 });
 
-    glGenTextures(1, &_externalTexture);
-    glBindTexture(GL_TEXTURE_2D, _externalTexture);
-    static const glm::u8vec4 color{ 0 };
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, &color);
-    gl::setSwapInterval(0);
+    withValidSurface([&]{
+        bool currentResult = _glContext.makeCurrent();
+        if (currentResult) {
+            gladLoadGLES2Loader(getGlProcessAddress);
+            glGenTextures(1, &_externalTexture);
+            glBindTexture(GL_TEXTURE_2D, _externalTexture);
+            static const glm::u8vec4 color{ 0 };
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, &color);
+            gl::setSwapInterval(0);
+        }
 
-    // GPU library init
-    gpu::Context::init<gpu::gl::GLBackend>();
-    _glContext.makeCurrent();
-    _gpuContext = std::make_shared<gpu::Context>();
-    _backend = _gpuContext->getBackend();
-    _glContext.doneCurrent();
-    _glContext.moveToThread(_thread);
+        // GPU library init
+        gpu::Context::init<gpu::gl::GLBackend>();
+        _glContext.makeCurrent();
+        _gpuContext = std::make_shared<gpu::Context>();
+        _backend = _gpuContext->getBackend();
+        _glContext.doneCurrent();
+    });
     _thread->setObjectName("RenderThread");
 }
 
-void RenderThread::setup() {
-    ovr::VrHandler::initVr();
+void RenderThread::withValidSurface(const Task& task) {
+    withNativeWindow([&](ANativeWindow*& nativeWindow) {
+        ensureSurface(nativeWindow);
+        task();
+    });
+}
 
+void RenderThread::setup() {
     // Wait until the context has been moved to this thread
     { std::unique_lock<std::mutex> lock(_frameLock); }
     _gpuContext->beginFrame();
     _gpuContext->endFrame();
-    _glContext.makeCurrent();
+
 
 
 #if OCULUS_MOBILE
+    _glContext.makeCurrent();
+    ovr::VrHandler::initVr();
     _vm->AttachCurrentThread(&_env, nullptr);
     jclass cls = _env->GetObjectClass(_activity);
     jmethodID mid = _env->GetMethodID(cls, "launchOculusActivity", "()V");
@@ -177,6 +277,29 @@ void RenderThread::handleInput() {
             }
         }
     }
+#else
+    withTouch([&](int action, const glm::vec2& v){
+        static int lastAction = 1;
+        if (action == 1) {
+            lastAction = 1;
+            return;
+        }
+
+        auto nv = (v * 2.0f) - 1.0f;
+        //nv.y *= -1.0f;
+        static glm::vec2 start = nv;
+        if (lastAction == 1) {
+            start = nv;
+        }
+
+        lastAction = action;
+        nv = nv - start;
+        qWarning() << "QQQ" << __FUNCTION__ << action << nv.x << nv.y;
+
+        glm::vec3 translation { nv.x, 0.0f, nv.y};
+        float scale = 10.1f;
+        _correction = glm::translate(glm::mat4(), translation * scale) * _correction;
+    });
 #endif
 }
 
@@ -211,7 +334,11 @@ void RenderThread::renderFrame(gpu::FramePointer& frame) {
             }
         });
     });
+    _gpuContext->enableStereo(true);
 #else
+    _backend->setCameraCorrection(glm::inverse(_correction), _activeFrame->view);
+
+    _activeFrame->stereoState._enable = false;
     eyeProjections[0][0] = vec4{ 0.91729, 0.0, -0.17407, 0.0 };
     eyeProjections[0][1] = vec4{ 0.0, 0.083354, -0.106141, 0.0 };
     eyeProjections[0][2] = vec4{ 0.0, 0.0, -1.0, -0.2 };
@@ -226,7 +353,6 @@ void RenderThread::renderFrame(gpu::FramePointer& frame) {
     _glContext.makeCurrent();
     _backend->recycle();
     _backend->syncCache();
-    _gpuContext->enableStereo(true);
     if (frame && !frame->batches.empty()) {
         _gpuContext->executeFrame(frame);
     }
@@ -238,7 +364,7 @@ void RenderThread::renderFrame(gpu::FramePointer& frame) {
     _glContext.doneCurrent();
     presentFrame(finalTexture, fboSize, tracking);
 #else
-    auto windowSize = _window->geometry().size();
+    const auto& windowSize = _size;
     auto finalFbo = glbackend.getFramebufferID(frame->framebuffer);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, finalFbo);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
@@ -250,7 +376,6 @@ void RenderThread::renderFrame(gpu::FramePointer& frame) {
         GL_COLOR_BUFFER_BIT, GL_NEAREST);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
     CHECK_GL_ERROR();
-    _glContext.swapBuffers();
 #endif
 }
 
@@ -277,16 +402,17 @@ bool RenderThread::process() {
         _activeFrame->stereoState._enable = true;
     }
 
-    if (!_activeFrame) {
-        _glContext.makeCurrent();
-        glClearColor(1, 0, 1, 1);
-        glClear(GL_COLOR_BUFFER_BIT);
-        CHECK_GL_ERROR();
+    withValidSurface([&]{
+        if (!_activeFrame) {
+            glClearColor(1, 0, 1, 1);
+            glClear(GL_COLOR_BUFFER_BIT);
+            CHECK_GL_ERROR();
+            QThread::msleep(1);
+        } else {
+            handleInput();
+            renderFrame(_activeFrame);
+        }
         _glContext.swapBuffers();
-        QThread::msleep(1);
-        return true;
-    }
-    handleInput();
-    renderFrame(_activeFrame);
+    });
     return true;
 }
