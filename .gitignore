@@ -23,6 +23,7 @@ android/**/bin
 android/**/src/main/res/values/libs.xml
 android/**/src/main/assets
 android/**/gradle*
+*.class
 
 # VSCode
 # List taken from Github Global Ignores master@435c4d92
@@ -101,4 +102,4 @@ tools/jsdoc/package-lock.json
 tools/unity-avatar-exporter/Library
 tools/unity-avatar-exporter/Packages
 tools/unity-avatar-exporter/ProjectSettings
-*.class
+tools/unity-avatar-exporter/Temp
