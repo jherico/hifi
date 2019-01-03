@@ -54,8 +54,8 @@ struct VrSurface : public TaskQueue {
         vrglContext.create(currentDisplay, currentContext);
         vrglContext.makeCurrent();
         glm::uvec2 eyeTargetSize{
-            vrapi_GetSystemPropertyInt(&java, VRAPI_SYS_PROP_SUGGESTED_EYE_TEXTURE_WIDTH),
-            vrapi_GetSystemPropertyInt(&java, VRAPI_SYS_PROP_SUGGESTED_EYE_TEXTURE_HEIGHT),
+            vrapi_GetSystemPropertyInt(&java, VRAPI_SYS_PROP_SUGGESTED_EYE_TEXTURE_WIDTH) * 1.5f,
+            vrapi_GetSystemPropertyInt(&java, VRAPI_SYS_PROP_SUGGESTED_EYE_TEXTURE_HEIGHT) * 1.5f,
         };
         __android_log_print(ANDROID_LOG_WARN, "QQQ_OVR", "QQQ Eye Size %d, %d", eyeTargetSize.x, eyeTargetSize.y);
         ovr::for_each_eye([&](ovrEye eye) {
@@ -136,7 +136,6 @@ struct VrSurface : public TaskQueue {
         if (GL_FRAMEBUFFER_COMPLETE != framebufferStatus) {
             __android_log_print(ANDROID_LOG_WARN, "QQQ_OVR", "incomplete framebuffer");
         }
-        CHECK_GL_ERROR();
         ovr::for_each_eye([&](ovrEye eye) {
             const auto &eyeTracking = tracking.Eye[eye];
             auto &eyeFbo = eyeFbos[eye];

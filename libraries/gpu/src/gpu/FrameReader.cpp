@@ -290,6 +290,9 @@ TexturePointer Deserializer::readTexture(const json& node, uint32_t external) {
         return nullptr;
     }
 
+    std::string source;
+    readOptional(source, node, keys::source);
+
     std::string ktxFile;
     readOptional(ktxFile, node, keys::ktxFile);
     Element ktxTexelFormat, ktxMipFormat;

@@ -45,6 +45,7 @@ android {
 }
 
 dependencies {
+    implementation fileTree(include: ['*.jar'], dir: '../../libraries/qt/libs')
     implementation project(':oculus')
     implementation project(':qt')
 }

@@ -70,7 +70,7 @@ JNIEXPORT void JNICALL Java_io_highfidelity_frameplayer_FramePlayerActivity_nati
 }
 #endif
 
-static const char* FRAME_FILE = "assets:/frames/20181124_1047.json";
+static const char* FRAME_FILE = "assets:/frames/20190102_1402.json";
 
 static void textureLoader(const std::string& filename, const gpu::TexturePointer& texture, uint16_t layer) {
     QImage image;
@@ -223,7 +223,6 @@ void RenderThread::renderFrame(gpu::FramePointer& frame) {
     eyeOffsets[0][3] = vec4{ -0.0327499993, 0.0, -0.0149999997, 1.0 };
     eyeOffsets[1][3] = vec4{ 0.0327499993, 0.0, -0.0149999997, 1.0 };
 #endif
-    _glContext.makeCurrent();
     _backend->recycle();
     _backend->syncCache();
     _gpuContext->enableStereo(true);
@@ -237,6 +236,7 @@ void RenderThread::renderFrame(gpu::FramePointer& frame) {
     auto finalTexture = glbackend.getTextureID(frame->framebuffer->getRenderBuffer(0));
     _glContext.doneCurrent();
     presentFrame(finalTexture, fboSize, tracking);
+    _glContext.makeCurrent();
 #else
     auto windowSize = _window->geometry().size();
     auto finalFbo = glbackend.getFramebufferID(frame->framebuffer);
@@ -270,6 +270,7 @@ bool RenderThread::process() {
         pendingFrames.swap(_pendingFrames);
     }
 
+    _glContext.makeCurrent();
     while (!pendingFrames.empty()) {
         _activeFrame = pendingFrames.front();
         pendingFrames.pop();
@@ -278,7 +279,6 @@ bool RenderThread::process() {
     }
 
     if (!_activeFrame) {
-        _glContext.makeCurrent();
         glClearColor(1, 0, 1, 1);
         glClear(GL_COLOR_BUFFER_BIT);
         CHECK_GL_ERROR();
