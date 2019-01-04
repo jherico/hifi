@@ -126,6 +126,8 @@ static const char* destColor = "destColor";
 static const char* destAlpha = "destAlpha";
 static const char* opColor = "opColor";
 static const char* opAlpha = "opAlpha";
+static const char* enable = "enable";
+static const char* contextDisable = "contextDisable";
 
 static std::array<const char*, Batch::NUM_COMMANDS> COMMAND_NAMES{ {
     "draw",

@@ -212,10 +212,10 @@ json Serializer::writeBatch(const Batch& batch) {
 
     batchNode[keys::name] = batch.getName();
     if (batch._enableSkybox != DEFAULT_BATCH._enableSkybox) {
-        batchNode[keys::stereo] = batch._enableStereo;
+        batchNode[keys::skybox] = batch._enableSkybox;
     }
     if (batch._enableStereo != DEFAULT_BATCH._enableStereo) {
-        batchNode[keys::skybox] = batch._enableSkybox;
+        batchNode[keys::stereo] = batch._enableStereo;
     }
     if (batch._projectionJitter != DEFAULT_BATCH._projectionJitter) {
         batchNode[keys::projectionJitter] = writeVec2(batch._projectionJitter);
@@ -500,6 +500,11 @@ json Serializer::writeFormat(const Stream::FormatPointer& formatPointer) {
         result[keys::FIELD] = value.FIELD; \
     }
 
+#define SET_IF_NOT_DEFAULT_(FIELD) \
+    if (value._##FIELD != DEFAULT._##FIELD) { \
+        result[keys::FIELD] = value._##FIELD; \
+    }
+
 #define SET_IF_NOT_DEFAULT_TRANSFORM(FIELD, TRANSFORM) \
     if (value.FIELD != DEFAULT.FIELD) { \
         result[keys::FIELD] = TRANSFORM(value.FIELD); \
@@ -537,6 +542,16 @@ static json writeDepthTest(const State::DepthTest& value) {
     SET_IF_NOT_DEFAULT(writeMask);
     SET_IF_NOT_DEFAULT(enabled);
     SET_IF_NOT_DEFAULT(function);
+    return result;
+}
+
+
+static json writeStereoState(const StereoState& value) {
+    static const StereoState DEFAULT;
+    json result = json::object();
+    SET_IF_NOT_DEFAULT_(enable);
+    SET_IF_NOT_DEFAULT_(contextDisable);
+    SET_IF_NOT_DEFAULT_(skybox);
     return result;
 }
 
@@ -752,10 +767,12 @@ void Serializer::writeFrame(const Frame& frame) {
         frameNode[keys::batches].push_back(writeBatch(*batchPointer));
     }
 
+    frameNode[keys::stereo] = writeStereoState(frame.stereoState);
     frameNode[keys::capturedTextures] = writeCapturableTextures(frame);
     frameNode[keys::frameIndex] = frame.frameIndex;
     frameNode[keys::view] = writeMat4(frame.view);
     frameNode[keys::pose] = writeMat4(frame.pose);
+    frameNode[keys::stereo] = 
     frameNode[keys::framebuffer] = getGlobalIndex(frame.framebuffer, framebufferMap);
     using namespace std::placeholders;
     serializeMap(frameNode, keys::swapchains, swapchainMap, std::bind(&Serializer::writeSwapchain, this, _1));
