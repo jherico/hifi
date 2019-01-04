@@ -726,6 +726,14 @@ BatchPointer Deserializer::readBatch(const json& node) {
     return result;
 }
 
+StereoState readStereoState(const json& node) {
+    StereoState result;
+    Deserializer::readOptional(result._enable, node, keys::enable);
+    Deserializer::readOptional(result._contextDisable, node, keys::contextDisable);
+    Deserializer::readOptional(result._skybox, node, keys::skybox);
+    return result;
+}
+
 FramePointer Deserializer::readFrame() {
     json frameNode;
     {
@@ -777,6 +785,9 @@ FramePointer Deserializer::readFrame() {
     frame.view = readMat4(frameNode[keys::view]);
     frame.pose = readMat4(frameNode[keys::pose]);
     frame.frameIndex = frameNode[keys::frameIndex];
+
+    frame.stereoState = readStereoState(frameNode[keys::stereo]);
+
 
     //frameNode[keys::stereoState] = frame.stereoState;
 
