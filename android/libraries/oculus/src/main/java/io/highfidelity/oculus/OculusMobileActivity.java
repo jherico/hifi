@@ -21,10 +21,8 @@ import android.view.WindowManager;
  * events to the OculusMobileDisplayPlugin
  */
 public class OculusMobileActivity extends Activity implements SurfaceHolder.Callback {
-    static {
-        System.loadLibrary("oculusMobile");
-    }
-    private static final String TAG =OculusMobileActivity.class.getName();
+    private static final String TAG = OculusMobileActivity.class.getSimpleName();
+
     private native long nativeOnCreate();
     private native void nativeOnResume(long handle);
     private native void nativeOnPause(long handle);
@@ -48,21 +46,25 @@ public class OculusMobileActivity extends Activity implements SurfaceHolder.Call
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        Log.w(TAG, "QQQ onCreate");
+        Log.w(TAG, "QQQ_LIFE onCreate");
         super.onCreate(savedInstanceState);
+
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         // Create a native surface for VR rendering (Qt GL surfaces are not suitable
         // because of the lack of fine control over the surface callbacks)
         mView = new SurfaceView(this);
         setContentView(mView);
         mView.getHolder().addCallback(this);
+
+        System.loadLibrary("oculusMobile");
         // Forward the create message to the display plugin
         mNativeHandle = nativeOnCreate();
+        Log.w(TAG, "QQQ_LIFE onCreate Done");
     }
 
     @Override
     protected void onDestroy() {
-        Log.w(TAG, "QQQ onDestroy");
+        Log.w(TAG, "QQQ_LIFE onDestroy");
         if (mSurfaceHolder != null) {
             nativeOnSurfaceDestroyed(mNativeHandle);
         }
@@ -73,21 +75,22 @@ public class OculusMobileActivity extends Activity implements SurfaceHolder.Call
 
     @Override
     protected void onResume() {
-        Log.w(TAG, "QQQ onResume");
+        Log.w(TAG, "QQQ_LIFE onResume");
         super.onResume();
         nativeOnResume(mNativeHandle);
+        Log.w(TAG, "QQQ_LIFE onResume Done");
     }
 
     @Override
     protected void onPause() {
-        Log.w(TAG, "QQQ onPause");
+        Log.w(TAG, "QQQ_LIFE onPause");
         nativeOnPause(mNativeHandle);
         super.onPause();
     }
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        Log.w(TAG, "QQQ surfaceCreated");
+        Log.w(TAG, "QQQ_SURFACE surfaceCreated");
         if (mNativeHandle != 0) {
             nativeOnSurfaceCreated(mNativeHandle, holder.getSurface());
             mSurfaceHolder = holder;
@@ -96,7 +99,7 @@ public class OculusMobileActivity extends Activity implements SurfaceHolder.Call
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        Log.w(TAG, "QQQ surfaceChanged");
+        Log.w(TAG, "QQQ_SURFACE surfaceChanged");
         if (mNativeHandle != 0) {
             nativeOnSurfaceChanged(mNativeHandle, holder.getSurface());
             mSurfaceHolder = holder;
@@ -105,10 +108,11 @@ public class OculusMobileActivity extends Activity implements SurfaceHolder.Call
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
-        Log.w(TAG, "QQQ surfaceDestroyed");
+        Log.w(TAG, "QQQ_SURFACE surfaceDestroyed");
         if (mNativeHandle != 0) {
             nativeOnSurfaceDestroyed(mNativeHandle);
             mSurfaceHolder = null;
+            finish();
         }
     }
 }

@@ -52,7 +52,7 @@ class FrameProcessor:
         with open(self.filename, 'w') as f:
             json.dump(self.json, f, indent=2)
 
-fp = FrameProcessor("D:/Frames/20190102_1402.json")
+fp = FrameProcessor("D:/Frames/20190103_1453.json")
 fp.process()
 
 

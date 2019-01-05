@@ -16,47 +16,27 @@
 
 using namespace ovr;
 
-void OculusMobileActivity::updateVrMode() {
-    VrHandler::submitRenderThreadTask([&](VrHandler* handler){
-        bool vrReady = !_activityPaused && _nativeWindow != nullptr;
-        handler->updateVrMode(vrReady ? this : nullptr);
-    });
-}
-
 void OculusMobileActivity::setNativeWindow(ANativeWindow *newNativeWindow) {
-    if (newNativeWindow != _nativeWindow) {
-        releaseNativeWindow();
-    }
-    _nativeWindow = newNativeWindow;
-    updateVrMode();
+    VrHandler::setNativeWindow(newNativeWindow);
 }
 
 void OculusMobileActivity::releaseNativeWindow() {
-    if (_nativeWindow != nullptr) {
-        auto oldNativeWindow = _nativeWindow;
-        _nativeWindow = nullptr;
-        updateVrMode();
-        ANativeWindow_release(oldNativeWindow);
-    }
+    VrHandler::setNativeWindow(nullptr);
 }
 
 void OculusMobileActivity::nativeOnCreate(JNIEnv *env, jobject obj) {
-    _activity = env->NewGlobalRef(obj);
+    VrHandler::onCreate(env, obj);
 }
 
 void OculusMobileActivity::nativeOnDestroy(JNIEnv *env) {
-    env->DeleteGlobalRef(_activity);
-    _activity = nullptr;
 }
 
 void OculusMobileActivity::nativeOnResume(JNIEnv *env) {
-    _activityPaused = false;
-    updateVrMode();
+    VrHandler::setResumed(true);
 }
 
 void OculusMobileActivity::nativeOnPause(JNIEnv *env) {
-    _activityPaused = true;
-    updateVrMode();
+    VrHandler::setResumed(false);
 }
 
 void OculusMobileActivity::nativeSurfaceCreated(ANativeWindow *newNativeWindow) {

@@ -34,15 +34,8 @@ public:
     void nativeSurfaceDestroyed();
 
 private:
-    void updateVrMode();
     void setNativeWindow(ANativeWindow *);
     void releaseNativeWindow();
-
-public:
-    // JNI support
-    jobject _activity;
-    bool _activityPaused{true};
-    ANativeWindow *_nativeWindow{nullptr};
 };
 
 }

@@ -11,10 +11,24 @@
     <uses-feature android:name="android.hardware.sensor.gyroscope" android:required="true"/>
     <uses-feature android:name="android.software.vr.mode" android:required="true"/>
     <uses-feature android:name="android.hardware.vr.high_performance" android:required="true"/>
+
     <application android:label="Frame Viewer"
         android:allowBackup="false"
         android:name="org.qtproject.qt5.android.bindings.QtApplication">
+
         <meta-data android:name="com.samsung.android.vr.application.mode" android:value="vr_only"/>
+
+        <service android:name=".FramePlayerService"
+            >
+            <meta-data android:name="android.app.qt_libs_resource_id" android:resource="@array/qt_libs"/>
+            <meta-data android:name="android.app.bundled_in_lib_resource_id" android:resource="@array/bundled_in_lib"/>
+            <meta-data android:name="android.app.bundled_in_assets_resource_id" android:resource="@array/bundled_in_assets"/>
+            <meta-data android:name="android.app.load_local_libs" android:value="plugins/platforms/android/libqtforandroid.so:plugins/bearer/libqandroidbearer.so:lib/libQt5QuickParticles.so"/>
+            <meta-data android:name="android.app.use_local_qt_libs" android:value="1"/>
+            <meta-data android:name="android.app.bundle_local_qt_libs" android:value="1"/>
+            <meta-data android:name="android.app.lib_name" android:value="framePlayer"/>
+        </service>
+
         <activity
             android:name=".FramePlayerActivity"
             android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
@@ -31,17 +45,19 @@
             <meta-data android:name="android.app.bundled_in_lib_resource_id" android:resource="@array/bundled_in_lib"/>
             <meta-data android:name="android.app.bundled_in_assets_resource_id" android:resource="@array/bundled_in_assets"/>
             <meta-data android:name="android.app.load_local_libs" android:value="plugins/platforms/android/libqtforandroid.so:plugins/bearer/libqandroidbearer.so:lib/libQt5QuickParticles.so"/>
+            <meta-data android:name="android.app.use_local_qt_libs" android:value="1"/>
+        </activity>
+        <activity
+            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
+            android:configChanges="screenSize|screenLayout|orientation|keyboardHidden|keyboard|navigation|uiMode"
+            android:name=".QuestOculusActivity"
+            android:label="OvrActivity"
+            android:screenOrientation="landscape"
+            android:excludeFromRecents="false">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
-            android:configChanges="screenSize|screenLayout|orientation|keyboardHidden|keyboard|navigation|uiMode"
-            android:name="io.highfidelity.oculus.OculusMobileActivity"
-            android:label="OvrActivity"
-            android:screenOrientation="landscape"
-            android:excludeFromRecents="false"/>
     </application>
 </manifest>

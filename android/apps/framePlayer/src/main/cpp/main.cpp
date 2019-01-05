@@ -11,6 +11,7 @@
 #include <QtGui/QGuiApplication>
 #include <QtCore/QTimer>
 #include <QtCore/QFileInfo>
+#include <QtAndroidExtras/QAndroidService>
 
 #include <Trace.h>
 
@@ -41,11 +42,12 @@ void messageHandler(QtMsgType type, const QMessageLogContext& context, const QSt
 }
 
 int main(int argc, char** argv) {
+    __android_log_write(ANDROID_LOG_WARN,"QQQ_LIFE", "main.cpp start");
     setupHifiApplication("gpuFramePlayer");
-    QGuiApplication app(argc, argv);
+    QAndroidService app(argc, argv);
     auto oldMessageHandler = qInstallMessageHandler(messageHandler);
     DependencyManager::set<tracing::Tracer>();
-    PlayerWindow window;
+    new PlayerWindow();
     app.exec();
     qInstallMessageHandler(oldMessageHandler);
     return 0;

@@ -8,17 +8,18 @@
 
 #include "PlayerWindow.h"
 
-#include <QtWidgets/QFileDialog>
+#include <android/log.h>
+#include <QtCore/QCoreApplication>
 
 PlayerWindow::PlayerWindow() {
-    installEventFilter(this);
-    setFlags(Qt::MSWindowsOwnDC | Qt::Window | Qt::Dialog | Qt::WindowMinMaxButtonsHint | Qt::WindowTitleHint);
-    setSurfaceType(QSurface::OpenGLSurface);
-    create();
-    showFullScreen();
-    // Ensure the window is visible and the GL context is valid
     QCoreApplication::processEvents();
-    _renderThread.initialize(this);
+    _renderThread.initialize();
+    connect(qApp, &QCoreApplication::aboutToQuit, this, [this]{
+        __android_log_write(ANDROID_LOG_WARN,"QQQ_LIFE", "application about to quit, stopping thread");
+       _renderThread.terminate();
+        deleteLater();
+    });
+
 }
 
 PlayerWindow::~PlayerWindow() {

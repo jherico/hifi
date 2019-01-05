@@ -15,15 +15,15 @@ project(':qt').projectDir = new File(settingsDir, 'libraries/qt')
 //include ':interface'
 //project(':interface').projectDir = new File(settingsDir, 'apps/questInterface')
 
-include ':questInterface'
-project(':questInterface').projectDir = new File(settingsDir, 'apps/questInterface')
+//include ':questInterface'
+//project(':questInterface').projectDir = new File(settingsDir, 'apps/questInterface')
 
 //
 // Test projects
 //
 
-//include ':framePlayer'
-//project(':framePlayer').projectDir = new File(settingsDir, 'apps/framePlayer')
+include ':framePlayer'
+project(':framePlayer').projectDir = new File(settingsDir, 'apps/framePlayer')
 
 //include ':ui'
 //project(':ui').projectDir = new File(settingsDir, 'apps/ui')

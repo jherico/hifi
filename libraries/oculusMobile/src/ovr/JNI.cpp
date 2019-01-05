@@ -7,6 +7,11 @@ using namespace ovr;
 
 extern "C" {
 
+JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *, void *) {
+    __android_log_write(ANDROID_LOG_WARN, "QQQ_JNI", "OculusMobile JNI_OnLoad");
+    return JNI_VERSION_1_6;
+}
+
 JNIEXPORT jlong JNICALL Java_io_highfidelity_oculus_OculusMobileActivity_nativeOnCreate(JNIEnv* env, jobject obj) {
     __android_log_write(ANDROID_LOG_WARN, "QQQ_JNI", __FUNCTION__);
     auto activity = new OculusMobileActivity();

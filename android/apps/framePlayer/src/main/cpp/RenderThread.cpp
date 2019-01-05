@@ -29,10 +29,6 @@
 #include <VrApi.h>
 #include <VrApi_Input.h>
 
-static JNIEnv* _env { nullptr };
-static JavaVM* _vm { nullptr };
-static jobject _activity { nullptr };
-
 struct HandController{
     ovrInputTrackedRemoteCapabilities caps;
     ovrInputStateTrackedRemote state;
@@ -49,20 +45,6 @@ struct HandController{
 
 std::vector<HandController> devices;
 
-extern "C" {
-
-JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *, void *) {
-    __android_log_write(ANDROID_LOG_WARN, "QQQ", __FUNCTION__);
-    return JNI_VERSION_1_6;
-}
-
-
-JNIEXPORT void JNICALL Java_io_highfidelity_frameplayer_FramePlayerActivity_nativeOnCreate(JNIEnv* env, jobject obj) {
-    env->GetJavaVM(&_vm);
-    _activity = env->NewGlobalRef(obj);
-}
-}
-
 #else
 extern "C" {
 JNIEXPORT void JNICALL Java_io_highfidelity_frameplayer_FramePlayerActivity_nativeOnCreate(JNIEnv* env, jobject obj) {
@@ -70,15 +52,15 @@ JNIEXPORT void JNICALL Java_io_highfidelity_frameplayer_FramePlayerActivity_nati
 }
 #endif
 
-static const char* FRAME_FILE = "assets:/frames/20190102_1402.json";
+static const char* FRAME_FILE = "assets:/frames/20190103_1453.json";
 
 static void textureLoader(const std::string& filename, const gpu::TexturePointer& texture, uint16_t layer) {
-    QImage image;
-    QImageReader(filename.c_str()).read(&image);
-    if (layer > 0) {
-        return;
-    }
-    texture->assignStoredMip(0, image.byteCount(), image.constBits());
+//    QImage image;
+//    QImageReader(filename.c_str()).read(&image);
+//    if (layer > 0) {
+//        return;
+//    }
+//    texture->assignStoredMip(0, image.byteCount(), image.constBits());
 }
 
 void RenderThread::submitFrame(const gpu::FramePointer& frame) {
@@ -91,56 +73,57 @@ void RenderThread::move(const glm::vec3& v) {
     _correction = glm::inverse(glm::translate(mat4(), v)) * _correction;
 }
 
-void RenderThread::initialize(QWindow* window) {
+void RenderThread::initialize() {
+    setObjectName("RenderThread");
+    std::unique_lock<std::mutex> lock(_frameLock);
+    Parent::initialize();
+    _thread->setObjectName("RenderThread");
+    ovr::VrHandler::initVr();
+    __android_log_write(ANDROID_LOG_WARN, "QQQ", "RenderThread::initialize done");
+}
+
+void RenderThread::setup() {
+    __android_log_write(ANDROID_LOG_WARN, "QQQ", "RenderThread::setup");
+
+    {
+        std::unique_lock<std::mutex> lock(_frameLock);
+    }
+
+#if OCULUS_MOBILE
+    ovr::VrHandler::setHandler(this);
+#endif
+
+    makeCurrent();
+    glGenTextures(1, &_externalTexture);
+    glBindTexture(GL_TEXTURE_2D, _externalTexture);
+    static const glm::u8vec4 color{ 0 };
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, &color);
+
+    __android_log_write(ANDROID_LOG_WARN, "QQQ", "RenderThread::initialize read frame");
     if (QFileInfo(FRAME_FILE).exists()) {
         auto frame = gpu::readFrame(FRAME_FILE, _externalTexture, &textureLoader);
         submitFrame(frame);
     }
 
-    std::unique_lock<std::mutex> lock(_frameLock);
-    setObjectName("RenderThread");
-    Parent::initialize();
-    _window = window;
-    _glContext.setWindow(window);
-    _glContext.create();
-    _glContext.makeCurrent();
-
-    glGenTextures(1, &_externalTexture);
-    glBindTexture(GL_TEXTURE_2D, _externalTexture);
-    static const glm::u8vec4 color{ 0 };
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, &color);
-    gl::setSwapInterval(0);
-
+    makeCurrent();
     // GPU library init
     gpu::Context::init<gpu::gl::GLBackend>();
-    _glContext.makeCurrent();
+    __android_log_write(ANDROID_LOG_WARN, "QQQ", "RenderThread::setup 4");
     _gpuContext = std::make_shared<gpu::Context>();
+    makeCurrent();
+    __android_log_write(ANDROID_LOG_WARN, "QQQ", "RenderThread::setup 5");
     _backend = _gpuContext->getBackend();
-    _glContext.doneCurrent();
-    _glContext.moveToThread(_thread);
-    _thread->setObjectName("RenderThread");
-}
-
-void RenderThread::setup() {
-    ovr::VrHandler::initVr();
-
+    makeCurrent();
+    __android_log_write(ANDROID_LOG_WARN, "QQQ", "RenderThread::setup 6");
     // Wait until the context has been moved to this thread
-    { std::unique_lock<std::mutex> lock(_frameLock); }
     _gpuContext->beginFrame();
     _gpuContext->endFrame();
-    _glContext.makeCurrent();
-
-
-#if OCULUS_MOBILE
-    _vm->AttachCurrentThread(&_env, nullptr);
-    jclass cls = _env->GetObjectClass(_activity);
-    jmethodID mid = _env->GetMethodID(cls, "launchOculusActivity", "()V");
-    _env->CallVoidMethod(_activity, mid);
-    ovr::VrHandler::setHandler(this);
-#endif
+    makeCurrent();
+    __android_log_write(ANDROID_LOG_WARN, "QQQ", "RenderThread::setup done");
 }
 
 void RenderThread::shutdown() {
+    __android_log_write(ANDROID_LOG_WARN,"QQQ_LIFE", "RenderThread::shutdown");
     _activeFrame.reset();
     while (!_pendingFrames.empty()) {
         _gpuContext->consumeFrameUpdates(_pendingFrames.front());
@@ -234,9 +217,7 @@ void RenderThread::renderFrame(gpu::FramePointer& frame) {
 
 #if OCULUS_MOBILE
     auto finalTexture = glbackend.getTextureID(frame->framebuffer->getRenderBuffer(0));
-    _glContext.doneCurrent();
     presentFrame(finalTexture, fboSize, tracking);
-    _glContext.makeCurrent();
 #else
     auto windowSize = _window->geometry().size();
     auto finalFbo = glbackend.getFramebufferID(frame->framebuffer);
@@ -255,6 +236,7 @@ void RenderThread::renderFrame(gpu::FramePointer& frame) {
 }
 
 bool RenderThread::process() {
+    makeCurrent();
 #if OCULUS_MOBILE
     pollTask();
 
@@ -270,7 +252,6 @@ bool RenderThread::process() {
         pendingFrames.swap(_pendingFrames);
     }
 
-    _glContext.makeCurrent();
     while (!pendingFrames.empty()) {
         _activeFrame = pendingFrames.front();
         pendingFrames.pop();
@@ -278,14 +259,6 @@ bool RenderThread::process() {
         _activeFrame->stereoState._enable = true;
     }
 
-    if (!_activeFrame) {
-        glClearColor(1, 0, 1, 1);
-        glClear(GL_COLOR_BUFFER_BIT);
-        CHECK_GL_ERROR();
-        _glContext.swapBuffers();
-        QThread::msleep(1);
-        return true;
-    }
     handleInput();
     renderFrame(_activeFrame);
     return true;

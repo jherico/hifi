@@ -1,6 +1,9 @@
 if (ANDROID)
     set(TARGET_NAME oculusMobile)
-    setup_hifi_library(AndroidExtras)
+    # don't use the setuphifilibrary macro, we don't want ANY qt dependencies
+    file(GLOB_RECURSE LIB_SRCS "src/*.h" "src/*.cpp" "src/*.c" "src/*.qrc")
+    add_library(${TARGET_NAME} SHARED ${LIB_SRCS})
+    target_glm()
     target_egl()
     target_glad()
     target_oculus_mobile()

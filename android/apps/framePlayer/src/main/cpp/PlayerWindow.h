@@ -7,23 +7,19 @@
 //
 
 #pragma once
-#include <QtGui/QWindow>
-#include <QtCore/QSettings>
 
+#include <QtCore/QSettings>
+#include <QtGui/QWindow>
+#include <QtGui/QOffscreenSurface>
 #include <gpu/Forward.h>
 #include "RenderThread.h"
 
 // Create a simple OpenGL window that renders text in various ways
-class PlayerWindow : public QWindow {
+class PlayerWindow : public QObject {
 public:
     PlayerWindow();
     virtual ~PlayerWindow();
 
-protected:
-    //bool eventFilter(QObject* obj, QEvent* event) override;
-    //void keyPressEvent(QKeyEvent* event) override;
-
 private:
-    QSettings _settings;
     RenderThread _renderThread;
 };

@@ -7,9 +7,6 @@
 //
 #include "VrHandler.h"
 
-#include <QtAndroidExtras/QAndroidJniEnvironment>
-#include <QtAndroidExtras/QtAndroid>
-
 #include <android/log.h>
 #include <android/native_window_jni.h>
 #include <unistd.h>
@@ -32,31 +29,56 @@ struct VrSurface : public TaskQueue {
     using HandlerTask = VrHandler::HandlerTask;
     VrHandler *handler{nullptr};
     ovrMobile *session{nullptr};
+    ANativeWindow* nativeWindow{ nullptr };
+    bool resumed { false };
     GLContext vrglContext;
     Framebuffer eyeFbos[2];
     uint32_t readFbo{0};
-    QAndroidJniObject mainActivity { QtAndroid::androidActivity() };
     jobject oculusActivity{ nullptr };
-    QAndroidJniEnvironment* renderEnv{ nullptr };
+    JavaVM* vm{nullptr};
     uint32_t presentIndex{0};
     double displayTime{0};
+    static constexpr float EYE_BUFFER_SCALE = 0.75f;
+
+    void onCreate(JNIEnv* env, jobject activity) {
+        env->GetJavaVM(&vm);
+        oculusActivity = env->NewGlobalRef(activity);
+    }
+
+    void setResumed(bool newResumed) {
+        this->resumed = newResumed;
+        submitRenderThreadTask([this](VrHandler* handler){ updateVrMode(); });
+    }
+
+    void setNativeWindow(ANativeWindow* newNativeWindow) {
+        auto oldNativeWindow = nativeWindow;
+        nativeWindow = newNativeWindow;
+        if (oldNativeWindow) {
+            ANativeWindow_release(oldNativeWindow);
+        }
+        submitRenderThreadTask([this](VrHandler* handler){ updateVrMode(); });
+    }
 
     void init() {
         if (!handler) {
             return;
         }
 
+        vrapi_SetPerfThread(session, VRAPI_PERF_THREAD_TYPE_MAIN, pthread_self());
 
-        QAndroidJniEnvironment env;
-        ovrJava java{ QAndroidJniEnvironment::javaVM(), env, mainActivity.object() };
         EGLContext currentContext = eglGetCurrentContext();
-        EGLDisplay currentDisplay = eglGetCurrentDisplay();
+        EGLDisplay currentDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
         vrglContext.create(currentDisplay, currentContext);
         vrglContext.makeCurrent();
-        glm::uvec2 eyeTargetSize{
-            vrapi_GetSystemPropertyInt(&java, VRAPI_SYS_PROP_SUGGESTED_EYE_TEXTURE_WIDTH) * 1.5f,
-            vrapi_GetSystemPropertyInt(&java, VRAPI_SYS_PROP_SUGGESTED_EYE_TEXTURE_HEIGHT) * 1.5f,
-        };
+
+        glm::uvec2 eyeTargetSize;
+        withEnv([&](JNIEnv* env){
+            ovrJava java{ vm, env, oculusActivity };
+            eyeTargetSize = glm::uvec2 {
+                vrapi_GetSystemPropertyInt(&java, VRAPI_SYS_PROP_SUGGESTED_EYE_TEXTURE_WIDTH) * EYE_BUFFER_SCALE,
+                vrapi_GetSystemPropertyInt(&java, VRAPI_SYS_PROP_SUGGESTED_EYE_TEXTURE_HEIGHT) * EYE_BUFFER_SCALE,
+            };
+        });
         __android_log_print(ANDROID_LOG_WARN, "QQQ_OVR", "QQQ Eye Size %d, %d", eyeTargetSize.x, eyeTargetSize.y);
         ovr::for_each_eye([&](ovrEye eye) {
             eyeFbos[eye].create(eyeTargetSize);
@@ -75,9 +97,9 @@ struct VrSurface : public TaskQueue {
                 shutdown();
                 handler = newHandler;
                 init();
-            }
-            if (handler) {
-                QAndroidJniObject::callStaticMethod<void>("io/highfidelity/oculus/OculusMobileActivity", "launch", "(Landroid/app/Activity;)V", mainActivity.object());
+                if (handler) {
+                    updateVrMode();
+                }
             }
         });
     }
@@ -92,10 +114,24 @@ struct VrSurface : public TaskQueue {
         });
     }
 
-    void updateVrMode(const OculusMobileActivity *oculusActivityWrapper) {
+    void withEnv(const std::function<void(JNIEnv*)>& f) {
+        JNIEnv* env = nullptr;
+        bool attached = false;
+        vm->GetEnv((void**)&env, JNI_VERSION_1_6);
+        if (!env) {
+            attached = true;
+            vm->AttachCurrentThread(&env, nullptr);
+        }
+        f(env);
+        if (attached) {
+            vm->DetachCurrentThread();
+        }
+    }
+
+    void updateVrMode() {
         // For VR mode to be valid, the activity must be between an onResume and
         // an onPause call and must additionally have a valid native window handle
-        bool vrReady = oculusActivityWrapper != nullptr;
+        bool vrReady = resumed && nullptr != nativeWindow;
         // If we're IN VR mode, we'll have a non-null ovrMobile pointer in session
         bool vrRunning = session != nullptr;
         if (vrReady != vrRunning) {
@@ -105,23 +141,19 @@ struct VrSurface : public TaskQueue {
                 session = nullptr;
                 oculusActivity = nullptr;
             } else {
-                if (!renderEnv) {
-                    renderEnv = new QAndroidJniEnvironment();
-                }
-                JavaVM* vm = renderEnv->javaVM();
                 __android_log_write(ANDROID_LOG_WARN, "QQQ_OVR", "vrapi_EnterVrMode");
-                JNIEnv* env = *renderEnv;
-                oculusActivity = env->NewGlobalRef(oculusActivityWrapper->_activity);
-                ovrJava java{ vm, env, oculusActivity };
-                ovrModeParms modeParms = vrapi_DefaultModeParms(&java);
-                modeParms.Flags |= VRAPI_MODE_FLAG_NATIVE_WINDOW;
-                modeParms.Display = (unsigned long long) vrglContext.display;
-                modeParms.ShareContext = (unsigned long long) vrglContext.context;
-                modeParms.WindowSurface = (unsigned long long) oculusActivityWrapper->_nativeWindow;
-                session = vrapi_EnterVrMode(&modeParms);
-                ovrPosef trackingTransform = vrapi_GetTrackingTransform( session, VRAPI_TRACKING_TRANSFORM_SYSTEM_CENTER_EYE_LEVEL);
-                vrapi_SetTrackingTransform( session, trackingTransform );
-                vrapi_SetPerfThread(session, VRAPI_PERF_THREAD_TYPE_RENDERER, pthread_self());
+                withEnv([&](JNIEnv* env){
+                    ovrJava java{ vm, env, oculusActivity };
+                    ovrModeParms modeParms = vrapi_DefaultModeParms(&java);
+                    modeParms.Flags |= VRAPI_MODE_FLAG_NATIVE_WINDOW;
+                    modeParms.Display = (unsigned long long) vrglContext.display;
+                    modeParms.ShareContext = (unsigned long long) vrglContext.context;
+                    modeParms.WindowSurface = (unsigned long long) nativeWindow;
+                    session = vrapi_EnterVrMode(&modeParms);
+                    ovrPosef trackingTransform = vrapi_GetTrackingTransform( session, VRAPI_TRACKING_TRANSFORM_SYSTEM_CENTER_EYE_LEVEL);
+                    vrapi_SetTrackingTransform( session, trackingTransform );
+                    vrapi_SetPerfThread(session, VRAPI_PERF_THREAD_TYPE_RENDERER, pthread_self());
+                });
             }
         }
     }
@@ -197,8 +229,18 @@ void VrHandler::pollTask() {
     SURFACE.pollTask();
 }
 
-void VrHandler::updateVrMode(const OculusMobileActivity* activity) {
-    SURFACE.updateVrMode(activity);
+void VrHandler::onCreate(JNIEnv *env, jobject activity) {
+    SURFACE.onCreate(env, activity);
+}
+
+void VrHandler::makeCurrent() {
+    if (!SURFACE.vrglContext.makeCurrent()) {
+        __android_log_write(ANDROID_LOG_WARN, "QQQ", "Failed to make GL current");
+    }
+}
+
+void VrHandler::doneCurrent() {
+    SURFACE.vrglContext.doneCurrent();
 }
 
 ovrTracking2 VrHandler::beginFrame() {
@@ -209,22 +251,11 @@ void VrHandler::presentFrame(uint32_t sourceTexture, const glm::uvec2 &sourceSiz
     SURFACE.presentFrame(sourceTexture, sourceSize, tracking);
 }
 
-//// Must only be used on the render thread, where the session is created and destroyed.
-//ovrMobile* VrHandler::getSession() const {
-//    if (!isRenderThread) {
-//        __android_log_print(ANDROID_LOG_WARN, "QQQ_OVR", "VrHandler::getSession called on non render thread");
-//    }
-//    return SURFACE.session;
-//}
-
 bool VrHandler::withOvrJava(const OvrJavaTask& task) {
-    jobject activity = SURFACE.oculusActivity ? SURFACE.oculusActivity : SURFACE.mainActivity.object();
-    if (!activity) {
-        activity = QtAndroid::androidActivity().object();
-    }
-    QAndroidJniEnvironment env;
-    ovrJava java{ QAndroidJniEnvironment::javaVM(), env, activity };
-    task(&java);
+    SURFACE.withEnv([&](JNIEnv* env){
+        ovrJava java{ SURFACE.vm, env, SURFACE.oculusActivity };
+        task(&java);
+    });
     return true;
 }
 
@@ -250,14 +281,13 @@ bool VrHandler::withOvrMobile(const OvrMobileTask &task) {
 
 
 void VrHandler::initVr(const char* appId) {
-    QAndroidJniEnvironment env;
-    auto activity = QtAndroid::androidActivity();
-    ovrJava java{ QAndroidJniEnvironment::javaVM(), env, activity.object() };
-    ovrInitParms initParms = vrapi_DefaultInitParms(&java);
-    initParms.GraphicsAPI = VRAPI_GRAPHICS_API_OPENGL_ES_3;
-    if (vrapi_Initialize(&initParms) != VRAPI_INITIALIZE_SUCCESS) {
-        __android_log_write(ANDROID_LOG_WARN, "QQQ_OVR", "Failed vrapi init");
-    }
+    withOvrJava([&](const ovrJava* java){
+        ovrInitParms initParms = vrapi_DefaultInitParms(java);
+        initParms.GraphicsAPI = VRAPI_GRAPHICS_API_OPENGL_ES_3;
+        if (vrapi_Initialize(&initParms) != VRAPI_INITIALIZE_SUCCESS) {
+            __android_log_write(ANDROID_LOG_WARN, "QQQ_OVR", "Failed vrapi init");
+        }
+    });
 
   //  if (appId) {
   //      auto platformInitResult = ovr_PlatformInitializeAndroid(appId, activity.object(), env);
@@ -272,5 +302,11 @@ void VrHandler::shutdownVr() {
 }
 
 
+void VrHandler::setResumed(bool resumed) {
+    SURFACE.setResumed(resumed);
+}
 
+void VrHandler::setNativeWindow(ANativeWindow *window) {
+    SURFACE.setNativeWindow(window);
+}
 

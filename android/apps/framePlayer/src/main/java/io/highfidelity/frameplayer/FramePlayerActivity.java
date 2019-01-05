@@ -17,27 +17,46 @@ import io.highfidelity.oculus.OculusMobileActivity;
 
 
 public class FramePlayerActivity extends QtActivity {
+    private static final String TAG =FramePlayerActivity.class.getSimpleName();
+
     private native void nativeOnCreate();
     private boolean launchedQuestMode = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        Log.w(TAG, "QQQ_LIFE onCreate");
         System.loadLibrary("framePlayer");
         super.onCreate(savedInstanceState);
         nativeOnCreate();
     }
 
+    @Override
+    protected void onDestroy() {
+        Log.w(TAG, "QQQ_LIFE onDestroy");
+        super.onDestroy();
+        finishAndRemoveTask();
+    }
+
+    @Override
+    protected void onResume() {
+        Log.w(TAG, "QQQ_LIFE onResume");
+        super.onResume();
+        if (launchedQuestMode) {
+            Log.w(TAG, "QQQ_Qt forwarding to OculusMobileActivity");
+            startActivity(new Intent(this, OculusMobileActivity.class));
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        Log.w(TAG, "QQQ_LIFE onPause");
+        super.onPause();
+    }
+
+    @SuppressWarnings("unused")
     public void launchOculusActivity() {
         startActivity(new Intent(this, OculusMobileActivity.class));
         launchedQuestMode = true;
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (launchedQuestMode) {
-            Log.w("QQQ_Qt", "FramePlayerActivity::onResume, forwarding to OculusMobileActivity");
-            startActivity(new Intent(this, OculusMobileActivity.class));
-        }
-    }
 }
