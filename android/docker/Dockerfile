@@ -25,8 +25,16 @@ RUN mkdir -p "$ANDROID_HOME" "$ANDROID_SDK_HOME" && \
     cd "$ANDROID_HOME" && \
     curl -s -S -o sdk.zip -L "${SDK_URL}" && \
     unzip sdk.zip && \
-    rm sdk.zip && \
-    yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses
+    rm sdk.zip 
+
+RUN mkdir -p ${ANDROID_SDK_HOME}/.android && \
+    touch ${ANDROID_SDK_HOME}/.android/repositories.cfg 
+
+# Initial license acceptance
+RUN yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses
+
+# License has changed, inject the updated hash
+RUN printf "\n24333f8a63b6825ea9c5514f83c2829b004d1fee" >> ${ANDROID_HOME}/licenses/android-sdk-license 
 
 # Install Android Build Tool and Libraries
 RUN $ANDROID_HOME/tools/bin/sdkmanager --update
