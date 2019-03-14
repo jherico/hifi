@@ -9,6 +9,7 @@ import tempfile
 import json
 import xml.etree.ElementTree as ET
 import functools
+import CMakeCache
 
 print = functools.partial(print, flush=True)
 
@@ -34,6 +35,7 @@ endif()
         self.sourcePortsPath = args.ports_path
         self.id = hifi_utils.hashFolder(self.sourcePortsPath)[:8]
         self.configFilePath = os.path.join(args.build_root, 'vcpkg.cmake')
+        self.cacheFilePath = os.path.join(args.build_root, 'CMakeCache.txt')
 
         # OS dependent information
         system = platform.system()
@@ -224,6 +226,25 @@ endif()
         cmakeConfig = cmakeTemplate.format(cmakeScript, cmakeScript, installPath, toolsPath).replace('\\', '/')
         with open(self.configFilePath, 'w') as f:
             f.write(cmakeConfig)
+
+        if os.path.exists(self.cacheFilePath):
+            cache = CMakeCache.CMakeCache(self.cacheFilePath)
+            if 'CMAKE_TOOLCHAIN_FILE' in cache:
+                toolchainFile = cache.get('CMAKE_TOOLCHAIN_FILE').value()
+                VCPKG_ENTRY = re.compile( r".*vcpkg.*" )
+                if os.path.realpath(cmakeScript) != os.path.realpath(toolchainFile):
+                    cache.remove('CMAKE_TOOLCHAIN_FILE')
+                    cacheKeys = list(cache.names())
+                    removeKeys = []
+                    # cmake cache is out of date... wipe it
+                    for name in cacheKeys:
+                        value = cache.get(name).value()
+                        if VCPKG_ENTRY.match(value):
+                            removeKeys.append(name)
+                    for name in removeKeys:
+                        cache.remove(name)                    
+                    cache.write()
+        
 
     def cleanOldBuilds(self):
         # FIXME because we have the base directory, and because a build will 
