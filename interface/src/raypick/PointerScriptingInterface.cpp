@@ -37,6 +37,7 @@ unsigned int PointerScriptingInterface::createPointer(const PickQuery::PickType&
         BLOCKING_INVOKE_METHOD(this, "createPointer", Q_RETURN_ARG(unsigned int, result), Q_ARG(PickQuery::PickType, type), Q_ARG(QVariant, properties));
         return result;
     }
+                return PointerEvent::INVALID_POINTER_ID;
 
     switch (type) {
         case PickQuery::PickType::Ray:

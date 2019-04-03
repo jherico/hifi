@@ -130,7 +130,7 @@ void OculusDisplayPlugin::uncustomizeContext() {
 static const uint64_t FRAME_BUDGET = (11 * USECS_PER_MSEC);
 static const uint64_t FRAME_OVER_BUDGET = (15 * USECS_PER_MSEC);
 
-void OculusDisplayPlugin::hmdPresent(const gpu::FramebufferPointer& compositeFramebuffer) {
+void OculusDisplayPlugin::hmdPresent() {
     static uint64_t lastSubmitEnd = 0;
 
     if (!_customized) {
@@ -147,6 +147,7 @@ void OculusDisplayPlugin::hmdPresent(const gpu::FramebufferPointer& compositeFra
 
     PROFILE_RANGE_EX(render, __FUNCTION__, 0xff00ff00, (uint64_t)_currentFrame->frameIndex)
 
+    const auto& compositeFramebuffer = getCompositeFramebuffer();
     {
         PROFILE_RANGE_EX(render, "Oculus Blit", 0xff00ff00, (uint64_t)_currentFrame->frameIndex)
         int curIndex;

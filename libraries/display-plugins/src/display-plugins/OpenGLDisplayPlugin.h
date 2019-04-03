@@ -94,10 +94,12 @@ protected:
     // is not populated
     virtual bool alwaysPresent() const { return false; }
 
+    virtual const gpu::FramebufferPointer& getCompositeFramebuffer();
     virtual QThread::Priority getPresentPriority() { return QThread::HighPriority; }
-    virtual void compositeLayers(const gpu::FramebufferPointer&);
-    virtual void compositePointer(const gpu::FramebufferPointer&);
-    virtual void compositeExtra(const gpu::FramebufferPointer&) {};
+    virtual void compositeLayers();
+    virtual void compositeScene();
+    virtual void compositePointer();
+    virtual void compositeExtra() {}
 
     // These functions must only be called on the presentation thread
     virtual void customizeContext();
@@ -112,7 +114,7 @@ protected:
     virtual void deactivateSession() {}
 
     // Plugin specific functionality to send the composed scene to the output window or device
-    virtual void internalPresent(const gpu::FramebufferPointer&);
+    virtual void internalPresent();
 
     
     void renderFromTexture(gpu::Batch& batch, const gpu::TexturePointer& texture, const glm::ivec4& viewport, const glm::ivec4& scissor, const gpu::FramebufferPointer& destFbo = nullptr, const gpu::FramebufferPointer& copyFbo = nullptr);
@@ -178,6 +180,7 @@ protected:
 
 private:
     gpu::PipelinePointer _presentPipeline;
+    gpu::PipelinePointer _simplePipeline;
 
 };
 

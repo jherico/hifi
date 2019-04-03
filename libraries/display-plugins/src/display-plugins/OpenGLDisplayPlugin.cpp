@@ -380,6 +380,15 @@ void OpenGLDisplayPlugin::customizeContext() {
         scissorState->setScissorEnable(true);
 
         {
+#ifdef Q_OS_ANDROID	
+            gpu::ShaderPointer program = gpu::Shader::createProgram(shader::gpu::program::DrawTextureGammaLinearToSRGB);	
+#else	
+            gpu::ShaderPointer program = gpu::Shader::createProgram(shader::gpu::program::DrawTexture);	
+#endif 	
+           _simplePipeline = gpu::Pipeline::create(program, scissorState);
+        }
+
+        {
 #ifdef Q_OS_ANDROID
             gpu::ShaderPointer program = gpu::Shader::createProgram(shader::gpu::program::DrawTextureGammaLinearToSRGB);
 #else
@@ -595,14 +604,18 @@ void OpenGLDisplayPlugin::updateFrameData() {
     });
 }
 
-void OpenGLDisplayPlugin::compositePointer(const gpu::FramebufferPointer& compositeFramebuffer) {
+const gpu::FramebufferPointer& OpenGLDisplayPlugin::getCompositeFramebuffer() {
+    return _currentFrame->framebuffer;
+}
+
+void OpenGLDisplayPlugin::compositePointer() {
     auto& cursorManager = Cursor::Manager::instance();
     const auto& cursorData = _cursorsData[cursorManager.getCursor()->getIcon()];
     auto cursorTransform = DependencyManager::get<CompositorHelper>()->getReticleTransform(glm::mat4());
     render([&](gpu::Batch& batch) {
         batch.enableStereo(false);
         batch.setProjectionTransform(mat4());
-        batch.setFramebuffer(compositeFramebuffer);
+        batch.setFramebuffer(getCompositeFramebuffer());
         batch.setPipeline(_cursorPipeline);
         batch.setResourceTexture(0, cursorData.texture);
         batch.resetViewTransform();
@@ -613,13 +626,32 @@ void OpenGLDisplayPlugin::compositePointer(const gpu::FramebufferPointer& compos
                 batch.draw(gpu::TRIANGLE_STRIP, 4);
             });
         } else {
-            batch.setViewportTransform(ivec4(uvec2(0), compositeFramebuffer->getSize()));
+            batch.setViewportTransform(ivec4(uvec2(0), getCompositeFramebuffer()->getSize()));
             batch.draw(gpu::TRIANGLE_STRIP, 4);
         }
     });
 }
 
-void OpenGLDisplayPlugin::compositeLayers(const gpu::FramebufferPointer& compositeFramebuffer) {
+void OpenGLDisplayPlugin::compositeScene() {
+    const auto& compositeFramebuffer = getCompositeFramebuffer();
+    if (compositeFramebuffer != _currentFrame->framebuffer) {
+        render([&](gpu::Batch& batch) {
+            batch.enableStereo(false);
+            batch.setFramebuffer(compositeFramebuffer);
+            batch.setViewportTransform(ivec4(uvec2(), compositeFramebuffer->getSize()));
+            batch.setStateScissorRect(ivec4(uvec2(), compositeFramebuffer->getSize()));
+            batch.resetViewTransform();
+            batch.setProjectionTransform(mat4());
+            batch.setPipeline(_simplePipeline);
+            batch.setResourceTexture(0, _currentFrame->framebuffer->getRenderBuffer(0));
+            batch.draw(gpu::TRIANGLE_STRIP, 4);
+        });
+    }
+}
+
+void OpenGLDisplayPlugin::compositeLayers() {
+    compositeScene();
+
 #ifdef HIFI_ENABLE_NSIGHT_DEBUG
     if (false) // do not draw the HUD if running nsight debug
 #endif
@@ -633,18 +665,18 @@ void OpenGLDisplayPlugin::compositeLayers(const gpu::FramebufferPointer& composi
 
     {
         PROFILE_RANGE_EX(render_detail, "compositeExtra", 0xff0077ff, (uint64_t)presentCount())
-        compositeExtra(compositeFramebuffer);
+        compositeExtra();
     }
 
     // Draw the pointer last so it's on top of everything
     auto compositorHelper = DependencyManager::get<CompositorHelper>();
     if (compositorHelper->getReticleVisible()) {
         PROFILE_RANGE_EX(render_detail, "compositePointer", 0xff0077ff, (uint64_t)presentCount())
-            compositePointer(compositeFramebuffer);
+            compositePointer();
     }
 }
 
-void OpenGLDisplayPlugin::internalPresent(const gpu::FramebufferPointer& compositeFramebuffer) {
+void OpenGLDisplayPlugin::internalPresent() {
     render([&](gpu::Batch& batch) {
         // Note: _displayTexture must currently be the same size as the display.
         uvec2 dims = _displayTexture ? uvec2(_displayTexture->getDimensions()) : getSurfacePixels();
@@ -653,8 +685,8 @@ void OpenGLDisplayPlugin::internalPresent(const gpu::FramebufferPointer& composi
         gpu::TexturePointer finalTexture;
         if (_displayTexture) {
             finalTexture = _displayTexture;
-        } else if (compositeFramebuffer) {
-            finalTexture = compositeFramebuffer->getRenderBuffer(0);
+        } else if (_currentFrame) {
+            finalTexture = getCompositeFramebuffer()->getRenderBuffer(0);
         } else {
             qCWarning(displayPlugins) << "No valid texture for output";
         }
@@ -698,18 +730,18 @@ void OpenGLDisplayPlugin::present() {
         // Write all layers to a local framebuffer
         {
             PROFILE_RANGE_EX(render, "composite", 0xff00ffff, frameId)
-            compositeLayers(_currentFrame->framebuffer);
+            compositeLayers();
         }
 
         // Take the composite framebuffer and send it to the output device
         {
             PROFILE_RANGE_EX(render, "internalPresent", 0xff00ffff, frameId)
-            internalPresent(_currentFrame->framebuffer);
+            internalPresent();
         }
 
         gpu::Backend::freeGPUMemSize.set(gpu::gl::getFreeDedicatedMemory());
     } else if (alwaysPresent()) {
-        internalPresent(nullptr);
+        internalPresent();
     }
     _movingAveragePresent.addSample((float)(usecTimestampNow() - startPresent));
 }

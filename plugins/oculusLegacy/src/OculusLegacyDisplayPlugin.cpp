@@ -237,7 +237,7 @@ void OculusLegacyDisplayPlugin::uncustomizeContext() {
     Parent::uncustomizeContext();
 }
 
-void OculusLegacyDisplayPlugin::hmdPresent(const gpu::FramebufferPointer& compositeFramebuffer) {
+void OculusLegacyDisplayPlugin::hmdPresent() {
     if (!_hswDismissed) {
         ovrHSWDisplayState hswState;
         ovrHmd_GetHSWDisplayState(_hmd, &hswState);
@@ -252,6 +252,7 @@ void OculusLegacyDisplayPlugin::hmdPresent(const gpu::FramebufferPointer& compos
     memset(eyePoses, 0, sizeof(ovrPosef) * 2);
     eyePoses[0].Orientation = eyePoses[1].Orientation = ovrRotation;
     
+    const auto& compositeFramebuffer = getCompositeFramebuffer();
     GLint texture = getGLBackend()->getTextureID(compositeFramebuffer->getRenderBuffer(0));
     auto sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
     glFlush();

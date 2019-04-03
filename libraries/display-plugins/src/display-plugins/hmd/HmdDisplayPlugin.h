@@ -53,15 +53,15 @@ signals:
     void hmdVisibleChanged(bool visible);
 
 protected:
-    virtual void hmdPresent(const gpu::FramebufferPointer&) = 0;
+    virtual void hmdPresent() = 0;
     virtual bool isHmdMounted() const = 0;
     virtual void postPreview() {};
     virtual void updatePresentPose();
 
     bool internalActivate() override;
     void internalDeactivate() override;
-    void compositePointer(const gpu::FramebufferPointer&) override;
-    void internalPresent(const gpu::FramebufferPointer&) override;
+    void compositePointer() override;
+    void internalPresent() override;
     void customizeContext() override;
     void uncustomizeContext() override;
     void updateFrameData() override;

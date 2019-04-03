@@ -177,11 +177,11 @@ float HmdDisplayPlugin::getLeftCenterPixel() const {
     return leftCenterPixel;
 }
 
-void HmdDisplayPlugin::internalPresent(const gpu::FramebufferPointer& compositeFramebuffer) {
+void HmdDisplayPlugin::internalPresent() {
     PROFILE_RANGE_EX(render, __FUNCTION__, 0xff00ff00, (uint64_t)presentCount())
 
     // Composite together the scene, hud and mouse cursor
-    hmdPresent(compositeFramebuffer);
+    hmdPresent();
 
     if (_displayTexture) {
         // Note: _displayTexture must currently be the same size as the display.
@@ -263,7 +263,7 @@ void HmdDisplayPlugin::internalPresent(const gpu::FramebufferPointer& compositeF
 
                 viewport.z *= 2;
             }
-            renderFromTexture(batch, compositeFramebuffer->getRenderBuffer(0), viewport, scissor, nullptr, fbo);
+            renderFromTexture(batch, getCompositeFramebuffer()->getRenderBuffer(0), viewport, scissor, nullptr, fbo);
         });
         swapBuffers();
 
@@ -450,7 +450,7 @@ DisplayPlugin::HUDOperator HmdDisplayPlugin::HUDRenderer::build() {
     };
 }
 
-void HmdDisplayPlugin::compositePointer(const gpu::FramebufferPointer& compositeFramebuffer) {
+void HmdDisplayPlugin::compositePointer() {
     auto& cursorManager = Cursor::Manager::instance();
     const auto& cursorData = _cursorsData[cursorManager.getCursor()->getIcon()];
     auto compositorHelper = DependencyManager::get<CompositorHelper>();
@@ -459,7 +459,7 @@ void HmdDisplayPlugin::compositePointer(const gpu::FramebufferPointer& composite
     render([&](gpu::Batch& batch) {
         // FIXME use standard gpu stereo rendering for this.
         batch.enableStereo(false);
-        batch.setFramebuffer(compositeFramebuffer);
+        batch.setFramebuffer(getCompositeFramebuffer());
         batch.setPipeline(_cursorPipeline);
         batch.setResourceTexture(0, cursorData.texture);
         batch.resetViewTransform();
