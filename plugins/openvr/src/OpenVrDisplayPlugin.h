@@ -15,23 +15,6 @@
 
 const float TARGET_RATE_OpenVr = 90.0f;  // FIXME: get from sdk tracked device property? This number is vive-only.
 
-namespace gl {
-    class OffscreenContext;
-}
-class OpenVrSubmitThread;
-class OffscreenGLCanvas;
-static const size_t COMPOSITING_BUFFER_SIZE = 3;
-
-struct CompositeInfo {
-    using Queue = std::queue<CompositeInfo>;
-    using Array = std::array<CompositeInfo, COMPOSITING_BUFFER_SIZE>;
-    
-    gpu::TexturePointer texture;
-    uint32_t textureID { 0 };
-    glm::mat4 pose;
-    void* fence{ 0 };
-};
-
 class OpenVrDisplayPlugin : public HmdDisplayPlugin {
     using Parent = HmdDisplayPlugin;
 public:
@@ -48,7 +31,6 @@ public:
     bool hasAsyncReprojection() const override { return _asyncReprojectionActive; }
 
     void customizeContext() override;
-    void uncustomizeContext() override;
 
     // Stereo specific methods
     void resetSensors() override;
@@ -58,9 +40,6 @@ public:
     bool suppressKeyboard() override;
     void unsuppressKeyboard() override;
     bool isKeyboardVisible() override;
-
-    // Possibly needs an additional thread for VR submission
-    int getRequiredThreadCount() const override;
 
     QString getPreferredAudioInDevice() const override;
     QString getPreferredAudioOutDevice() const override;
@@ -72,10 +51,10 @@ protected:
     void internalDeactivate() override;
     void updatePresentPose() override;
 
-    void compositeLayers() override;
     void hmdPresent() override;
     bool isHmdMounted() const override;
     void postPreview() override;
+    void updatePoses();
 
 private:
     vr::IVRSystem* _system { nullptr };
@@ -83,15 +62,6 @@ private:
 
     vr::HmdMatrix34_t _lastGoodHMDPose;
     mat4 _sensorResetMat;
-    bool _threadedSubmit { true };
-
-    CompositeInfo::Array _compositeInfos;
-    size_t _renderingIndex { 0 };
-    std::shared_ptr<OpenVrSubmitThread> _submitThread;
-    std::shared_ptr<gl::OffscreenContext> _submitCanvas;
-    friend class OpenVrSubmitThread;
-
     bool _asyncReprojectionActive { false };
-
     bool _hmdMounted { false };
 };
