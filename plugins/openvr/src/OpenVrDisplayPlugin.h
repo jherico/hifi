@@ -50,7 +50,6 @@ public:
     bool hasAsyncReprojection() const override { return _asyncReprojectionActive; }
 
     void customizeContext() override;
-    void uncustomizeContext() override;
 
     // Stereo specific methods
     void resetSensors() override;
@@ -60,9 +59,6 @@ public:
     bool suppressKeyboard() override;
     void unsuppressKeyboard() override;
     bool isKeyboardVisible() override;
-
-    // Possibly needs an additional thread for VR submission
-    int getRequiredThreadCount() const override;
 
     QString getPreferredAudioInDevice() const override;
     QString getPreferredAudioOutDevice() const override;
@@ -77,7 +73,6 @@ protected:
     void internalDeactivate() override;
     void updatePresentPose() override;
 
-    void compositeLayers() override;
     void hmdPresent() override;
     bool isHmdMounted() const override;
     void postPreview() override;
@@ -88,11 +83,9 @@ private:
 
     vr::HmdMatrix34_t _lastGoodHMDPose;
     mat4 _sensorResetMat;
-    bool _threadedSubmit { true };
 
     CompositeInfo::Array _compositeInfos;
     size_t _renderingIndex { 0 };
-    std::shared_ptr<OpenVrSubmitThread> _submitThread;
     std::shared_ptr<gl::OffscreenContext> _submitCanvas;
     friend class OpenVrSubmitThread;
 
