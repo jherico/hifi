@@ -35,4 +35,33 @@ WebEngineView {
     }
 
     WebSpinner { }
+
+    /* 
+     * Async notification API placeholder START
+     */
+    Component {
+        id: delayCallerComponent
+        Timer { }
+    }
+
+    function delayCall( interval, callback ) {
+        var delayCaller = delayCallerComponent.createObject( null, { "interval": interval } );
+        delayCaller.triggered.connect( function () {
+            callback();
+            delayCaller.destroy();
+        } );
+        delayCaller.start();
+    }
+    /* 
+     * Async notification API placeholder END
+     */
+
+    // FIXME replace use of Async notification API placeholder with actual user notification UI
+    onFeaturePermissionRequested: {
+        // Execute an asyncronous 
+        delayCall(2000, function() {
+            grantFeaturePermission(securityOrigin, feature, false);
+        })
+    }
+
 }
