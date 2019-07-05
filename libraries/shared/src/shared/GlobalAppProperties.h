@@ -21,6 +21,7 @@ namespace hifi { namespace properties {
     extern const char* TRACING;
     extern const char* HMD;
     extern const char* APP_LOCAL_DATA_PATH;
+    extern const char* DISABLE_LOD;
 
     namespace gl {
         extern const char* BACKEND;

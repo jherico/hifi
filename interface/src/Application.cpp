@@ -776,14 +776,25 @@ bool setupEssentials(int& argc, char** argv, bool runningMarkerExisted) {
     bool suppressPrompt = cmdOptionExists(argc, const_cast<const char**>(argv), SUPPRESS_SETTINGS_RESET);
 
     // set the OCULUS_STORE property so the oculus plugin can know if we ran from the Oculus Store
-    static const auto OCULUS_STORE_ARG = "--oculus-store";
-    bool isStore = cmdOptionExists(argc, const_cast<const char**>(argv), OCULUS_STORE_ARG);
-    qApp->setProperty(hifi::properties::OCULUS_STORE, isStore);
+    {
+        static const auto OCULUS_STORE_ARG = "--oculus-store";
+        bool isStore = cmdOptionExists(argc, const_cast<const char**>(argv), OCULUS_STORE_ARG);
+        qApp->setProperty(hifi::properties::OCULUS_STORE, isStore);
+    }
 
     // emulate standalone device
-    static const auto STANDALONE_ARG = "--standalone";
-    bool isStandalone = cmdOptionExists(argc, const_cast<const char**>(argv), STANDALONE_ARG);
-    qApp->setProperty(hifi::properties::STANDALONE, isStandalone);
+    {
+        static const auto STANDALONE_ARG = "--standalone";
+        bool isStandalone = cmdOptionExists(argc, const_cast<const char**>(argv), STANDALONE_ARG);
+        qApp->setProperty(hifi::properties::STANDALONE, isStandalone);
+    }
+    
+    // Disable level of detail auto config
+    {
+        static const auto DISABLE_LOD_ARG = "--disable-lod";
+        bool disableLOD = cmdOptionExists(argc, const_cast<const char**>(argv), SUPPRESS_SETTINGS_RESET);
+        qApp->setProperty(hifi::properties::DISABLE_LOD, disableLOD);
+    }
 
     // Ignore any previous crashes if running from command line with a test script.
     bool inTestMode { false };
@@ -5758,7 +5769,7 @@ void Application::unloadAvatarScripts() {
 void Application::updateLOD(float deltaTime) const {
     PerformanceTimer perfTimer("LOD");
     // adjust it unless we were asked to disable this feature, or if we're currently in throttleRendering mode
-    if (!isThrottleRendering()) {
+    if (!isThrottleRendering() && !property(hifi::properties::DISABLE_LOD).toBool()) {
         float presentTime = getActiveDisplayPlugin()->getAveragePresentTime();
         float engineRunTime = (float)(_graphicsEngine.getRenderEngine()->getConfiguration().get()->getCPURunTime());
         float gpuTime = getGPUContext()->getFrameTimerGPUAverage();
