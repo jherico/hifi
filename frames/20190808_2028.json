@@ -1,0 +1,218 @@
+{
+    "batches": [
+        {
+            "commands": [
+                [
+                    "resetStages"
+                ]
+            ],
+            "name": "Application_render::gpuContextReset"
+        },
+        {
+            "buffers": [
+                0,
+                1
+            ],
+            "commands": [
+                [
+                    "setFramebuffer",
+                    0
+                ],
+                [
+                    "setViewportTransform",
+                    0
+                ],
+                [
+                    "setProjectionTransform",
+                    16
+                ],
+                [
+                    "setViewTransform",
+                    0,
+                    6716328544470827009
+                ],
+                [
+                    "setModelTransform"
+                ],
+                [
+                    "setPipeline",
+                    0
+                ],
+                [
+                    "setUniformBuffer",
+                    192,
+                    0,
+                    0,
+                    7453301596244410368
+                ],
+                [
+                    "setUniformBuffer",
+                    16,
+                    0,
+                    1,
+                    6716328544470827013
+                ],
+                [
+                    "draw",
+                    6721434710829957120,
+                    7434995921642848260,
+                    5282249852078522372
+                ]
+            ],
+            "data": "AAAAAAAAAACQBgAAtAMAAAxgrj8AAAAAAAAAAAAAAAAAAAAAeYIaQAAAAAAAAAAAAAAAAAAAAABSAIC/AACAvwAAAAAAAAAAPtcjvgAAAAA=",
+            "drawCallInfos": [
+                0
+            ],
+            "framebuffers": [
+                0
+            ],
+            "name": "splashFrame",
+            "objects": [
+                null
+            ],
+            "pipelines": [
+                0
+            ],
+            "skybox": true,
+            "stereo": false,
+            "transforms": [
+                [
+                    -0.9700363874435425,
+                    0.0,
+                    0.24296016991138458,
+                    0.0,
+                    0.0,
+                    1.0,
+                    0.0,
+                    0.0,
+                    -0.24296016991138458,
+                    0.0,
+                    -0.9700363874435425,
+                    0.0,
+                    8.317525863647461,
+                    0.5640444755554199,
+                    -72.87004089355469,
+                    1.0
+                ]
+            ]
+        }
+    ],
+    "buffers": [
+        192,
+        16
+    ],
+    "capturedTextures": [],
+    "formats": [],
+    "frameIndex": 72,
+    "framebuffer": 0,
+    "framebuffers": [
+        {
+            "bufferMask": 3221225473,
+            "colorAttachments": [
+                {
+                    "texture": 1
+                }
+            ],
+            "depthStencilAttachment": {
+                "element": 4110,
+                "texture": 0
+            },
+            "height": 948,
+            "name": "cached",
+            "width": 1680
+        }
+    ],
+    "pipelines": [
+        {
+            "program": 0,
+            "state": {
+                "blendFunction": {
+                    "destAlpha": 1,
+                    "destColor": 5,
+                    "sourceAlpha": 13,
+                    "sourceColor": 4
+                },
+                "stencilActivation": {
+                    "enabled": true
+                },
+                "stencilTestBack": {
+                    "function": 2
+                },
+                "stencilTestFront": {
+                    "function": 2
+                }
+            }
+        }
+    ],
+    "pose": null,
+    "programs": [
+        [
+            0,
+            1
+        ]
+    ],
+    "queries": [],
+    "shaders": [
+        {
+            "id": 4294967295,
+            "name": "skybox.vert",
+            "type": 0
+        },
+        {
+            "id": 4294967295,
+            "name": "proceduralSkybox.frag",
+            "replacements": {
+                "//PROCEDURAL_BLOCK": "// Replicate the default skybox texture\r\n\r\nconst int NUM_COLORS = 5;\r\nconst vec3 WHITISH = vec3(0.471, 0.725, 0.825);\r\nconst vec3 GREENISH = vec3(0.157, 0.529, 0.588);\r\nconst vec3 COLORS[NUM_COLORS] = vec3[](\r\n    GREENISH,\r\n    GREENISH,\r\n    WHITISH,\r\n    WHITISH,\r\n    vec3(0.6, 0.275, 0.706)    // purple\r\n);\r\nconst float PI = 3.14159265359;\r\nconst vec3 BLACK = vec3(0.0);\r\nconst vec3 SPACE_BLUE = vec3(0.0, 0.118, 0.392);\r\nconst float HORIZONTAL_OFFSET = 3.75;\r\n\r\nvec3 getSkyboxColor() {\r\n    vec2 horizontal = vec2(_normal.x, _normal.z);\r\n    horizontal = normalize(horizontal);\r\n    float theta = atan(horizontal.y, horizontal.x);\r\n    theta = 0.5 * (theta / PI + 1.0);\r\n    float index = theta * NUM_COLORS;\r\n    index = mod(index + HORIZONTAL_OFFSET, NUM_COLORS);\r\n    int index1 = int(index) % NUM_COLORS;\r\n    int index2 = (index1 + 1) % NUM_COLORS;\r\n    vec3 horizonColor = mix(COLORS[index1], COLORS[index2], index - index1);\r\n    horizonColor = mix(horizonColor, SPACE_BLUE, smoothstep(0.0, 0.08, _normal.y));\r\n    horizonColor = mix(horizonColor, BLACK, smoothstep(0.04, 0.15, _normal.y));\r\n    horizonColor = mix(BLACK, horizonColor, smoothstep(-0.01, 0.0, _normal.y));\r\n\treturn pow(horizonColor, vec3(0.4545));;\r\n}\r\n",
+                "//PROCEDURAL_VERSION": "#define PROCEDURAL_V2"
+            },
+            "type": 1
+        }
+    ],
+    "stereo": {},
+    "swapchains": [],
+    "textureTables": [],
+    "textures": [
+        {
+            "depth": 1,
+            "height": 948,
+            "layers": 0,
+            "mips": 1,
+            "samples": 1,
+            "source": "cached::depthStencil",
+            "texelFormat": 4110,
+            "type": 1,
+            "usageType": 0,
+            "width": 1680
+        },
+        {
+            "depth": 1,
+            "height": 948,
+            "layers": 0,
+            "mips": 1,
+            "samples": 1,
+            "source": "cached::color::0",
+            "texelFormat": 27025,
+            "type": 1,
+            "usageType": 0,
+            "width": 1680
+        }
+    ],
+    "view": [
+        -0.9700361490249634,
+        -0.0,
+        -0.2429601103067398,
+        -0.0,
+        -0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.2429601103067398,
+        -0.0,
+        -0.9700361490249634,
+        -0.0,
+        25.77281379699707,
+        -0.5640444755554199,
+        -68.6657485961914,
+        1.0
+    ]
+}
