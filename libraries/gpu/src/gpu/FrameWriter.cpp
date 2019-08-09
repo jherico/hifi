@@ -643,6 +643,10 @@ json Serializer::writeShader(const ShaderPointer& shaderPointer) {
     result[keys::id] = shader._source.id;
     result[keys::name] = shader._source.name;
     result[keys::type] = shader._type;
+    const auto& replacements = shaderPointer->getSource().replacements;
+    if (!replacements.empty()) {
+        result["replacements"] = replacements;
+    }
     return result;
 }
 

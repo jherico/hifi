@@ -58,7 +58,7 @@ void GraphicsEngine::initializeGPU(GLWidget* glwidget) {
 
 #ifndef Q_OS_ANDROID
     _gpuContext->pushProgramsToSync(shader::allPrograms(), [this] {
-        _programsCompiled.store(true);
+        //_programsCompiled.store(true);
     }, 1);
 #endif
 

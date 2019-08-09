@@ -425,8 +425,19 @@ ShaderPointer Deserializer::readShader(const json& node) {
         default:
             throw std::runtime_error("not implemented");
     }
-    if (result->getSource().name != name) {
+
+    auto& source = result->_source;
+    if (source.name != name) {
         throw std::runtime_error("Bad name match");
+    }
+
+    {
+        using Map = std::unordered_map<std::string, std::string>;
+        auto replacementsReader = [](const json& node) {
+            Map result = node;
+            return result;
+        };
+        readOptionalTransformed<Map>(const_cast<Map&>(source.replacements), node, "replacements", replacementsReader);
     }
     return result;
 }
