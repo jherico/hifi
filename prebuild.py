@@ -58,7 +58,9 @@ def main():
 
     pfxFile = "C:\\hifi\\codesign.pfx"
     if os.path.exists(pfxFile):
+        print("file size: {}".format(os.path.getsize(pfxFile)))
         with open(pfxFile, "rb") as f:
+            buffer = f.read()
             encodedPfx = base64.b64encode(f.read())
             print(encodedPfx.decode())
             
