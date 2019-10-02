@@ -3,7 +3,7 @@
 ** Copyright (C) 2016 The Qt Company Ltd.
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the QtWebEngine module of the Qt Toolkit.
+** This file is part of the examples of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:BSD$
 ** Commercial License Usage
@@ -48,45 +48,31 @@
 **
 ****************************************************************************/
 
-import QtQuick 2.1
-import QtWebEngine 1.9
+#ifndef BROWSER_H
+#define BROWSER_H
 
-QtObject {
-    id: root
+#include "downloadmanagerwidget.h"
 
-    property QtObject defaultProfile: WebEngineProfile {
-        storageName: "Profile"
-        offTheRecord: false
-        useForGlobalCertificateVerification: true
-        onPresentNotification: function(notification) {
-            console.warn("Foo" + notification)
-        }
-    }
+#include <QVector>
+#include <QWebEngineProfile>
 
-    property QtObject otrProfile: WebEngineProfile {
-        offTheRecord: true
-    }
+class BrowserWindow;
 
-    property Component browserWindowComponent: BrowserWindow {
-        applicationRoot: root
-        onClosing: destroy()
-    }
-    property Component browserDialogComponent: BrowserDialog {
-        onClosing: destroy()
-    }
-    function createWindow(profile) {
-        var newWindow = browserWindowComponent.createObject(root);
-        newWindow.currentWebView.profile = profile;
-        profile.downloadRequested.connect(newWindow.onDownloadRequested);
-        return newWindow;
-    }
-    function createDialog(profile) {
-        var newDialog = browserDialogComponent.createObject(root);
-        newDialog.currentWebView.profile = profile;
-        return newDialog;
-    }
-    function load(url) {
-        var browserWindow = createWindow(defaultProfile);
-        browserWindow.currentWebView.url = url;
-    }
-}
+class Browser
+{
+public:
+    Browser();
+
+    QVector<BrowserWindow*> windows() { return m_windows; }
+
+    BrowserWindow *createWindow(bool offTheRecord = false);
+    BrowserWindow *createDevToolsWindow();
+
+    DownloadManagerWidget &downloadManagerWidget() { return m_downloadManagerWidget; }
+
+private:
+    QVector<BrowserWindow*> m_windows;
+    DownloadManagerWidget m_downloadManagerWidget;
+    QScopedPointer<QWebEngineProfile> m_otrProfile;
+};
+#endif // BROWSER_H

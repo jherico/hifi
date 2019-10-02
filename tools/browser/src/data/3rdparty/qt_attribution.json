@@ -1,8 +1,8 @@
 {
-    "Id": "quicknanobrowser-tango",
+    "Id": "simplebrowser-tango",
     "Name": "Tango Icon Library",
     "QDocModule": "qtwebengine",
-    "QtUsage": "Used in WebEngine Quick Nano Browser example.",
+    "QtUsage": "Used in WebEngine SimpleBrowser example.",
 
     "QtParts": [ "examples" ],
     "Description": "Selected icons from the Tango Icon Library",

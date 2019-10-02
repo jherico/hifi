@@ -48,66 +48,40 @@
 **
 ****************************************************************************/
 
-#include "browser.h"
-#include "browserwindow.h"
-#include "tabwidget.h"
-#include <QApplication>
-#include <QWebEngineProfile>
-#include <QWebEngineSettings>
-#include <Windows.h>
+#ifndef WEBVIEW_H
+#define WEBVIEW_H
 
-QUrl commandLineUrlArgument()
+#include <QIcon>
+#include <QWebEngineView>
+
+class WebPage;
+
+class WebView : public QWebEngineView
 {
-    const QStringList args = QCoreApplication::arguments();
-    for (const QString &arg : args.mid(1)) {
-        if (!arg.startsWith(QLatin1Char('-')))
-            return QUrl::fromUserInput(arg);
-    }
-    return QUrl(QStringLiteral("https://www.webrtc-experiment.com/Pluginfree-Screen-Sharing"));
-}
+    Q_OBJECT
 
-__declspec(dllimport) void OutputDebugStringA(const char*);
+public:
+    WebView(QWidget *parent = nullptr);
+    void setPage(WebPage *page);
 
-void myMessageHandler(QtMsgType type, const QMessageLogContext & context, const QString & message) {
-    OutputDebugStringA(message.toStdString().c_str());
-    OutputDebugStringA("\n");
-}
+    int loadProgress() const;
+    bool isWebActionEnabled(QWebEnginePage::WebAction webAction) const;
+    QIcon favIcon() const;
 
-int main(int argc, char **argv)
-{
+protected:
+    void contextMenuEvent(QContextMenuEvent *event) override;
+    QWebEngineView *createWindow(QWebEnginePage::WebWindowType type) override;
 
-    qInstallMessageHandler(myMessageHandler);
-    QCoreApplication::setOrganizationName("QtExamples");
-    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-    QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+signals:
+    void webActionEnabledChanged(QWebEnginePage::WebAction webAction, bool enabled);
+    void favIconChanged(const QIcon &icon);
+    void devToolsRequested(QWebEnginePage *source);
 
-    QApplication app(argc, argv);
+private:
+    void createWebActionTrigger(QWebEnginePage *page, QWebEnginePage::WebAction);
 
-    //Utils utils;
-    //appEngine.rootContext()->setContextProperty("utils", &utils);
-    QStringList chromiumFlags;
-    chromiumFlags << "--enable-experimental-web-platform-features";
-    chromiumFlags << "--auto-select-desktop-capture-source='Entire screen'";
-    chromiumFlags << "--enable-usermedia-screen-capturing";
-    chromiumFlags << "--enable-experimental-web-platform-features";
-    chromiumFlags << "--enable-logging";
-    chromiumFlags << "--v=1";
-    if (!chromiumFlags.empty()) {
-        qputenv("QTWEBENGINE_CHROMIUM_FLAGS", chromiumFlags.join(' ').toLocal8Bit());
-    }
+private:
+    int m_loadProgress;
+};
 
-
-    app.setWindowIcon(QIcon(QStringLiteral(":AppLogoColor.png")));
-
-    QWebEngineSettings::defaultSettings()->setAttribute(QWebEngineSettings::PluginsEnabled, true);
-    QWebEngineSettings::defaultSettings()->setAttribute(QWebEngineSettings::DnsPrefetchEnabled, true);
-    QWebEngineProfile::defaultProfile()->setUseForGlobalCertificateVerification();
-
-    QUrl url = commandLineUrlArgument();
-
-    Browser browser;
-    BrowserWindow *window = browser.createWindow();
-    window->tabWidget()->setUrl(url);
-
-    return app.exec();
-}
+#endif

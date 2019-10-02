@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2016 The Qt Company Ltd.
+** Copyright (C) 2017 The Qt Company Ltd.
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the examples of the Qt Toolkit.
@@ -48,66 +48,39 @@
 **
 ****************************************************************************/
 
-#include "browser.h"
-#include "browserwindow.h"
-#include "tabwidget.h"
-#include <QApplication>
-#include <QWebEngineProfile>
-#include <QWebEngineSettings>
-#include <Windows.h>
+#ifndef DOWNLOADWIDGET_H
+#define DOWNLOADWIDGET_H
 
-QUrl commandLineUrlArgument()
+#include "ui_downloadwidget.h"
+
+#include <QFrame>
+#include <QTime>
+
+QT_BEGIN_NAMESPACE
+class QWebEngineDownloadItem;
+QT_END_NAMESPACE
+
+// Displays one ongoing or finished download (QWebEngineDownloadItem).
+class DownloadWidget final : public QFrame, public Ui::DownloadWidget
 {
-    const QStringList args = QCoreApplication::arguments();
-    for (const QString &arg : args.mid(1)) {
-        if (!arg.startsWith(QLatin1Char('-')))
-            return QUrl::fromUserInput(arg);
-    }
-    return QUrl(QStringLiteral("https://www.webrtc-experiment.com/Pluginfree-Screen-Sharing"));
-}
+    Q_OBJECT
+public:
+    // Precondition: The QWebEngineDownloadItem has been accepted.
+    explicit DownloadWidget(QWebEngineDownloadItem *download, QWidget *parent = nullptr);
 
-__declspec(dllimport) void OutputDebugStringA(const char*);
+signals:
+    // This signal is emitted when the user indicates that they want to remove
+    // this download from the downloads list.
+    void removeClicked(DownloadWidget *self);
 
-void myMessageHandler(QtMsgType type, const QMessageLogContext & context, const QString & message) {
-    OutputDebugStringA(message.toStdString().c_str());
-    OutputDebugStringA("\n");
-}
+private slots:
+    void updateWidget();
 
-int main(int argc, char **argv)
-{
+private:
+    QString withUnit(qreal bytes);
 
-    qInstallMessageHandler(myMessageHandler);
-    QCoreApplication::setOrganizationName("QtExamples");
-    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-    QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+    QWebEngineDownloadItem *m_download;
+    QTime m_timeAdded;
+};
 
-    QApplication app(argc, argv);
-
-    //Utils utils;
-    //appEngine.rootContext()->setContextProperty("utils", &utils);
-    QStringList chromiumFlags;
-    chromiumFlags << "--enable-experimental-web-platform-features";
-    chromiumFlags << "--auto-select-desktop-capture-source='Entire screen'";
-    chromiumFlags << "--enable-usermedia-screen-capturing";
-    chromiumFlags << "--enable-experimental-web-platform-features";
-    chromiumFlags << "--enable-logging";
-    chromiumFlags << "--v=1";
-    if (!chromiumFlags.empty()) {
-        qputenv("QTWEBENGINE_CHROMIUM_FLAGS", chromiumFlags.join(' ').toLocal8Bit());
-    }
-
-
-    app.setWindowIcon(QIcon(QStringLiteral(":AppLogoColor.png")));
-
-    QWebEngineSettings::defaultSettings()->setAttribute(QWebEngineSettings::PluginsEnabled, true);
-    QWebEngineSettings::defaultSettings()->setAttribute(QWebEngineSettings::DnsPrefetchEnabled, true);
-    QWebEngineProfile::defaultProfile()->setUseForGlobalCertificateVerification();
-
-    QUrl url = commandLineUrlArgument();
-
-    Browser browser;
-    BrowserWindow *window = browser.createWindow();
-    window->tabWidget()->setUrl(url);
-
-    return app.exec();
-}
+#endif // DOWNLOADWIDGET_H

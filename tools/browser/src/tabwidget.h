@@ -48,66 +48,61 @@
 **
 ****************************************************************************/
 
-#include "browser.h"
-#include "browserwindow.h"
-#include "tabwidget.h"
-#include <QApplication>
-#include <QWebEngineProfile>
-#include <QWebEngineSettings>
-#include <Windows.h>
+#ifndef TABWIDGET_H
+#define TABWIDGET_H
 
-QUrl commandLineUrlArgument()
+#include <QTabWidget>
+#include <QWebEnginePage>
+
+QT_BEGIN_NAMESPACE
+class QUrl;
+QT_END_NAMESPACE
+
+class WebView;
+
+class TabWidget : public QTabWidget
 {
-    const QStringList args = QCoreApplication::arguments();
-    for (const QString &arg : args.mid(1)) {
-        if (!arg.startsWith(QLatin1Char('-')))
-            return QUrl::fromUserInput(arg);
-    }
-    return QUrl(QStringLiteral("https://www.webrtc-experiment.com/Pluginfree-Screen-Sharing"));
-}
+    Q_OBJECT
 
-__declspec(dllimport) void OutputDebugStringA(const char*);
+public:
+    TabWidget(QWebEngineProfile *profile, QWidget *parent = nullptr);
 
-void myMessageHandler(QtMsgType type, const QMessageLogContext & context, const QString & message) {
-    OutputDebugStringA(message.toStdString().c_str());
-    OutputDebugStringA("\n");
-}
+    WebView *currentWebView() const;
 
-int main(int argc, char **argv)
-{
+signals:
+    // current tab/page signals
+    void linkHovered(const QString &link);
+    void loadProgress(int progress);
+    void titleChanged(const QString &title);
+    void urlChanged(const QUrl &url);
+    void favIconChanged(const QIcon &icon);
+    void webActionEnabledChanged(QWebEnginePage::WebAction action, bool enabled);
+    void devToolsRequested(QWebEnginePage *source);
 
-    qInstallMessageHandler(myMessageHandler);
-    QCoreApplication::setOrganizationName("QtExamples");
-    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-    QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+public slots:
+    // current tab/page slots
+    void setUrl(const QUrl &url);
+    void triggerWebPageAction(QWebEnginePage::WebAction action);
 
-    QApplication app(argc, argv);
+    WebView *createTab();
+    WebView *createBackgroundTab();
+    void closeTab(int index);
+    void nextTab();
+    void previousTab();
 
-    //Utils utils;
-    //appEngine.rootContext()->setContextProperty("utils", &utils);
-    QStringList chromiumFlags;
-    chromiumFlags << "--enable-experimental-web-platform-features";
-    chromiumFlags << "--auto-select-desktop-capture-source='Entire screen'";
-    chromiumFlags << "--enable-usermedia-screen-capturing";
-    chromiumFlags << "--enable-experimental-web-platform-features";
-    chromiumFlags << "--enable-logging";
-    chromiumFlags << "--v=1";
-    if (!chromiumFlags.empty()) {
-        qputenv("QTWEBENGINE_CHROMIUM_FLAGS", chromiumFlags.join(' ').toLocal8Bit());
-    }
+private slots:
+    void handleCurrentChanged(int index);
+    void handleContextMenuRequested(const QPoint &pos);
+    void cloneTab(int index);
+    void closeOtherTabs(int index);
+    void reloadAllTabs();
+    void reloadTab(int index);
 
+private:
+    WebView *webView(int index) const;
+    void setupView(WebView *webView);
 
-    app.setWindowIcon(QIcon(QStringLiteral(":AppLogoColor.png")));
+    QWebEngineProfile *m_profile;
+};
 
-    QWebEngineSettings::defaultSettings()->setAttribute(QWebEngineSettings::PluginsEnabled, true);
-    QWebEngineSettings::defaultSettings()->setAttribute(QWebEngineSettings::DnsPrefetchEnabled, true);
-    QWebEngineProfile::defaultProfile()->setUseForGlobalCertificateVerification();
-
-    QUrl url = commandLineUrlArgument();
-
-    Browser browser;
-    BrowserWindow *window = browser.createWindow();
-    window->tabWidget()->setUrl(url);
-
-    return app.exec();
-}
+#endif // TABWIDGET_H

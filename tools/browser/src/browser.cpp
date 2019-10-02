@@ -50,64 +50,43 @@
 
 #include "browser.h"
 #include "browserwindow.h"
-#include "tabwidget.h"
-#include <QApplication>
-#include <QWebEngineProfile>
-#include <QWebEngineSettings>
-#include <Windows.h>
 
-QUrl commandLineUrlArgument()
+Browser::Browser()
 {
-    const QStringList args = QCoreApplication::arguments();
-    for (const QString &arg : args.mid(1)) {
-        if (!arg.startsWith(QLatin1Char('-')))
-            return QUrl::fromUserInput(arg);
-    }
-    return QUrl(QStringLiteral("https://www.webrtc-experiment.com/Pluginfree-Screen-Sharing"));
+    // Quit application if the download manager window is the only remaining window
+    m_downloadManagerWidget.setAttribute(Qt::WA_QuitOnClose, false);
+
+    QObject::connect(
+        QWebEngineProfile::defaultProfile(), &QWebEngineProfile::downloadRequested,
+        &m_downloadManagerWidget, &DownloadManagerWidget::downloadRequested);
 }
 
-__declspec(dllimport) void OutputDebugStringA(const char*);
-
-void myMessageHandler(QtMsgType type, const QMessageLogContext & context, const QString & message) {
-    OutputDebugStringA(message.toStdString().c_str());
-    OutputDebugStringA("\n");
+BrowserWindow *Browser::createWindow(bool offTheRecord)
+{
+    if (offTheRecord && !m_otrProfile) {
+        m_otrProfile.reset(new QWebEngineProfile);
+        QObject::connect(
+            m_otrProfile.get(), &QWebEngineProfile::downloadRequested,
+            &m_downloadManagerWidget, &DownloadManagerWidget::downloadRequested);
+    }
+    auto profile = offTheRecord ? m_otrProfile.get() : QWebEngineProfile::defaultProfile();
+    auto mainWindow = new BrowserWindow(this, profile, false);
+    m_windows.append(mainWindow);
+    QObject::connect(mainWindow, &QObject::destroyed, [this, mainWindow]() {
+        m_windows.removeOne(mainWindow);
+    });
+    mainWindow->show();
+    return mainWindow;
 }
 
-int main(int argc, char **argv)
+BrowserWindow *Browser::createDevToolsWindow()
 {
-
-    qInstallMessageHandler(myMessageHandler);
-    QCoreApplication::setOrganizationName("QtExamples");
-    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-    QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
-
-    QApplication app(argc, argv);
-
-    //Utils utils;
-    //appEngine.rootContext()->setContextProperty("utils", &utils);
-    QStringList chromiumFlags;
-    chromiumFlags << "--enable-experimental-web-platform-features";
-    chromiumFlags << "--auto-select-desktop-capture-source='Entire screen'";
-    chromiumFlags << "--enable-usermedia-screen-capturing";
-    chromiumFlags << "--enable-experimental-web-platform-features";
-    chromiumFlags << "--enable-logging";
-    chromiumFlags << "--v=1";
-    if (!chromiumFlags.empty()) {
-        qputenv("QTWEBENGINE_CHROMIUM_FLAGS", chromiumFlags.join(' ').toLocal8Bit());
-    }
-
-
-    app.setWindowIcon(QIcon(QStringLiteral(":AppLogoColor.png")));
-
-    QWebEngineSettings::defaultSettings()->setAttribute(QWebEngineSettings::PluginsEnabled, true);
-    QWebEngineSettings::defaultSettings()->setAttribute(QWebEngineSettings::DnsPrefetchEnabled, true);
-    QWebEngineProfile::defaultProfile()->setUseForGlobalCertificateVerification();
-
-    QUrl url = commandLineUrlArgument();
-
-    Browser browser;
-    BrowserWindow *window = browser.createWindow();
-    window->tabWidget()->setUrl(url);
-
-    return app.exec();
+    auto profile = QWebEngineProfile::defaultProfile();
+    auto mainWindow = new BrowserWindow(this, profile, true);
+    m_windows.append(mainWindow);
+    QObject::connect(mainWindow, &QObject::destroyed, [this, mainWindow]() {
+        m_windows.removeOne(mainWindow);
+    });
+    mainWindow->show();
+    return mainWindow;
 }

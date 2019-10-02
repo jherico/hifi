@@ -3,7 +3,7 @@
 ** Copyright (C) 2016 The Qt Company Ltd.
 ** Contact: https://www.qt.io/licensing/
 **
-** This file is part of the QtWebEngine module of the Qt Toolkit.
+** This file is part of the examples of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:BSD$
 ** Commercial License Usage
@@ -48,27 +48,53 @@
 **
 ****************************************************************************/
 
-import QtQuick 2.1
-import QtQuick.Window 2.2
-import QtWebEngine 1.9
+#include "webpage.h"
+#include "webpopupwindow.h"
+#include "webview.h"
+#include <QAction>
+#include <QIcon>
+#include <QLineEdit>
+#include <QVBoxLayout>
+#include <QWindow>
 
-Window {
-    id: window
-    property alias currentWebView: webView
-    flags: Qt.Dialog | Qt.WindowStaysOnTopHint
-    width: 800
-    height: 600
-    visible: true
-    onClosing: destroy()
-    WebEngineView {
-        id: webView
-        anchors.fill: parent
+WebPopupWindow::WebPopupWindow(QWebEngineProfile *profile)
+    : m_urlLineEdit(new QLineEdit(this))
+    , m_favAction(new QAction(this))
+    , m_view(new WebView(this))
+{
+    setAttribute(Qt::WA_DeleteOnClose);
+    setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
-        onGeometryChangeRequested: function(geometry) {
-            window.x = geometry.x
-            window.y = geometry.y
-            window.width = geometry.width
-            window.height = geometry.height
-        }
-    }
+    QVBoxLayout *layout = new QVBoxLayout;
+    layout->setMargin(0);
+    setLayout(layout);
+    layout->addWidget(m_urlLineEdit);
+    layout->addWidget(m_view);
+
+    m_view->setPage(new WebPage(profile, m_view));
+    m_view->setFocus();
+
+    m_urlLineEdit->setReadOnly(true);
+    m_urlLineEdit->addAction(m_favAction, QLineEdit::LeadingPosition);
+
+    connect(m_view, &WebView::titleChanged, this, &QWidget::setWindowTitle);
+    connect(m_view, &WebView::urlChanged, [this](const QUrl &url) {
+        m_urlLineEdit->setText(url.toDisplayString());
+    });
+    connect(m_view, &WebView::favIconChanged, m_favAction, &QAction::setIcon);
+    connect(m_view->page(), &WebPage::geometryChangeRequested, this, &WebPopupWindow::handleGeometryChangeRequested);
+    connect(m_view->page(), &WebPage::windowCloseRequested, this, &QWidget::close);
+}
+
+WebView *WebPopupWindow::view() const
+{
+    return m_view;
+}
+
+void WebPopupWindow::handleGeometryChangeRequested(const QRect &newGeometry)
+{
+    if (QWindow *window = windowHandle())
+        setGeometry(newGeometry.marginsRemoved(window->frameMargins()));
+    show();
+    m_view->setFocus();
 }

@@ -48,66 +48,68 @@
 **
 ****************************************************************************/
 
-#include "browser.h"
-#include "browserwindow.h"
-#include "tabwidget.h"
-#include <QApplication>
-#include <QWebEngineProfile>
-#include <QWebEngineSettings>
-#include <Windows.h>
+#ifndef BROWSERWINDOW_H
+#define BROWSERWINDOW_H
 
-QUrl commandLineUrlArgument()
+#include <QMainWindow>
+#include <QTime>
+#include <QWebEnginePage>
+
+QT_BEGIN_NAMESPACE
+class QLineEdit;
+class QProgressBar;
+QT_END_NAMESPACE
+
+class Browser;
+class TabWidget;
+class WebView;
+
+class BrowserWindow : public QMainWindow
 {
-    const QStringList args = QCoreApplication::arguments();
-    for (const QString &arg : args.mid(1)) {
-        if (!arg.startsWith(QLatin1Char('-')))
-            return QUrl::fromUserInput(arg);
-    }
-    return QUrl(QStringLiteral("https://www.webrtc-experiment.com/Pluginfree-Screen-Sharing"));
-}
+    Q_OBJECT
 
-__declspec(dllimport) void OutputDebugStringA(const char*);
+public:
+    BrowserWindow(Browser *browser, QWebEngineProfile *profile, bool forDevTools = false);
+    QSize sizeHint() const override;
+    TabWidget *tabWidget() const;
+    WebView *currentTab() const;
+    Browser *browser() { return m_browser; }
 
-void myMessageHandler(QtMsgType type, const QMessageLogContext & context, const QString & message) {
-    OutputDebugStringA(message.toStdString().c_str());
-    OutputDebugStringA("\n");
-}
+protected:
+    void closeEvent(QCloseEvent *event) override;
 
-int main(int argc, char **argv)
-{
+private slots:
+    void handleNewWindowTriggered();
+    void handleNewIncognitoWindowTriggered();
+    void handleFileOpenTriggered();
+    void handleFindActionTriggered();
+    void handleShowWindowTriggered();
+    void handleWebViewLoadProgress(int);
+    void handleWebViewTitleChanged(const QString &title);
+    void handleWebActionEnabledChanged(QWebEnginePage::WebAction action, bool enabled);
+    void handleDevToolsRequested(QWebEnginePage *source);
 
-    qInstallMessageHandler(myMessageHandler);
-    QCoreApplication::setOrganizationName("QtExamples");
-    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-    QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+private:
+    QMenu *createFileMenu(TabWidget *tabWidget);
+    QMenu *createEditMenu();
+    QMenu *createViewMenu(QToolBar *toolBar);
+    QMenu *createWindowMenu(TabWidget *tabWidget);
+    QMenu *createHelpMenu();
+    QToolBar *createToolBar();
 
-    QApplication app(argc, argv);
+private:
+    Browser *m_browser;
+    QWebEngineProfile *m_profile;
+    TabWidget *m_tabWidget;
+    QProgressBar *m_progressBar;
+    QAction *m_historyBackAction;
+    QAction *m_historyForwardAction;
+    QAction *m_stopAction;
+    QAction *m_reloadAction;
+    QAction *m_stopReloadAction;
+    QLineEdit *m_urlLineEdit;
+    QAction *m_favAction;
+    QString m_lastSearch;
+};
 
-    //Utils utils;
-    //appEngine.rootContext()->setContextProperty("utils", &utils);
-    QStringList chromiumFlags;
-    chromiumFlags << "--enable-experimental-web-platform-features";
-    chromiumFlags << "--auto-select-desktop-capture-source='Entire screen'";
-    chromiumFlags << "--enable-usermedia-screen-capturing";
-    chromiumFlags << "--enable-experimental-web-platform-features";
-    chromiumFlags << "--enable-logging";
-    chromiumFlags << "--v=1";
-    if (!chromiumFlags.empty()) {
-        qputenv("QTWEBENGINE_CHROMIUM_FLAGS", chromiumFlags.join(' ').toLocal8Bit());
-    }
-
-
-    app.setWindowIcon(QIcon(QStringLiteral(":AppLogoColor.png")));
-
-    QWebEngineSettings::defaultSettings()->setAttribute(QWebEngineSettings::PluginsEnabled, true);
-    QWebEngineSettings::defaultSettings()->setAttribute(QWebEngineSettings::DnsPrefetchEnabled, true);
-    QWebEngineProfile::defaultProfile()->setUseForGlobalCertificateVerification();
-
-    QUrl url = commandLineUrlArgument();
-
-    Browser browser;
-    BrowserWindow *window = browser.createWindow();
-    window->tabWidget()->setUrl(url);
-
-    return app.exec();
-}
+#endif // BROWSERWINDOW_H
