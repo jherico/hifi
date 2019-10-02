@@ -22,6 +22,7 @@ if (BUILD_TOOLS)
     # Allow different tools for stable builds
     if (STABLE_BUILD)
         set(ALL_TOOLS
+            browser
             udt-test
             vhacd-util
             frame-optimizer
@@ -35,6 +36,7 @@ if (BUILD_TOOLS)
         )
     else()
         set(ALL_TOOLS
+            browser
             udt-test
             vhacd-util
             frame-optimizer
