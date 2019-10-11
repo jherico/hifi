@@ -144,7 +144,7 @@ endif()
             downloadVcpkg = True
 
         if downloadVcpkg:
-            if "HIFI_VCPKG_BOOTSTRAP" in os.environ:
+            if True or ("HIFI_VCPKG_BOOTSTRAP" in os.environ):
                 print("Cloning vcpkg from github to {}".format(self.path))
                 hifi_utils.executeSubprocess(['git', 'clone', 'git@github.com:microsoft/vcpkg.git', self.path])
                 print("Bootstrapping vcpkg")
