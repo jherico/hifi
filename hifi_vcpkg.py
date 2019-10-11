@@ -148,7 +148,7 @@ endif()
                 print("Cloning vcpkg from github to {}".format(self.path))
                 hifi_utils.executeSubprocess(['git', 'clone', 'https://github.com/microsoft/vcpkg.git', self.path])
                 print("Bootstrapping vcpkg")
-                hifi_utils.executeSubprocess([self.bootstrapCmd], folder=self.path)
+                hifi_utils.executeSubprocess(["{}/{}".format(self.path, self.bootstrapCmd)], folder=self.path)
             else:
                 print("Fetching vcpkg from {} to {}".format(self.vcpkgUrl, self.path))
                 hifi_utils.downloadAndExtract(self.vcpkgUrl, self.path, self.vcpkgHash)
